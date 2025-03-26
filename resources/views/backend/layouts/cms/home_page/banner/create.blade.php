@@ -40,18 +40,16 @@
                         </div>
 
 
-                        <!-- 3rd Subtitle Field -->
+                        <!-- Description Field -->
                         <div class="col-lg-6">
                             <div class="form-group mb-4">
-                                <label class="label text-secondary">Button Text <span class="text-danger">*</span></label>
+                                <label class="label text-secondary">Description<span class="text-danger">*</span></label>
                                 <div class="form-group position-relative">
-                                    <input type="text"
-                                        class="form-control text-dark ps-5 h-55 @error('sub_title') is-invalid @enderror"
-                                        name="sub_title" value="{{ old('sub_title', $data->sub_title ?? '') }}"
-                                        placeholder="Enter Button Text here">
+                                    <textarea class="form-control text-dark ps-5 h-55 @error('description') is-invalid @enderror" name="description"
+                                        placeholder="Enter Description here">{{ old('description', $data->description ?? '') }}</textarea>
                                 </div>
-                                @error('sub_title')
-                                    <div id="sub_title-error" class="text-danger">{{ $message }}</div>
+                                @error('description')
+                                    <div id="description-error" class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -59,12 +57,13 @@
 
                     <div class="col-lg-12">
                         <div class="form-group ">
-                            <label class="label text-secondary mb-1">Video<span class="text-danger">*</span></label>
-                            <input class="dropify form-control @error('image') is-invalid @enderror" type="file"
-                                name="image" accept="video/*"
-                                data-default-file="{{ isset($data) && $data->image ? asset($data->image) : '' }}">
-                            @error('image')
-                                <div id="image-error" class="text-danger">{{ $message }}</div>
+                            <label class="label text-secondary mb-1">Background Image<span
+                                    class="text-danger">*</span></label>
+                            <input class="dropify form-control @error('background_image') is-invalid @enderror"
+                                type="file" name="background_image" accept="image/*"
+                                data-default-file="{{ isset($data) && $data->background_image ? asset($data->background_image) : '' }}">
+                            @error('background_image')
+                                <div id="background_image-error" class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>

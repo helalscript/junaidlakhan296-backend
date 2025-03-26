@@ -135,6 +135,18 @@ $systemSetting = App\Models\SystemSetting::first();
                         </a>
                     </li>
                     <li class="menu-item">
+                        <a href="{{ route('cms.home_page.how_it_work.index') }}"
+                            class="menu-link {{ request()->routeIs('cms.home_page.how_it_work.*') ? 'active' : '' }}">
+                            How It Works
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{{ route('cms.home_page.why_choose_us.index') }}"
+                            class="menu-link {{ request()->routeIs('cms.home_page.why_choose_us.*') ? 'active' : '' }}">
+                            Why Choose Us
+                        </a>
+                    </li>
+                    <li class="menu-item">
                         <a href="{{ route('cms.home_page.social_link.index') }}"
                             class="menu-link {{ request()->routeIs('cms.home_page.social_link.*') ? 'active' : '' }}">
                             Social Link

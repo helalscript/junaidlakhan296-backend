@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Web\Backend\CMS;
 
+use App\Http\Controllers\Controller;
 use App\Enums\Page;
 use App\Enums\Section;
 use App\Helpers\Helper;
-use App\Http\Controllers\Controller;
 use App\Models\CMS;
 use Exception;
 use Illuminate\Http\Request;
@@ -13,16 +13,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
-class HomePageController extends Controller
+class HomePageHowItWorkContainerController extends Controller
 {
 
     public function index(Request $request)
     {
+        $WhyChooseUs = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUs)->first();
         if ($request->ajax()) {
-            $data = CMS::where('page', Page::HomePage)->where('section', Section::Banner)->latest();
+            $data = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUsContainer)->latest();
             return DataTables::of($data)
                 ->addIndexColumn()
-
                 ->addColumn('image', function ($data) {
                     return '<img src="' . asset($data->image) . '" class="wh-40 rounded-3" alt="user">';
                 })
@@ -41,9 +41,10 @@ class HomePageController extends Controller
                 })
                 ->addColumn('action', function ($data) {
                     return '<div class="action-wrapper">
-                         <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Edit" onclick="window.location.href=\'' . route('cms.home_page.banner.edit', $data->id) . '\'">
-                         <i class="material-symbols-outlined fs-16 text-body">edit</i>
-                        </button>
+                        <a type="button" href="javascript:void(0)"
+                                class="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
+                                data-bs-toggle="modal" data-bs-target="#EditServiceContainer" onclick="viewModel(' . $data->id . ')" ><i class="material-symbols-outlined fs-16 text-body">edit</i>
+                            </a>
                         <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Delete" onclick="deleteRecord(event,' . $data->id . ')">
                         <i class="material-symbols-outlined fs-16 text-danger">delete</i>
                         </button>
@@ -53,50 +54,61 @@ class HomePageController extends Controller
                 ->rawColumns(['image', 'status', 'action'])
                 ->make(true);
         }
-        return view("backend.layouts.cms.home_page.banner.index");
+        return view("backend.layouts.cms.home_page.how_it_work_container.index", compact("WhyChooseUs"));
     }
 
     public function create()
     {
-        $data = CMS::where('page', Page::HomePage->value)->where('section', Section::Banner->value)->first();
-        return view("backend.layouts.cms.home_page.banner.create", compact('data'));
+        flash()->warning('not found this page');
+        return back();
     }
-    // Corresponding store methods to handle form submissions
+
     public function store(Request $request)
     {
 
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
-            'sub_title' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'sub_description' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
-
         try {
-            if ($request->hasFile('image')) {
-                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'banner', time() . '_' . getFileName($request->file('image')));
-            }
+
             $validatedData['page'] = Page::HomePage->value;
-            $validatedData['section'] = Section::Banner->value;
+            $validatedData['section'] = Section::HowItWorkContainer->value;
+            if ($request->hasFile('image')) {
+                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'HowItWorkContainer', time() . '_' . getFileName($request->file('image')));
+            }
             CMS::Create($validatedData);
-            flash()->success('Banner created successfully');
-            return redirect()->route('cms.home_page.banner.index');
+
+            return response()->json([
+                "success" => true,
+                "message" => "Why Choose Us Container Content created successfully"
+            ]);
         } catch (Exception $e) {
             Log::error("HomePageController::store" . $e->getMessage());
-            flash()->error('Banner not created successfully');
-            return redirect()->route('cms.home_page.banner.index');
+            // flash()->error('Service Container Content not created successfully');
+            // return redirect()->route('cms.home_page.banner.index');
+            return response()->json([
+                "success" => false,
+                "message" => "Why Choose Us Container Content not create"
+            ]);
         }
     }
+
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
         $data = CMS::findOrFail($id);
-        return view("backend.layouts.cms.home_page.banner.edit", compact("data"));
+        return view("backend.layouts.cms.home_page.how_it_work_container.edit", compact("data"));
     }
 
+    public function show(string $id)
+    {
+        flash()->warning('not found this page');
+        return back();
+    }
     /**
      * Update the specified resource in storage.
      */
@@ -104,10 +116,8 @@ class HomePageController extends Controller
     {
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
-            'sub_title' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'sub_description' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
         try {
             $data = CMS::findOrFail($id);
@@ -115,16 +125,20 @@ class HomePageController extends Controller
                 if ($data && $data->image && file_exists(public_path($data->image))) {
                     Helper::fileDelete(public_path($data->image));
                 }
-                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'banner', time() . '_' . getFileName($request->file('image')));
+                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'HowItWorkContainer', time() . '_' . getFileName($request->file('image')));
             }
 
             $data->update($validatedData);
-            flash()->success('Banner Updated Successfully');
-            return redirect()->route('cms.home_page.banner.index');
+            return response()->json([
+                "success" => true,
+                "message" => "Service Container Content Updated Successfully"
+            ]);
         } catch (Exception $e) {
             Log::error("HomePageController::update" . $e->getMessage());
-            flash()->error('Banner not Updated Successfully');
-            return redirect()->route('cms.home_page.banner.index');
+            return response()->json([
+                "success" => false,
+                "message" => "Service Container Content not Update"
+            ]);
         }
     }
 
@@ -179,38 +193,40 @@ class HomePageController extends Controller
         ]);
     }
 
-    public function updateBanner(Request $request)
+    // update main service container
+    public function HowItWorkContainerUpdate(Request $request)
     {
-        $validatedData = $request->validate(
-            [
-                'title' => 'required|string|max:255',
-                'description' => 'required|string|max:255',
-                'background_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
-            ],
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'sub_title' => 'required|string|max:255',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
+        ]);
 
-        );
         try {
-            if ($request->hasFile('background_image')) {
-                $data = CMS::where('page', Page::HomePage->value)->where('section', Section::Banner->value)->first();
-                if ($data && $data->background_image && file_exists(public_path($data->background_image))) {
-                    Helper::fileDelete(public_path($data->background_image));
+
+            $HowItWork = CMS::where('page', Page::HomePage)
+                ->where('section', Section::HowItWork)
+                ->first();
+
+            if ($request->hasFile('image')) {
+                if ($HowItWork && $HowItWork->image && file_exists(public_path($HowItWork->image))) {
+                    Helper::fileDelete(public_path($HowItWork->image));
                 }
-                $validatedData['background_image'] = Helper::fileUpload($request->file('background_image'), 'banner', time() . '_' . getFileName($request->file('background_image')));
+                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'HowItWork', time() . '_' . getFileName($request->file('image')));
             }
             CMS::updateOrCreate(
                 [
                     'page' => Page::HomePage->value,
-                    'section' => Section::Banner->value,
+                    'section' => Section::HowItWork->value,
                 ],
                 $validatedData
             );
-            flash()->success('Banner Updated Successfully');
-            return redirect()->route('cms.home_page.banner.create');
+            flash()->success('Service container update successfully');
+            return redirect()->route('cms.home_page.how_it_work.index');
         } catch (Exception $e) {
-            Log::error("HomePageController::update" . $e->getMessage());
-            flash()->error('Banner not Updated Successfully');
-            return redirect()->route('cms.home_page.banner.create');
+            Log::error("HomePageWhyChooseUsContainerController::WhyChooseUsContainerUpdate" . $e->getMessage());
+            flash()->error('Service container not update successfully');
+            return redirect()->route('cms.home_page.how_it_work.index');
         }
     }
-
 }

@@ -10,7 +10,9 @@
 
 
 use App\Http\Controllers\Web\Backend\CMS\HomePageController;
+use App\Http\Controllers\Web\Backend\CMS\HomePageHowItWorkContainerController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageSocialLinkContainerController;
+use App\Http\Controllers\Web\Backend\CMS\HomePageWhyChooseUsContainerController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\ProfileController;
 use App\Http\Controllers\Web\Backend\DynamicPageController;
@@ -57,6 +59,16 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   // Route Social link
   Route::resource('/home-page/social-link/index', HomePageSocialLinkContainerController::class)->names('cms.home_page.social_link')->except('show');
   Route::post('/home-page/social-link/status/{id}', [HomePageSocialLinkContainerController::class, 'status'])->name('cms.home_page.social_link.status');
+
+  // Route home page how it works
+  Route::resource('/home-page/how-it-work/index', HomePageHowItWorkContainerController::class)->names('cms.home_page.how_it_work')->except('show');
+  Route::post('/home-page/how-it-work/status/{id}', [HomePageHowItWorkContainerController::class, 'status'])->name('cms.home_page.how_it_work.status');
+  
+  // Route home page why choose us
+  Route::resource('/home-page/why-choose-us/index', HomePageWhyChooseUsContainerController::class)->names('cms.home_page.why_choose_us')->except('show');
+  Route::post('/home-page/why-choose-us/status/{id}', [HomePageWhyChooseUsContainerController::class, 'status'])->name('cms.home_page.why_choose_us.status');
+  Route::Post('/cms/home-page/service-container-update', [HomePageWhyChooseUsContainerController::class, 'WhyChooseUsContainerUpdate'])->name('cms.home_page.why_choose_us.why_choose_us_update');
+  
 
 });
 
