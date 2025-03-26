@@ -10,12 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('faqs', function (Blueprint $table) {
+        Schema::create('contact_us', function (Blueprint $table) {
             $table->id();
-            $table->string('question');
-            $table->longText('answer');
-            $table->enum('type', ['user', 'admin', 'host'])->default('user');
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('ip_address')->nullable();
+            $table->string('email');
+            $table->string('phone')->nullable();
+            $table->longText('message');
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('faqs');
+        Schema::dropIfExists('contact_us');
     }
 };

@@ -10,11 +10,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('faqs', function (Blueprint $table) {
+        Schema::create('user_custom_notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('question');
-            $table->longText('answer');
-            $table->enum('type', ['user', 'admin', 'host'])->default('user');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('custom_notification_id')->constrained('custom_notifications')->onDelete('cascade');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
@@ -25,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('faqs');
+        Schema::dropIfExists('user_custom_notifications');
     }
 };

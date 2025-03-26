@@ -4,12 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     // Rest omitted for brevity
 
@@ -40,7 +41,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'user_name',
+        'first_name',
+        'last_name',
         'email',
         'phone',
         'avatar',
@@ -113,65 +115,4 @@ class User extends Authenticatable
     }
 
 
-    /**
-     * Get the services created by the user (contractor).
-     */
-    public function services()
-    {
-        return $this->hasMany(Service::class, 'user_id');
-    }
-
-    /**
-     * Get the bookings made by the user (customer).
-     */
-    public function bookings()
-    {
-        return $this->hasMany(Booking::class, 'user_id');
-    }
-
-
-    /**
-     * Get the addresses associated with the user
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function userAddresses()
-    {
-        return $this->hasMany(UserAddress::class, 'user_id');
-    }
-
-
-    /**
-     * Get the contractor ranking associated with the user.
-     */
-    public function contractorRanking()
-    {
-        return $this->hasOne(ContractorRanking::class, 'user_id');
-    }
-
-
-
-    /**
-     * Count the completed bookings for the user.
-     */
-    public function completedBookingsCount()
-    {
-        return $this->bookings()->where('status', 'completed')->count();
-    }
-
-    /**
-     * Count the pending bookings for the user.
-     */
-    public function pendingBookingsCount()
-    {
-        return $this->bookings()->where('status', 'pending')->count();
-    }
-
-    /**
-     * Count the reviews made by the user.
-     */
-    // public function reviewsCount()
-    // {
-    //     return $this->hasMany(Review::class, 'contactor_id')->count();
-    // }
 }
