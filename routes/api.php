@@ -38,8 +38,12 @@ Route::group(['middleware' => 'auth:api'], function ($router) {
     Route::delete('/delete-profile', [UserController::class, 'deleteProfile']);
 });
 
-// cms part
+// --------- cms part --------------
+//home page
 Route::get('/cms/home-page/banner', [HomePageController::class, 'getHomeBanner']);
+Route::get('/cms/home-page/how-it-work', [HomePageController::class, 'getHomeHowitWork']);
+Route::get('/cms/home-page/why-choose-us', [HomePageController::class, 'getHomeWhyChooseUs']);
+
 Route::get('/cms/social-link', [HomePageController::class, 'getSocialLinks']);
 Route::get('/cms/system-info', [HomePageController::class, 'getSystemInfo']);
 

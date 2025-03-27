@@ -8,7 +8,7 @@
 @section('content')
     <div class="main-content-container overflow-hidden">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-            <h3 class="mb-0">Home Why Choose Us List</h3>
+            <h3 class="mb-0">Home How It Work List</h3>
 
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                 <ol class="breadcrumb align-items-center mb-0 lh-1">
@@ -19,10 +19,10 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Home Why Choose Us</span>
+                        <span class="fw-medium">Home How It Work</span>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Home Why Choose Us List</span>
+                        <span class="fw-medium">Home How It Work List</span>
                     </li>
                 </ol>
             </nav>
@@ -34,11 +34,11 @@
                     <div class="card-body p-4">
 
                         <div class="mb-4">
-                            <h4 class="fs-20 mb-1">CMS Home Page Why Choose Us Container</h4>
-                            <p class="fs-15">Update Home Page Why Choose Us Container and site details here.</p>
+                            <h4 class="fs-20 mb-1">CMS Home Page How It Work Container</h4>
+                            <p class="fs-15">Update Home Page How It Work Container and site details here.</p>
                         </div>
 
-                        <form action="{{ route('cms.home_page.why_choose_us.why_choose_us_update') }}"
+                        <form action="{{ route('cms.home_page.how_it_work.how_it_work_update') }}"
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="row">
@@ -50,7 +50,7 @@
                                         <div class="form-group position-relative">
                                             <input type="text"
                                                 class="form-control text-dark ps-5 h-55 @error('title') is-invalid @enderror"
-                                                name="title" value="{{ old('title', $WhyChooseUs->title ?? '') }}"
+                                                name="title" value="{{ old('title', $HowItWork->title ?? '') }}"
                                                 required placeholder="Enter Title here">
                                         </div>
                                         @error('title')
@@ -68,7 +68,7 @@
                                             <input type="text"
                                                 class="form-control text-dark ps-5 h-55 @error('sub_title') is-invalid @enderror"
                                                 name="sub_title"
-                                                value="{{ old('sub_title', $WhyChooseUs->sub_title ?? '') }}"
+                                                value="{{ old('sub_title', $HowItWork->sub_title ?? '') }}"
                                                 placeholder="Enter Sub Title here">
                                         </div>
                                         @error('sub_title')
@@ -77,18 +77,6 @@
                                     </div>
                                 </div>
 
-                            </div>
-                            <!-- Image Field -->
-                            <div class="col-lg-12">
-                                <div class="form-group ">
-                                    <label class="label text-secondary mb-1">Image<span class="text-danger">*</span></label>
-                                    <input class="dropify form-control @error('image') is-invalid @enderror" type="file"
-                                        name="image"
-                                        data-default-file="{{ isset($WhyChooseUs) && $WhyChooseUs->image ? asset($WhyChooseUs->image) : '' }}">
-                                    @error('image')
-                                        <div id="image-error" class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
                             </div>
 
                     </div>
@@ -119,7 +107,7 @@
                                 data-bs-toggle="modal" data-bs-target="#CreateServiceContainer">
                                 <span class="py-sm-1 d-block">
                                     <i class="ri-add-line d-none d-sm-inline-block"></i>
-                                    <span>Add New Service Container Content</span>
+                                    <span>Add New How It Work Container Content</span>
                                 </span>
                             </a>
                         </div>
@@ -181,7 +169,7 @@
         </x-modal>
 
         {{-- here this return a model  start --}}
-        @include('backend.layouts.cms.home_page.why_choose_us_container.create')
+        @include('backend.layouts.cms.home_page.how_it_work_container.create')
 
 
     </div>
@@ -226,7 +214,7 @@
                 dom: "<'row justify-content-between table-topbar'<'col-md-6 col-sm-4 px-0'l>>tir",
 
                 ajax: {
-                    url: "{{ route('cms.home_page.why_choose_us.index') }}",
+                    url: "{{ route('cms.home_page.how_it_work.index') }}",
                     type: "get"
                 },
                 columns: [{
@@ -383,14 +371,14 @@
         // Use the status change alert
         function changeStatus(event, id) {
             event.preventDefault();
-            let statusUrl = '{{ route('cms.home_page.why_choose_us.status', ':id') }}';
+            let statusUrl = '{{ route('cms.home_page.how_it_work.status', ':id') }}';
             showStatusChangeAlert(id, statusUrl);
         }
 
         // Use the delete confirm alert
         function deleteRecord(event, id) {
             event.preventDefault();
-            let deleteUrl = '{{ route('cms.home_page.why_choose_us.destroy', ':id') }}';
+            let deleteUrl = '{{ route('cms.home_page.how_it_work.destroy', ':id') }}';
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
@@ -408,7 +396,7 @@
             let submitButton = $('#submitButton');
             submitButton.prop('disabled', true).text('Submitting...');
 
-            let storeurl = '{{ route('cms.home_page.why_choose_us.store') }}';
+            let storeurl = '{{ route('cms.home_page.how_it_work.store') }}';
             let formData = new FormData(this); // Collect form data
             $.ajax({
                 url: storeurl, // Route to handle form submission
@@ -447,7 +435,7 @@
     {{--  for update data --}}
     <script>
         function viewModel(id) {
-            let url = '{{ route('cms.home_page.why_choose_us.edit', ':id') }}'.replace(':id', id);
+            let url = '{{ route('cms.home_page.how_it_work.edit', ':id') }}'.replace(':id', id);
             $.ajax({
                 type: "GET",
                 url: url,
@@ -459,7 +447,7 @@
                         let submitButton = $('#submitButtonUpdate');
                         submitButton.prop('disabled', true).text('Submitting...');
 
-                        let storeurl = '{{ route('cms.home_page.why_choose_us.update', ':id') }}'
+                        let storeurl = '{{ route('cms.home_page.how_it_work.update', ':id') }}'
                             .replace(
                                 ':id', id);
                         let formData = new FormData(this); // Collect form data

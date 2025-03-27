@@ -119,7 +119,7 @@
                                 data-bs-toggle="modal" data-bs-target="#CreateServiceContainer">
                                 <span class="py-sm-1 d-block">
                                     <i class="ri-add-line d-none d-sm-inline-block"></i>
-                                    <span>Add New Service Container Content</span>
+                                    <span>Add New Why Choose Us Container Content</span>
                                 </span>
                             </a>
                         </div>

@@ -41,11 +41,11 @@
                         class="btn btn-primary border border-primary bg-transparent text-primary py-2 px-3 fw-semibold">Mail
                         <Source:media:sizes></Source:media:sizes>Settings</a>
                 </li>
-                <li>
+                {{-- <li>
                     <a href="{{route('system_settings.mail_get')}}"
                         class="btn btn-primary border border-primary bg-transparent text-primary py-2 px-3 fw-semibold">Payment
                         <Source:media:sizes></Source:media:sizes>Settings</a>
-                </li>
+                </li> --}}
             </ul>
 
             <div class="mb-4">
@@ -129,7 +129,36 @@
                             @enderror
                         </div>
                     </div>
-                  
+                   
+                    <div class="col-lg-6">
+                        <div class="form-group mb-4">
+                            <label class="label text-secondary">Company Open Hour</label>
+                            <div class="form-group position-relative">
+                                <input type="text"
+                                    class="form-control text-dark ps-5 h-55 @error('company_open_hour') is-invalid @enderror"
+                                    name="company_open_hour" value="{{ old('company_open_hour', $settings->company_open_hour ?? '10:00 - 18:00') }}" required
+                                    placeholder="Enter company open hours here">
+                            </div>
+                            @error('company_open_hour')
+                                <div id="company_open_hour-error" class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="form-group mb-4">
+                            <label class="label text-secondary">Address</label>
+                            <div class="form-group position-relative">
+                                <input type="text"
+                                    class="form-control text-dark ps-5 h-55 @error('address') is-invalid @enderror"
+                                    name="address" value="{{ old('address', $settings->address ?? 'Morocco Town') }}" required
+                                    placeholder="Enter address here">
+                            </div>
+                            @error('address')
+                                <div id="address-error" class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                     <div class="col-lg-6">
                         <div class="form-group mb-4">
                             <label class="label text-secondary">Description</label>

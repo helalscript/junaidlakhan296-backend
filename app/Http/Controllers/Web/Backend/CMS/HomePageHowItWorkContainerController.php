@@ -18,9 +18,9 @@ class HomePageHowItWorkContainerController extends Controller
 
     public function index(Request $request)
     {
-        $WhyChooseUs = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUs)->first();
+        $HowItWork = CMS::where('page', Page::HomePage)->where('section', Section::HowItWork)->first();
         if ($request->ajax()) {
-            $data = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUsContainer)->latest();
+            $data = CMS::where('page', Page::HomePage)->where('section', Section::HowItWorkContainer)->latest();
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('image', function ($data) {
@@ -54,7 +54,7 @@ class HomePageHowItWorkContainerController extends Controller
                 ->rawColumns(['image', 'status', 'action'])
                 ->make(true);
         }
-        return view("backend.layouts.cms.home_page.how_it_work_container.index", compact("WhyChooseUs"));
+        return view("backend.layouts.cms.home_page.how_it_work_container.index", compact("HowItWork"));
     }
 
     public function create()
@@ -117,7 +117,7 @@ class HomePageHowItWorkContainerController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
         try {
             $data = CMS::findOrFail($id);
@@ -131,13 +131,13 @@ class HomePageHowItWorkContainerController extends Controller
             $data->update($validatedData);
             return response()->json([
                 "success" => true,
-                "message" => "Service Container Content Updated Successfully"
+                "message" => "How It Work Container Content Updated Successfully"
             ]);
         } catch (Exception $e) {
             Log::error("HomePageController::update" . $e->getMessage());
             return response()->json([
                 "success" => false,
-                "message" => "Service Container Content not Update"
+                "message" => "How It Work Container Content not Update"
             ]);
         }
     }
@@ -199,7 +199,6 @@ class HomePageHowItWorkContainerController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'sub_title' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
 
         try {
@@ -208,12 +207,7 @@ class HomePageHowItWorkContainerController extends Controller
                 ->where('section', Section::HowItWork)
                 ->first();
 
-            if ($request->hasFile('image')) {
-                if ($HowItWork && $HowItWork->image && file_exists(public_path($HowItWork->image))) {
-                    Helper::fileDelete(public_path($HowItWork->image));
-                }
-                $validatedData['image'] = Helper::fileUpload($request->file('image'), 'HowItWork', time() . '_' . getFileName($request->file('image')));
-            }
+            
             CMS::updateOrCreate(
                 [
                     'page' => Page::HomePage->value,
@@ -221,11 +215,11 @@ class HomePageHowItWorkContainerController extends Controller
                 ],
                 $validatedData
             );
-            flash()->success('Service container update successfully');
+            flash()->success('How It Work container update successfully');
             return redirect()->route('cms.home_page.how_it_work.index');
         } catch (Exception $e) {
-            Log::error("HomePageWhyChooseUsContainerController::WhyChooseUsContainerUpdate" . $e->getMessage());
-            flash()->error('Service container not update successfully');
+            Log::error("HomePageHowItWorkContainerController::HowItWorkContainerUpdate" . $e->getMessage());
+            flash()->error('How It Work container not update successfully');
             return redirect()->route('cms.home_page.how_it_work.index');
         }
     }

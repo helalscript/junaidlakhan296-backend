@@ -47,11 +47,11 @@ class SystemSettingController extends Controller
             'system_name' => 'required|string|max:50',
             'email' => 'required|string|email|max:255',
             'contact_number' => 'required|string|max:20',
-            // 'company_open_hour' => 'required|string|max:255',
+            'company_open_hour' => 'required|string|max:255',
             'copyright_text' => 'required|string|max:255',
             'logo' => 'nullable|mimes:jpeg,jpg,png,ico,svg',
             'favicon' => 'nullable|mimes:jpeg,jpg,png,ico,svg',
-            // 'address' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
             'description' => 'required|string|max:500',
         ]);
         // dd($validateDta);
@@ -60,9 +60,9 @@ class SystemSettingController extends Controller
         $setting->system_name = $request->system_name;
         $setting->email = $request->email;
         $setting->contact_number = $request->contact_number;
-        // $setting->company_open_hour = $request->company_open_hour;
+        $setting->company_open_hour = $request->company_open_hour;
         $setting->copyright_text = $request->copyright_text;
-        // $setting->address = $request->address;
+        $setting->address = $request->address;
         $setting->description = $request->description;
 
         if ($request->hasFile('logo')) {
