@@ -382,13 +382,14 @@
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
+    {{-- dropify --}}
     <script type="text/javascript" src="https://jeremyfagis.github.io/dropify/dist/js/dropify.min.js"></script>
     <script>
         $(document).ready(function() {
             $('.dropify').dropify();
         })
     </script>
-
+    {{-- end dropify --}}
     <script>
         $('#request-form').on('submit', function(event) {
             event.preventDefault(); // Prevent default form submission

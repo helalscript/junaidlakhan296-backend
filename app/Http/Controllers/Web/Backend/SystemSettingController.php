@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Web\Backend;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
+use App\Models\User;
+use Artisan;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class SystemSettingController extends Controller
 {
@@ -129,6 +133,145 @@ class SystemSettingController extends Controller
             flash()->success("Failed Updated ");
             return back();
         }
+    }
+
+    public function clearCache()
+    {
+        Artisan::call('cache:clear');
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        Artisan::call('optimize:clear');
+        flash()->success("Cache Clear Successfully");
+        return back();
+    }
+    public function clearView()
+    {
+        Artisan::call('view:clear');
+        flash()->success("View Clear Successfully");
+        return back();
+    }
+
+    public function socialConfigGet()
+    {
+        return view('backend.layouts.settings.social_login_configuration');
+    }
+    public function paymentSettingGet()
+    {
+        return view('backend.layouts.settings.payment_configuration');
+    }
+
+    public function paymentSettingUpdate(Request $request)
+    {
+        try {
+            if (auth()->user()->role === 'admin') {
+                $request->validate([
+                    'stripe_key' => 'required|string',
+                    'stripe_secret' => 'required|string',
+                    'stripe_webhook_secret' => 'required|string',
+                ]);
+    
+                $envPath = base_path('.env');
+                $envContent = File::get($envPath);
+    
+                $lineBreak = "\n";
+                $stripePublicKey = trim($request->stripe_key);
+                $stripeSecretKey = trim($request->stripe_secret);
+                $stripeWebhookSecret = trim($request->stripe_webhook_secret);
+    
+                $envContent = preg_replace([
+                    '/^STRIPE_PUBLIC_KEY=.*$/m',
+                    '/^STRIPE_SECRET_KEY=.*$/m',
+                    '/^STRIPE_WEBHOOK_SECRET=.*$/m',
+                ], [
+                    'STRIPE_PUBLIC_KEY="' . $stripePublicKey . '"',
+                    'STRIPE_SECRET_KEY="' . $stripeSecretKey . '"',
+                    'STRIPE_WEBHOOK_SECRET="' . $stripeWebhookSecret . '"',
+                ], $envContent);
+    
+                if ($envContent !== null) {
+                    File::put($envPath, $envContent);
+                }
+    
+                flash()->success('Stripe settings updated successfully.');
+            } else {
+                flash()->error('Unauthorized action.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Payment Setting Update Error: ' . $e->getMessage());
+            flash()->error('Something went wrong while updating settings.');
+        }
+    
+        return redirect()->back();
+    }
+    
+
+
+
+    /**
+     * Update social app Settings.
+     *
+     * This method sanitizes and validates input values for social app Settings (Google, Facebook, Apple) and updates the .env file accordingly.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function socialAppUpdate(Request $request)
+    {
+        // Sanitize input values
+        $request->merge([
+            'google_client_id' => preg_replace('/\s+/', '', $request->google_client_id),
+            'google_client_secret' => preg_replace('/\s+/', '', $request->google_client_secret),
+            'google_redirect_uri' => preg_replace('/\s+/', '', $request->google_redirect_uri),
+            // 'facebook_client_id' => preg_replace('/\s+/', '', $request->facebook_client_id),
+            // 'facebook_client_secret' => preg_replace('/\s+/', '', $request->facebook_client_secret),
+            // 'facebook_redirect_uri' => preg_replace('/\s+/', '', $request->facebook_redirect_uri),
+            // 'apple_client_id' => preg_replace('/\s+/', '', $request->apple_client_id),
+            // 'apple_client_secret' => preg_replace('/\s+/', '', $request->apple_client_secret),
+            // 'apple_redirect_uri' => preg_replace('/\s+/', '', $request->apple_redirect_uri),
+        ]);
+
+        $request->validate([
+            'google_client_id' => 'required|string',
+            'google_client_secret' => 'required|string',
+            'google_redirect_uri' => 'required|string',
+            // 'facebook_client_id' => 'required|string',
+            // 'facebook_client_secret' => 'required|string',
+            // 'facebook_redirect_uri' => 'required|string',
+            // 'apple_client_id' => 'required|string',
+            // 'apple_client_secret' => 'required|string',
+            // 'apple_redirect_uri' => 'required|string',
+        ]);
+
+        $envContent = File::get(base_path('.env'));
+        $lineBreak = "\n";
+        $envContent = preg_replace([
+            '/GOOGLE_CLIENT_ID=(.*)\s/',
+            '/GOOGLE_CLIENT_SECRET=(.*)\s/',
+            '/GOOGLE_REDIRECT_URI=(.*)\s/',
+            // '/FACEBOOK_CLIENT_ID=(.*)\s/',
+            // '/FACEBOOK_CLIENT_SECRET=(.*)\s/',
+            // '/FACEBOOK_REDIRECT_URI=(.*)\s/',
+            // '/APPLE_CLIENT_ID=(.*)\s/',
+            // '/APPLE_CLIENT_SECRET=(.*)\s/',
+            // '/APPLE_REDIRECT_URI=(.*)\s/',
+        ], [
+            'GOOGLE_CLIENT_ID=' . $request->google_client_id . $lineBreak,
+            'GOOGLE_CLIENT_SECRET=' . $request->google_client_secret . $lineBreak,
+            'GOOGLE_REDIRECT_URI=' . $request->google_redirect_uri . $lineBreak,
+            // 'FACEBOOK_CLIENT_ID=' . $request->facebook_client_id . $lineBreak,
+            // 'FACEBOOK_CLIENT_SECRET=' . $request->facebook_client_secret . $lineBreak,
+            // 'FACEBOOK_REDIRECT_URI=' . $request->facebook_redirect_uri . $lineBreak,
+            // 'APPLE_CLIENT_ID=' . $request->apple_client_id . $lineBreak,
+            // 'APPLE_CLIENT_SECRET=' . $request->apple_client_secret . $lineBreak,
+            // 'APPLE_REDIRECT_URI=' . $request->apple_redirect_uri . $lineBreak,
+        ], $envContent);
+
+        if ($envContent !== null) {
+            File::put(base_path('.env'), $envContent);
+        }
+        flash()->success('Social Setting Update successfully.');
+        return redirect()->back();
+
     }
 
 }

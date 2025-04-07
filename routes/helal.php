@@ -41,10 +41,17 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   // Route for updating system settings
   Route::post('system-settings-update', [SystemSettingController::class, 'update'])->name('system_settings.update');
 
-  // // Mail Settings index
+  // Mail Settings index
   Route::get('system-settings-mail', [SystemSettingController::class, 'mailSettingGet'])->name('system_settings.mail_get');
-  // // Mail Settings routes
+  // Mail Settings routes
   Route::post('system-settings-mail', [SystemSettingController::class, 'mailSettingUpdate'])->name('system_settings.mail');
+  // Social App Settings
+  Route::get('setting-configuration-social', [SystemSettingController::class, 'socialConfigGet'])->name('system_settings.configuration.social_get');
+  Route::post('setting-configuration-social', [SystemSettingController::class, 'socialAppUpdate'])->name('system_settings.configuration.social');
+  // Payments Settings
+  Route::get('setting-configuration-payment', [SystemSettingController::class, 'paymentSettingGet'])->name('system_settings.configuration.payment_get');
+  Route::post('setting-configuration-payment', [SystemSettingController::class, 'paymentSettingUpdate'])->name('system_settings.configuration.payment');
+
 
   // Routes for DynamicPageController
   Route::resource('/dynamic-page', DynamicPageController::class)->names('dynamic_page');

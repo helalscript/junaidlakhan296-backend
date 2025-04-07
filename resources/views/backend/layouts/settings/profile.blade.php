@@ -111,7 +111,7 @@
                                         <option value="female"
                                             {{ old('gender', $user->gender ?? '') == 'female' ? 'selected' : '' }}
                                             class="text-dark">Female</option>
-                                        <option {{ old('gender', $user->gender ?? '') == 'other' ? 'selected' : '' }}
+                                        <option value="others" {{ old('gender', $user->gender ?? '') == 'others' ? 'selected' : '' }}
                                             class="text-dark">Others</option>
                                     </select>
                                     <i

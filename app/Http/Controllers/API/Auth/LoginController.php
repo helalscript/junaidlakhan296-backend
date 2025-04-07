@@ -8,10 +8,18 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
 {
+    /**
+     * Logs in the user.
+     *
+     * @bodyParam email string required The email of the user.
+     * @bodyParam password string required The password of the user.
+     * @bodyParam role string required The role of the user. Can be either customer or contractor.
+     */
     public function Login(Request $request)
     {
 
@@ -19,7 +27,7 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|string',
             'password' => 'required|string',
-            'role' => 'required|in:customer,contractor',
+            // 'role' => 'required|in:customer,contractor',
         ]);
         try {
             if (filter_var($request->email, FILTER_VALIDATE_EMAIL) !== false) {
@@ -37,16 +45,16 @@ class LoginController extends Controller
                 return Helper::jsonErrorResponse('Invalid password', 401);
             }
             //! Check the password
-            if ($request->role !== $user->role) {
-                switch ($user->role) {
-                    case 'contractor':
-                        return Helper::jsonErrorResponse('you are not authorized as a customer.', 401);
-                    case 'customer':
-                        return Helper::jsonErrorResponse('you are not authorized as a contractor.', 401);
-                    default:
-                        return Helper::jsonErrorResponse('invalid specified.', 401);
-                }
-            }
+            // if ($request->role !== $user->role) {
+            //     switch ($user->role) {
+            //         case 'contractor':
+            //             return Helper::jsonErrorResponse('you are not authorized as a customer.', 401);
+            //         case 'customer':
+            //             return Helper::jsonErrorResponse('you are not authorized as a contractor.', 401);
+            //         default:
+            //             return Helper::jsonErrorResponse('invalid specified.', 401);
+            //     }
+            // }
 
             //* Generate token if email is verified
             $token = auth('api')->login($user);
@@ -60,22 +68,35 @@ class LoginController extends Controller
                 'data' => auth('api')->user()
             ], 200);
         } catch (Exception $e) {
+            Log::error('LoginController::Login' . $e->getMessage());
             return Helper::jsonErrorResponse($e->getMessage(), 500);
         }
     }
 
+    /**
+     * Refreshes the JWT access token for the authenticated user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @throws \Exception If an error occurs during token refresh.
+     */
     public function refreshToken()
     {
-        $refreshToken = auth('api')->refresh();
+        try {
+            $refreshToken = auth('api')->refresh();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Access token refreshed successfully.',
-            'code' => 200,
-            'token_type' => 'bearer',
-            'token' => $refreshToken,
-            'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'data' => auth('api')->user()
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Access token refreshed successfully.',
+                'code' => 200,
+                'token_type' => 'bearer',
+                'token' => $refreshToken,
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+                'data' => auth('api')->user()
+            ]);
+        } catch (Exception $e) {
+            Log::error('LoginController::refreshToken' . $e->getMessage());
+            return Helper::jsonErrorResponse($e->getMessage(), 500);
+        }
     }
 }
