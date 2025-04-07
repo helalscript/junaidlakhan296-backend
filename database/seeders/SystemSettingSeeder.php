@@ -16,14 +16,14 @@ class SystemSettingSeeder extends Seeder
         SystemSetting::create([
             'title' => 'Junaid Lakhan',
             'system_name' => 'Junaid Lakhan',
-            'email' => '',
-            'contact_number' => '',
-            'company_open_hour' => '',
+            'email' => 'example@email.com',
+            'contact_number' => '+88084936789',
+            'company_open_hour' => '24 HOUR',
             'copyright_text' => '© Copyright 2023, All right reserved',
             'logo' => 'uploads/logos/logo.png',
             'favicon' => 'uploads/favicons/favicon.png',
-            'address' => '',
-            'description' => '',
+            'address' => 'TEST',
+            'description' => 'TEST',
         ]);
     }
 }

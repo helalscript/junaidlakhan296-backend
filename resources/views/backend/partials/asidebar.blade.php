@@ -79,20 +79,14 @@ $systemSetting = App\Models\SystemSetting::first();
                             Change Password
                         </a>
                     </li>
-                    <!-- Email Configaration Submenu -->
+                    <!-- System Settings Configaration Submenu -->
                     <li class="menu-item">
                         <a href="{{ route('system_settings.index') }}"
-                            class="menu-link {{ request()->routeIs('system_settings.index') ? 'active' : '' }}">
+                            class="menu-link {{ request()->routeIs('system_settings.*') ? 'active' : '' }}">
                             System Configaration
                         </a>
                     </li>
-                    <!-- Email Configaration Submenu -->
-                    {{-- <li class="menu-item">
-                        <a href="{{ route('system_settings.mail_get') }}"
-                            class="menu-link {{ request()->routeIs('system_settings.mail_get') ? 'active' : '' }}">
-                            Email Configaration
-                        </a>
-                    </li> --}}
+
                 </ul>
             </li>
             <!-- dynamic page Menu Item -->

@@ -41,10 +41,17 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   // Route for updating system settings
   Route::post('system-settings-update', [SystemSettingController::class, 'update'])->name('system_settings.update');
 
-  // // Mail Settings index
+  // Mail Settings index
   Route::get('system-settings-mail', [SystemSettingController::class, 'mailSettingGet'])->name('system_settings.mail_get');
-  // // Mail Settings routes
+  // Mail Settings routes
   Route::post('system-settings-mail', [SystemSettingController::class, 'mailSettingUpdate'])->name('system_settings.mail');
+  // Social App Settings
+  Route::get('setting-configuration-social', [SystemSettingController::class, 'socialConfigGet'])->name('system_settings.configuration.social_get');
+  Route::post('setting-configuration-social', [SystemSettingController::class, 'socialAppUpdate'])->name('system_settings.configuration.social');
+  // Payments Settings
+  Route::get('setting-configuration-payment', [SystemSettingController::class, 'paymentSettingGet'])->name('system_settings.configuration.payment_get');
+  Route::post('setting-configuration-payment', [SystemSettingController::class, 'paymentSettingUpdate'])->name('system_settings.configuration.payment');
+
 
   // Routes for DynamicPageController
   Route::resource('/dynamic-page', DynamicPageController::class)->names('dynamic_page');
@@ -63,13 +70,13 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   // Route home page how it works
   Route::resource('/home-page/how-it-work/index', HomePageHowItWorkContainerController::class)->names('cms.home_page.how_it_work')->except('show');
   Route::post('/home-page/how-it-work/status/{id}', [HomePageHowItWorkContainerController::class, 'status'])->name('cms.home_page.how_it_work.status');
-  
+  Route::Post('/cms/home-page/how-it-work-update', [HomePageHowItWorkContainerController::class, 'HowItWorkContainerUpdate'])->name('cms.home_page.how_it_work.how_it_work_update');
+
   // Route home page why choose us
   Route::resource('/home-page/why-choose-us/index', HomePageWhyChooseUsContainerController::class)->names('cms.home_page.why_choose_us')->except('show');
   Route::post('/home-page/why-choose-us/status/{id}', [HomePageWhyChooseUsContainerController::class, 'status'])->name('cms.home_page.why_choose_us.status');
-  Route::Post('/cms/home-page/service-container-update', [HomePageWhyChooseUsContainerController::class, 'WhyChooseUsContainerUpdate'])->name('cms.home_page.why_choose_us.why_choose_us_update');
+  Route::Post('/cms/home-page/why-choose-us-update', [HomePageWhyChooseUsContainerController::class, 'WhyChooseUsContainerUpdate'])->name('cms.home_page.why_choose_us.why_choose_us_update');
   
-
 });
 
 

@@ -51,7 +51,7 @@ class HomePageWhyChooseUsContainerController extends Controller
              
                 </div>';
                 })
-                ->rawColumns(['image','status', 'action'])
+                ->rawColumns(['image', 'status', 'action'])
                 ->make(true);
         }
         return view("backend.layouts.cms.home_page.why_choose_us_container.index", compact("WhyChooseUs"));
@@ -118,7 +118,7 @@ class HomePageWhyChooseUsContainerController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
         try {
             $data = CMS::findOrFail($id);

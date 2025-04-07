@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -19,45 +20,86 @@ use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
+        /**
+         * Register a new user.
+         *
+         * @param \Illuminate\Http\Request $request
+         * @return \Illuminate\Http\JsonResponse
+         */
+        
     public function register(Request $request)
     {
         $validateData = $request->validate([
-            'name' => 'required|string|max:100',
-            'phone' => 'nullable|unique:users,phone|numeric|max_digits:20',
-            'email' => 'required|string|email|max:150|unique:users',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'phone' => 'nullable|numeric|max_digits:20|unique:users,phone,NULL,id,deleted_at,NULL',
+            'email' => 'required|string|email|max:150|unique:users,email,NULL,id,deleted_at,NULL',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:customer,contractor',
+            'role' => 'required|in:user,host',
         ]);
 
         try {
             $otp = rand(1000, 9999);
-            $otpExpiresAt = Carbon::now()->addMinutes(60); //1 hour
+            $otpExpiresAt = Carbon::now()->addMinutes(60); // 1 hour
 
-            $userData = [
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'phone' => $request->input('phone'),
-                'password' => Hash::make($request->input('password')),
-                'role' => $request->input('role'),
-                'otp' => $otp,
-                'otp_expires_at' => $otpExpiresAt,
-            ];
+            // Check for soft-deleted user
+            $existingUser = User::withTrashed()
+                ->where('email', $request->input('email'))
+                ->orWhere('phone', $request->input('phone'))
+                ->first();
 
-            $user = User::create($userData);
-            // Attempt to send OTP email
-            try {
-                // Mail::to($user->email)->send(new OtpMail($otp, $user, 'Verify Your Email Address'));
-                Mail::to($user->email)->send(new OtpMail($otp, $user, 'Verify Your Email Address'));
-                return Helper::jsonResponse(true, 'A verification email has been successfully sent to your email address. Please check your inbox to complete the verification.', 200);
-            } catch (Exception $e) {
-                // If email sending fails, delete the created user and return an error message
-                $user->delete();
-                return Helper::jsonErrorResponse('Failed to send verification email. Please try again later.', 500);
+            if ($existingUser && $existingUser->trashed()) {
+                // Restore the soft-deleted user
+                $existingUser->restore();
+                $existingUser->update([
+                    'first_name' => $request->input('first_name'),
+                    'last_name' => $request->input('last_name'),
+                    'name' => $request->input('first_name') . ' ' . $request->input('last_name'),
+                    'email' => $request->input('email'),
+                    'phone' => $request->input('phone'),
+                    'password' => Hash::make($request->input('password')),
+                    'role' => $request->input('role'),
+                    'otp' => $otp,
+                    'otp_expires_at' => $otpExpiresAt,
+                ]);
+                $user = $existingUser;
+            } else {
+                $userData = [
+                    'first_name' => $request->input('first_name'),
+                    'last_name' => $request->input('last_name'),
+                    'name' => $request->input('first_name') . ' ' . $request->input('last_name'),
+                    'email' => $request->input('email'),
+                    'phone' => $request->input('phone'),
+                    'password' => Hash::make($request->input('password')),
+                    'role' => $request->input('role'),
+                    'otp' => $otp,
+                    'otp_expires_at' => $otpExpiresAt,
+                ];
             }
+
+            DB::beginTransaction();
+
+            if (!isset($user)) {
+                $user = User::create($userData);
+            }
+
+            Mail::to($user->email)->send(new OtpMail($otp, $user, 'Verify Your Email Address'));
+
+            DB::commit();
+            return Helper::jsonResponse(true, 'A verification email has been successfully sent to your email address. Please check your inbox to complete the verification.', 200);
         } catch (Exception $e) {
-            return Helper::jsonErrorResponse('User registration failed', 500);
+            DB::rollBack();
+            Log::error('RegisterController::register' . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to send verification email. Please try again later.', 500);
         }
     }
+
+        /**
+         * Verify the user's email address.
+         *
+         * @param \Illuminate\Http\Request $request
+         * @return \Illuminate\Http\JsonResponse
+         */
     public function VerifyEmail(Request $request)
     {
         $request->validate([
@@ -109,11 +151,17 @@ class RegisterController extends Controller
             ], 200);
 
         } catch (Exception $e) {
-            // Log::error("Email verification failed for {$request->input('email')}: " . $e->getMessage());
+            Log::error('RegisterController::VerifyEmail' . $e->getMessage());
             return Helper::jsonErrorResponse('An error occurred during email verification.', 403);
         }
     }
 
+    /**
+     * Resend OTP to the user's email address.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function ResendOtp(Request $request)
     {
         $request->validate([
@@ -148,6 +196,7 @@ class RegisterController extends Controller
             }
 
         } catch (Exception $e) {
+            Log::error('RegisterController::ResendOtp' . $e->getMessage());
             return Helper::jsonErrorResponse('Something worng', 403);
         }
     }

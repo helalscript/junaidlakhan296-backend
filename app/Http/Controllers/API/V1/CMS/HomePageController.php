@@ -18,37 +18,6 @@ class HomePageController extends Controller
 {
 
     /**
-     * Fetches the home page banner details from the CMS.
-     *
-     * This method retrieves the banner information for the home page, including
-     * the ID, title, subtitle, and image associated with the banner. If no data
-     * is found, it returns a response indicating that no data is available.
-     *
-     * @param Request $request The incoming request instance.
-     * @return \Illuminate\Http\JsonResponse A JSON response containing the banner data or an error message.
-     */
-
-    public function getHomeBanner(Request $request): JsonResponse
-    {
-        try {
-            $data = CMS::where('page', Page::HomePage)->where('section', Section::Banner)->select('id', 'title', 'sub_title', 'image')->first();
-            if (!$data) {
-                return Helper::jsonResponse(true, 'No data found', 200, []);
-            }
-            $data = [
-                'id' => $data->id,
-                'title' => $data->title,
-                'button_text' => $data->sub_title,
-                'video' => $data->image
-            ];
-            return Helper::jsonResponse(true, 'Banner data fatced successfully', 200, $data);
-        } catch (Exception $e) {
-            Log::error("HomePageController::getHomeBanner" . $e->getMessage());
-            return Helper::jsonErrorResponse('Something went wrong', 500);
-        }
-    }
-
-    /**
      * Retrieves active social links for the home page.
      *
      * This method fetches and paginates the social links data associated with
@@ -82,14 +51,13 @@ class HomePageController extends Controller
     public function getSystemInfo(Request $request): JsonResponse
     {
         try {
-            $data = SystemSetting::select('id', 'system_name', 'logo', 'favicon', 'copyright_text', 'description', 'contact_number', 'address', 'email')->first();
+            $data = SystemSetting::select('id', 'system_name', 'logo', 'favicon', 'copyright_text', 'address', 'company_open_hour', 'description', 'contact_number', 'address', 'email')->first();
             return Helper::jsonResponse(true, 'System data fetched successfully', 200, $data);
         } catch (Exception $e) {
             Log::error("HomePageController::getSystemInfo" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to retrieve System', 403);
         }
     }
-
 
     /**
      * Retrieves a paginated list of active dynamic pages.
@@ -142,4 +110,98 @@ class HomePageController extends Controller
             return Helper::jsonErrorResponse('Failed to retrieve Dynamic page data.', 403);
         }
     }
+
+    /**
+     * Fetches the home page banner details from the CMS.
+     *
+     * This method retrieves the banner information for the home page, including
+     * the ID, title, subtitle, and image associated with the banner. If no data
+     * is found, it returns a response indicating that no data is available.
+     *
+     * @param Request $request The incoming request instance.
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the banner data or an error message.
+     */
+
+    public function getHomeBanner(Request $request): JsonResponse
+    {
+        try {
+            $data = CMS::where('page', Page::HomePage)->where('section', Section::Banner)->select('id', 'title', 'description', 'background_image')->first();
+            if (!$data) {
+                return Helper::jsonResponse(true, 'No data found', 200, []);
+            }
+            return Helper::jsonResponse(true, 'Banner data fatced successfully', 200, $data);
+        } catch (Exception $e) {
+            Log::error("HomePageController::getHomeBanner" . $e->getMessage());
+            return Helper::jsonErrorResponse('Something went wrong', 500);
+        }
+    }
+
+    /**
+     * Fetches the how it works section and 3 items from the how it works container
+     * from the CMS for the home page.
+     *
+     * This method retrieves the how it works section from the CMS, including the
+     * section title, subtitle, and 3 items from the how it works container. Each
+     * item includes the ID, title, description, and image associated with the
+     * item. If no data is found, it returns a response indicating that no data
+     * is available.
+     *
+     * @param Request $request The incoming request instance.
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the how it works data or an error message.
+     */
+    public function getHomeHowitWork(Request $request): JsonResponse
+    {
+        try {
+            $section = CMS::where('page', Page::HomePage)->where('section', Section::HowItWork)->select('id', 'title', 'sub_title')->first();
+            if (!$section) {
+                return Helper::jsonResponse(true, 'No data found', 200, []);
+            }
+            $items = CMS::where('page', Page::HomePage)->where('section', Section::HowItWorkContainer)->where('status', 'active')->select('id', 'title', 'description', 'image')->get()->take(3);
+
+            $data = [
+                'section' => $section ?? '',
+                'items' => $items ?? []
+            ];
+            return Helper::jsonResponse(true, 'How it work data fatced successfully', 200, $data);
+        } catch (Exception $e) {
+            Log::error("HomePageController::getHomeHowitWork" . $e->getMessage());
+            return Helper::jsonErrorResponse('Something went wrong', 500);
+        }
+    }
+
+    /**
+     * Retrieves the "Why Choose Us" section data for the home page.
+     *
+     * This method fetches the main section details including the ID, title,
+     * subtitle, and image for the "Why Choose Us" section. It also retrieves
+     * up to three active items from the "Why Choose Us" container section,
+     * each containing an ID, title, description, and image. If the section
+     * data is not found, it returns a JSON response indicating no data
+     * is available.
+     *
+     * @param Request $request The incoming request instance.
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the
+     * "Why Choose Us" data or an error message.
+     */
+
+    public function getHomeWhyChooseUs(Request $request): JsonResponse
+    {
+        try {
+            $section = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUs)->select('id', 'title', 'sub_title', 'image')->first();
+            if (!$section) {
+                return Helper::jsonResponse(true, 'No data found', 200, []);
+            }
+            $items = CMS::where('page', Page::HomePage)->where('section', Section::WhyChooseUsContainer)->where('status', 'active')->select('id', 'title', 'description', 'image')->get()->take(3);
+
+            $data = [
+                'section' => $section ?? '',
+                'items' => $items ?? []
+            ];
+            return Helper::jsonResponse(true, 'How it work data fatced successfully', 200, $data);
+        } catch (Exception $e) {
+            Log::error("HomePageController::getHomeHowitWork" . $e->getMessage());
+            return Helper::jsonErrorResponse('Something went wrong', 500);
+        }
+    }
+
 }
