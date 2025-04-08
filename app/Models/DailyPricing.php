@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DailyPricing extends Model
 {
     // Table associated with the model
-    protected $table = 'daily_pricing';
+    protected $table = 'daily_pricings';
 
     // Mass assignable attributes
     protected $fillable = [
@@ -24,8 +24,8 @@ class DailyPricing extends Model
     protected $casts = [
         'parking_space_id' => 'integer',
         'rate' => 'decimal:2',
-        'start_time' => 'time',
-        'end_time' => 'time',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
         'start_date' => 'date', // Cast to date
         'end_date' => 'date', // Cast to date
         'status' => 'string',

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class MonthlyPricing extends Model
 {
     // Table associated with the model
-    protected $table = 'monthly_pricing';
+    protected $table = 'monthly_pricings';
 
     // Mass assignable attributes
     protected $fillable = [
@@ -24,8 +24,8 @@ class MonthlyPricing extends Model
     protected $casts = [
         'parking_space_id' => 'integer',
         'rate' => 'decimal:2',
-        'start_time' => 'time',
-        'end_time' => 'time',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
         'start_date' => 'date',
         'end_date' => 'date',
         'status' => 'string',
