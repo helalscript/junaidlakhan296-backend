@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
 use App\Models\ParkingSpace;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class ParkingSpaceController extends Controller
     {
         try {
             $per_page = $request->per_page ?? 25;
-            $parkingSpaces = ParkingSpace::where('status', 'available')->where('user_id',  $this->user->id)->with([
+            $parkingSpaces = ParkingSpace::where('status', 'available')->where('user_id', $this->user->id)->with([
                 'driverInstructions' => function ($query) {
                     $query->select('id', 'parking_space_id', 'instructions');
                 },
@@ -46,19 +47,32 @@ class ParkingSpaceController extends Controller
         }
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $ParkingSpaceSlug)
     {
         try {
-            $parkingSpace = ParkingSpace::find($id);
-            return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, $parkingSpace, true);
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->with([
+                'driverInstructions' => function ($query) {
+                    $query->select('id', 'parking_space_id', 'instructions');
+                },
+                'hourlyPricing.days',
+                'dailyPricing' => function ($query) {
+                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                },
+                'monthlyPricing' => function ($query) {
+                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                },
+                'spotDetails' => function ($query) {
+                    $query->select('id', 'parking_space_id', 'icon', 'details');
+                }
+            ])->firstOrFail();
+            return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, ParkingSpaceResource::make($parkingSpace));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::show" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking space', 500);
         }
     }
 
-
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
@@ -129,7 +143,7 @@ class ParkingSpaceController extends Controller
             $data = $validatedData;
             $data['unique_id'] = (string) Str::uuid();
             $data['user_id'] = auth()->check() ? auth()->id() : null;
-            $data['slug'] = auth()->check() ? auth()->id() : null;
+            $data['slug'] = Helper::makeSlug($data['title'], 'parking_spaces');
 
             // Create Parking Space
             $parkingSpace = ParkingSpace::create($data);
@@ -181,7 +195,7 @@ class ParkingSpaceController extends Controller
                         unset($spotDetail['icon']);  // Remove icon from the spot detail data
 
                         // Upload the image and get the image path
-                        $imagePath = Helper::fileUpload($image, 'parking_space_images', $key . '_' . getFileName($image));
+                        $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
                     }
 
                     // Add the uploaded image path to the spotDetail array
@@ -213,6 +227,56 @@ class ParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to create parking space' . $e->getMessage(), 500);
         }
     }
+    public function destroy(string $ParkingSpaceSlug)
+    {
+        try {
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->firstOrFail();
+            DB::beginTransaction();
 
+            // // Delete associated driver instructions
+            // $parkingSpace->driverInstructions()->delete();
+            // // Delete associated hourly pricing
+            // $parkingSpace->hourlyPricing()->each(function ($hourlyPricing) {
+            //     $hourlyPricing->days()->delete();
+            //     $hourlyPricing->delete();
+            // });
+            // // Delete associated daily pricing
+            // $parkingSpace->dailyPricing()->delete();
+            // // Delete associated monthly pricing
+            // $parkingSpace->monthlyPricing()->delete();
+            // Delete associated spot details' icons
+            if ($parkingSpace->spotDetails) {
+                foreach ($parkingSpace->spotDetails as $spotDetail) {
+                    // Log::info($spotDetail->icon);
+                    if ($spotDetail->icon) {
+                        // Convert URL to file path
+                        $filePath = str_replace(url('/'), public_path(), $spotDetail->icon);
+
+                        // Check if the file exists and delete it
+                        if (file_exists($filePath)) {
+                            Helper::fileDelete($filePath);
+                        }
+                    }
+                }
+            }
+            dd($parkingSpace->spotDetails);
+            // Delete associated spot details
+            $parkingSpace->spotDetails()->delete();
+            // Delete the gallery images
+            if ($parkingSpace->gallery_images) {
+                Helper::fileDelete($parkingSpace->gallery_images);
+            }
+            // Delete the parking space
+            $parkingSpace->delete();
+
+            DB::commit();
+
+            return Helper::jsonResponse(true, 'Parking space and associated data deleted successfully', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("ParkingSpaceController::destroy => " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to delete parking space', 403);
+        }
+    }
 
 }

@@ -16,6 +16,7 @@ class ParkingSpaceResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'user_id' => $this->user_id,
             'unique_id' => $this->unique_id,
             'title' => $this->title,

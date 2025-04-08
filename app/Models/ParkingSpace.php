@@ -31,20 +31,20 @@ class ParkingSpace extends Model
 
     // The attributes that should be cast to native types
     protected $casts = [
-        'user_id' => 'integer',           
-        'unique_id' => 'string',          
-        'title' => 'string',              
-        'type_of_spot' => 'string',       
-        'max_vehicle_size' => 'string',  
-        'total_slots' => 'integer',     
-        'description' => 'string',      
-        'latitude' => 'decimal:7',       
-        'longitude' => 'decimal:7',      
-        'address' => 'string',          
-        'gallery_images' => 'array',     
-        'slug' => 'string',              
-        'status' => 'string',            
-        'deleted_at' => 'datetime',      
+        'user_id' => 'integer',
+        'unique_id' => 'string',
+        'title' => 'string',
+        'type_of_spot' => 'string',
+        'max_vehicle_size' => 'string',
+        'total_slots' => 'integer',
+        'description' => 'string',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+        'address' => 'string',
+        'gallery_images' => 'array',
+        'slug' => 'string',
+        'status' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
 
@@ -52,70 +52,27 @@ class ParkingSpace extends Model
     {
         return $this->belongsTo(User::class);
     }
-    // public function getGalleryImagesAttribute($value): array|null
-    // {
-    //     // If the gallery_images is not empty and is an array
-    //     $images = json_decode($value, true);
-    //     // dd($images);
-    //     // If the gallery_images is a valid array
-    //     if (is_array($images)) {
-    //         // Check if the request is an API request
-    //         if (request()->is('api/*')) {
-    //             // Return the full URL for API requests
-    //             return array_map(fn($image) => url($image), $images);
-    //         }
-
-
-
-
-    //         // Return only the paths for web requests
-    //         return $images;
-    //     }
-
-    //     // Return null if no valid gallery_images are set
-    //     return null;
-    // }
-
-
-
-
-
-
-
 
     public function getGalleryImagesAttribute($value): array|null
-{
-    \Log::info('Raw gallery_images value: ', ['value' => $value]);
+    {
+        // Attempt to decode the gallery_images field as JSON
+        $images = json_decode($value, true);
 
-    // Attempt to decode the gallery_images field as JSON
-    $images = json_decode($value, true);
+        // If the gallery_images is a valid array and not null, process it
+        if (is_array($images)) {
+            // Check if the request is an API request
+            if (request()->is('api/*')) {
+                // Return the full URL for API requests
+                return array_map(fn($image) => url($image), $images);
+            }
 
-    // If the gallery_images is a valid array and not null, process it
-    if (is_array($images)) {
-        // Check if the request is an API request
-        if (request()->is('api/*')) {
-            // Return the full URL for API requests
-            return array_map(fn($image) => url($image), $images);
+            // Return only the paths for web requests
+            return $images;
         }
 
-        // Return only the paths for web requests
-        return $images;
+        // Return null if no valid gallery_images are set
+        return null;
     }
-
-    // Return null if no valid gallery_images are set
-    return null;
-}
-
-
-
-
-
-
-
-
-
-
-
 
     public function hourlyPricing()
     {
