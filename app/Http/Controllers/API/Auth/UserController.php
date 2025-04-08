@@ -38,7 +38,6 @@ class UserController extends Controller
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'gender' => 'nullable|in:male,female,others',
             'phone' => 'nullable|unique:users,phone,' . auth()->user()->id . '|numeric|max_digits:20',
             'password' => 'nullable|string|min:6|confirmed',
         ]);

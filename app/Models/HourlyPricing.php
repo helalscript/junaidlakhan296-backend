@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class HourlyPricing extends Model
 {
     // Table associated with the model
-    protected $table = 'hourly_pricing';
+    protected $table = 'hourly_pricings';
 
     // Mass assignable attributes
     protected $fillable = [
@@ -22,14 +22,19 @@ class HourlyPricing extends Model
     protected $casts = [
         'parking_space_id' => 'integer',
         'rate' => 'decimal:2', // Cast to decimal with 2 decimal places
-        'start_time' => 'time', // Cast to time
-        'end_time' => 'time', // Cast to time
+        'start_time' => 'datetime:H:i', // Cast to time
+        'end_time' => 'datetime:H:i', // Cast to time
         'status' => 'string', // Cast to string (enum)
     ];
 
     public function parkingSpace()
     {
         return $this->belongsTo(ParkingSpace::class, 'parking_space_id');
+    }
+
+    public function days()
+    {
+        return $this->hasMany(HourlyPricingDay::class);
     }
 }
 

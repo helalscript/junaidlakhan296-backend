@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->decimal('longitude', 10, 7);
             $table->longText('address')->nullable();
             $table->json('gallery_images')->nullable();
+            $table->string('slug')->unique();
             $table->enum('status', ['available', 'unavailable', 'sold-out', 'close']);
             $table->timestamps();
             $table->softDeletes(); // Add soft delete column
