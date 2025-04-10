@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('pakage_id')->nullable()->constrained('pakages')->onDelete('cascade');
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('status', ['active', 'inactive', 'cancelled']);
+            $table->enum('status', ['pending','active', 'inactive', 'cancelled'])->default('pending');
             $table->timestamps();
         });
     }

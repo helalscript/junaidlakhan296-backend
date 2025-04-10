@@ -19,7 +19,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->date('start_date'); // Date range for pricing
             $table->date('end_date');
-            $table->enum('status', ['active', 'inactive']);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
 
             // Foreign key constraint

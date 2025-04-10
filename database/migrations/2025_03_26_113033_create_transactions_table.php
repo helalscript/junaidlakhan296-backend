@@ -16,14 +16,14 @@ return new class extends Migration {
             $table->foreignId('sender_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('receiver_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('transaction_number')->nullable();
-            $table->decimal('sub_amount', 10, 2);
-            $table->decimal('service_fee', 10, 2);
-            $table->decimal('discount', 10, 2);
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('sub_amount', 10, 2)->nullable();
+            $table->decimal('service_fee', 10, 2)->nullable();
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->longText('location')->nullable();
-            $table->enum('type', ['transfer', 'earning', 'withdraw', 'refunded']);
-            $table->enum('payment_gateway', ['cash', 'online', 'wallet']);
-            $table->enum('status', ['pending', 'success', 'cancelled', 'closed']);
+            $table->enum('type', ['transfer', 'earning', 'withdraw', 'refunded'])->nullable();
+            $table->enum('payment_gateway', ['cash', 'online', 'wallet'])->nullable();
+            $table->enum('status', ['pending', 'success', 'cancelled', 'closed'])->default('pending');
             $table->timestamps();
         });
     }
