@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Review extends Model
 {
     protected $fillable = [
-        'user_id', 'parking_space_id', 'comment', 'rating', 'status'
+        'user_id',
+        'parking_space_id',
+        'comment',
+        'rating',
+        'status'
     ];
 
     protected $casts = [
@@ -27,5 +31,7 @@ class Review extends Model
     {
         return $this->belongsTo(ParkingSpace::class);
     }
+
+    
 }
 

@@ -16,7 +16,7 @@ return new class extends Migration
         $table->foreignId('parking_space_id')->constrained('parking_spaces')->onDelete('cascade');
         $table->string('icon');
         $table->text('details');
-        $table->enum('status', ['active', 'inactive']);
+        $table->enum('status', ['active', 'inactive'])->default('active');
         $table->timestamps();
         });
     }

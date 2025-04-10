@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('booking_extend_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->enum('status', ['pending', 'accepted', 'cancelled', 'closed']);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->time('start_time')->nullable();
+            $table->time('end_time')->nullable();
+            $table->enum('status', ['pending', 'accepted', 'cancelled', 'closed'])->default('pending');
             $table->timestamps();
         });
     }

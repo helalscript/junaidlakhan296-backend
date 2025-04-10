@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('vehicle_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('registration_number');
-            $table->string('type');
-            $table->string('make');
-            $table->string('model');
-            $table->string('license_plate_number_eng');
-            $table->string('license_plate_number_ara');
-            $table->enum('status', ['active', 'inactive']);
+            $table->string('registration_number')->nullable();
+            $table->string('type')->nullable();
+            $table->string('make')->nullable();
+            $table->string('model')->nullable();
+            $table->string('license_plate_number_eng')->nullable();
+            $table->string('license_plate_number_ara')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

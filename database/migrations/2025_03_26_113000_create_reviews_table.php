@@ -16,8 +16,8 @@ return new class extends Migration
         $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         $table->foreignId('parking_space_id')->constrained('parking_spaces')->onDelete('cascade');
         $table->text('comment')->nullable();
-        $table->integer('rating');
-        $table->enum('status', ['pending', 'approved', 'rejected']);
+        $table->integer('rating')->nullable();
+        $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
         $table->timestamps();
         });
     }

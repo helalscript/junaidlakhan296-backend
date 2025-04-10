@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('custom_notifications', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->longText('description');
+            $table->longText('description')->nullable();
             $table->string('type')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
