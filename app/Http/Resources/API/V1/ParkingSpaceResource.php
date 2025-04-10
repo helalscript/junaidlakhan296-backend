@@ -28,12 +28,15 @@ class ParkingSpaceResource extends JsonResource
             'longitude' => $this->longitude,
             'address' => $this->address,
             'gallery_images' => $this->gallery_images,
+            'total_reviews' => $this->total_reviews??null,
+            'average_rating' => $this->average_rating ? number_format($this->average_rating, 1) : null,
             'status' => $this->status,
             'driver_instructions' => DriverInstructionResource::collection($this->whenLoaded('driverInstructions')),
             'hourly_pricing' => HourlyPricingResource::collection($this->whenLoaded('hourlyPricing')),
             'daily_pricing' => DailyPricingResource::collection($this->whenLoaded('dailyPricing')),
             'monthly_pricing' => MonthlyPricingResource::collection($this->whenLoaded('monthlyPricing')),
             'spot_details' => SpotDetailResource::collection($this->whenLoaded('spotDetails')),
+            'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
         ];
     }
 }

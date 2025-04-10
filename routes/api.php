@@ -28,6 +28,7 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     Route::post('/reset-password', [ResetPasswordController::class, 'ResetPassword']);
     //social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
+
 });
 
 Route::group(['middleware' => 'auth:api'], function ($router) {
@@ -57,10 +58,15 @@ Route::get("dynamic-pages/single/{slug}", [HomePageController::class, "showDayna
 // });
 
 
-Route::group(['middleware' => ['auth:api','check_is_host']], function ($router) {
-    Route::get('/my-parking-spaces', [ParkingSpaceController::class, 'index']);
+Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router) {
+    Route::get('/my-parking-spaces', [ParkingSpaceController::class, 'indexForHost']);
     Route::post('/my-parking-spaces/create', [ParkingSpaceController::class, 'store']);
     Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'update']);
-    Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'show']);
+    Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'showForHost']);
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'destroy']);
 });
+
+
+// public api
+Route::get('/parking-spaces', [ParkingSpaceController::class, 'indexForUsers']);
+Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'showForUsers']);

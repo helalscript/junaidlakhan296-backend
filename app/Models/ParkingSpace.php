@@ -97,5 +97,15 @@ class ParkingSpace extends Model
     {
         return $this->hasMany(SpotDetail::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function averageRating()
+{
+    return $this->reviews()->where('status', 'approved')->avg('rating') ?? 0;
+}
 }
 

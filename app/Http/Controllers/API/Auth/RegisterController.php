@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
-        /**
-         * Register a new user.
-         *
-         * @param \Illuminate\Http\Request $request
-         * @return \Illuminate\Http\JsonResponse
-         */
-        
+    /**
+     * Register a new user.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+
     public function register(Request $request)
     {
         $validateData = $request->validate([
@@ -44,8 +44,12 @@ class RegisterController extends Controller
 
             // Check for soft-deleted user
             $existingUser = User::withTrashed()
-                ->where('email', $request->input('email'))
-                ->orWhere('phone', $request->input('phone'))
+                ->where(function ($query) use ($request) {
+                    $query->where('email', $request->input('email'));
+                    if ($request->filled('phone')) {
+                        $query->orWhere('phone', $request->input('phone'));
+                    }
+                })
                 ->first();
 
             if ($existingUser && $existingUser->trashed()) {
@@ -94,12 +98,12 @@ class RegisterController extends Controller
         }
     }
 
-        /**
-         * Verify the user's email address.
-         *
-         * @param \Illuminate\Http\Request $request
-         * @return \Illuminate\Http\JsonResponse
-         */
+    /**
+     * Verify the user's email address.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function VerifyEmail(Request $request)
     {
         $request->validate([

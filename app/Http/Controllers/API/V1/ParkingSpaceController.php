@@ -17,35 +17,112 @@ class ParkingSpaceController extends Controller
 {
     protected $user;
 
+    /**
+     * Set the authenticated user.
+     *
+     * This constructor method is called after all other service providers have
+     * been registered, so we can rely on the Auth facade being available.
+     */
     public function __construct()
     {
         $this->user = auth()->user();
     }
+
     /**
-     * Get a list of all parking spaces of the current user.
+     * Display a paginated list of parking spaces for the authenticated user.
+     *
+     * This method fetches all parking spaces created by the currently authenticated user
+     * along with their associated driver instructions, hourly pricing with days, daily pricing,
+     * monthly pricing, and spot details. Results are paginated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function indexForHost(Request $request)
     {
         try {
             $per_page = $request->per_page ?? 25;
-            $parkingSpaces = ParkingSpace::where('user_id', $this->user->id)->with([
-                'driverInstructions' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'instructions');
-                },
-                'hourlyPricing.days',
-                'dailyPricing' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
-                },
-                'monthlyPricing' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
-                },
-                'spotDetails' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'icon', 'details');
-                }
-            ])->paginate($per_page);
+            $parkingSpaces = ParkingSpace::where('user_id', $this->user->id)
+                ->withAvg([
+                    'reviews as average_rating' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ], 'rating')
+                ->with([
+                    'driverInstructions' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'instructions');
+                    },
+                    'hourlyPricing.days',
+                    'dailyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'monthlyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'spotDetails' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'icon', 'details');
+                    },
+                    'reviews' => function ($query) {
+                        $query->with([
+                            'user' => function ($query) {
+                                $query->select('id', 'name', 'avatar');
+                            }
+                        ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
+                    },
+                ])
+                ->withCount([
+                    'reviews as total_reviews' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ])->paginate($per_page);
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, ParkingSpaceResource::collection($parkingSpaces), true);
         } catch (Exception $e) {
-            Log::error("ParkingSpaceController::index" . $e->getMessage());
+            Log::error("ParkingSpaceController::indexForHost" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch parking spaces', 500);
+        }
+    }
+
+    public function indexForUsers(Request $request)
+    {
+        try {
+            $per_page = $request->per_page ?? 25;
+            $parkingSpaces = ParkingSpace::where('status', 'available')
+                ->withAvg([
+                    'reviews as average_rating' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ], 'rating')
+                ->with([
+                    'driverInstructions' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'instructions');
+                    },
+                    'hourlyPricing.days',
+                    'dailyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'monthlyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'spotDetails' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'icon', 'details');
+                    },
+                    'reviews' => function ($query) {
+                        $query->with([
+                            'user' => function ($query) {
+                                $query->select('id', 'name', 'avatar');
+                            }
+                        ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
+                    },
+                ])
+                ->withCount([
+                    'reviews as total_reviews' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ])->paginate($per_page);
+            // dd($parkingSpaces->toArray());
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, ParkingSpaceResource::collection($parkingSpaces), true);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::indexForUsers" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces', 500);
         }
     }
@@ -57,24 +134,43 @@ class ParkingSpaceController extends Controller
      * @param string $ParkingSpaceSlug
      * @return JsonResponse
      */
-    public function show(Request $request, $ParkingSpaceSlug)
+    public function showForHost(Request $request, $ParkingSpaceSlug)
     {
         try {
-            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->with([
-                'driverInstructions' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'instructions');
-                },
-                'hourlyPricing.days',
-                'dailyPricing' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
-                },
-                'monthlyPricing' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
-                },
-                'spotDetails' => function ($query) {
-                    $query->select('id', 'parking_space_id', 'icon', 'details');
-                }
-            ])->firstOrFail();
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)
+                ->withAvg([
+                    'reviews as average_rating' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ], 'rating')
+                ->with([
+                    'driverInstructions' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'instructions');
+                    },
+                    'hourlyPricing.days',
+                    'dailyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'monthlyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'spotDetails' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'icon', 'details');
+                    },
+                    'reviews' => function ($query) {
+                        $query->with([
+                            'user' => function ($query) {
+                                $query->select('id', 'name', 'avatar');
+                            }
+                        ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
+                    },
+                ])
+                ->withCount([
+                    'reviews as total_reviews' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ])
+                ->firstOrFail();
             return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, ParkingSpaceResource::make($parkingSpace));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::show" . $e->getMessage());
@@ -82,6 +178,49 @@ class ParkingSpaceController extends Controller
         }
     }
 
+    public function showForUsers(Request $request, $ParkingSpaceSlug)
+    {
+        try {
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)
+                ->withAvg([
+                    'reviews as average_rating' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ], 'rating')
+                ->with([
+                    'driverInstructions' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'instructions');
+                    },
+                    'hourlyPricing.days',
+                    'dailyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'monthlyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'start_time', 'end_time', 'start_date', 'end_date');
+                    },
+                    'spotDetails' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'icon', 'details');
+                    },
+                    'reviews' => function ($query) {
+                        $query->with([
+                            'user' => function ($query) {
+                                $query->select('id', 'name', 'avatar');
+                            }
+                        ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
+                    },
+                ])
+                ->withCount([
+                    'reviews as total_reviews' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ])
+                ->firstOrFail();
+            return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, ParkingSpaceResource::make($parkingSpace));
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::show" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch parking space', 500);
+        }
+    }
     /**
      * Store a newly created parking space in the database.
      *
@@ -106,9 +245,10 @@ class ParkingSpaceController extends Controller
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'address' => 'nullable|string',
+
+            // Gallery Images
             'gallery_images' => 'required|array',
             'gallery_images.*' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            // 'status' => 'required|in:available,unavailable,sold-out,close',
 
             // Instructions
             'instructions' => 'required|array|min:1',
@@ -118,8 +258,7 @@ class ParkingSpaceController extends Controller
             'hourly_pricing' => 'required|array',
             'hourly_pricing.*.rate' => 'required|numeric|min:0',
             'hourly_pricing.*.start_time' => 'required|date_format:H:i',
-            'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.start_time',
-            // 'hourly_pricing.*.status' => 'nullable|in:active,inactive',
+            'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.*.start_time',
             'hourly_pricing.*.days' => 'required|array|min:1',
             'hourly_pricing.*.days.*.day' => 'required|string',
             'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
@@ -128,50 +267,47 @@ class ParkingSpaceController extends Controller
             'daily_pricing' => 'required|array',
             'daily_pricing.*.rate' => 'required|numeric|min:0',
             'daily_pricing.*.start_time' => 'required|date_format:H:i',
-            'daily_pricing.*.end_time' => 'required|date_format:H:i|after:daily_pricing.start_time',
+            'daily_pricing.*.end_time' => 'required|date_format:H:i|after:daily_pricing.*.start_time',
             'daily_pricing.*.start_date' => 'required|date',
-            'daily_pricing.*.end_date' => 'required|date|after_or_equal:daily_pricing.start_date',
-            // 'daily_pricing.status' => 'nullable|in:active,inactive',
+            'daily_pricing.*.end_date' => 'required|date|after_or_equal:daily_pricing.*.start_date',
 
             // Monthly Pricing
             'monthly_pricing' => 'required|array',
             'monthly_pricing.*.rate' => 'required|numeric|min:0',
             'monthly_pricing.*.start_time' => 'required|date_format:H:i',
-            'monthly_pricing.*.end_time' => 'required|date_format:H:i|after:monthly_pricing.start_time',
+            'monthly_pricing.*.end_time' => 'required|date_format:H:i|after:monthly_pricing.*.start_time',
             'monthly_pricing.*.start_date' => 'required|date',
-            'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.start_date',
-            // 'monthly_pricing.*.status' => 'nullable|in:active,inactive',
+            'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.*.start_date',
 
             // Spot Details
             'spot_details' => 'required|array',
             'spot_details.*.icon' => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'spot_details.*.details' => 'required|string',
-            // 'spot_details.*.status' => 'nullable|in:active,inactive',
         ]);
 
         try {
             DB::beginTransaction();
-            // Handle Gallery Images Upload
+
+            // Handle Gallery Images
             $galleryImages = [];
             if ($request->hasFile('gallery_images')) {
                 foreach ($request->file('gallery_images') as $key => $image) {
                     $imagePath = Helper::fileUpload($image, 'gallery_space_images', $key . '_' . getFileName($image));
                     $galleryImages[] = $imagePath;
                 }
-                $validatedData['gallery_images'] = ($galleryImages);
-            } else {
-                $validatedData['gallery_images'] = null;
+                $validatedData['gallery_images'] = $galleryImages;
             }
-            // Prepare parking space data
-            $data = $validatedData;
-            $data['unique_id'] = (string) Str::uuid();
-            $data['user_id'] = auth()->check() ? auth()->id() : null;
-            $data['slug'] = Helper::makeSlug($data['title'], 'parking_spaces');
-            $data['status'] = 'available';
 
-            // Create Parking Space
-            $parkingSpace = ParkingSpace::create($data);
-            // Create Driver Instructions
+            // Create base Parking Space
+            $parkingSpaceData = $validatedData;
+            $parkingSpaceData['unique_id'] = (string) Str::uuid();
+            $parkingSpaceData['user_id'] = auth()->id();
+            $parkingSpaceData['slug'] = Helper::makeSlug($validatedData['title'], 'parking_spaces');
+            $parkingSpaceData['status'] = 'available';
+
+            $parkingSpace = ParkingSpace::create($parkingSpaceData);
+
+            // Save Instructions
             foreach ($validatedData['instructions'] as $instruction) {
                 $parkingSpace->driverInstructions()->create([
                     'instructions' => $instruction,
@@ -179,78 +315,66 @@ class ParkingSpaceController extends Controller
                 ]);
             }
 
-            // Hourly Pricing (with optional days)
-            if ($request->filled('hourly_pricing')) {
-                foreach ($validatedData['hourly_pricing'] as $hourly) {
-                    $hourlyDays = $hourly['days'] ?? [];
-                    unset($hourly['days']);
+            // Save Hourly Pricing with Days
+            foreach ($validatedData['hourly_pricing'] as $hourly) {
+                $days = $hourly['days'];
+                unset($hourly['days']);
 
-                    $hourlyPricing = $parkingSpace->hourlyPricing()->create($hourly);
-
-                    foreach ($hourlyDays as $day) {
-                        $hourlyPricing->days()->create($day);
-                    }
+                $hourlyModel = $parkingSpace->hourlyPricing()->create($hourly);
+                foreach ($days as $day) {
+                    $hourlyModel->days()->create($day);
                 }
             }
 
-            // Daily Pricing
-            if ($request->filled('daily_pricing')) {
-                foreach ($validatedData['daily_pricing'] as $pricing) {
-                    $parkingSpace->dailyPricing()->create($pricing);
-                }
-                // $parkingSpace->dailyPricing()->create($validatedData['daily_pricing']);
+            // Save Daily Pricing
+            foreach ($validatedData['daily_pricing'] as $daily) {
+                $parkingSpace->dailyPricing()->create($daily);
             }
 
-            // Monthly Pricing
-            if ($request->filled('monthly_pricing')) {
-                foreach ($validatedData['monthly_pricing'] as $pricing) {
-                    $parkingSpace->monthlyPricing()->create($pricing);
-                }
-                // $parkingSpace->monthlyPricing()->create($validatedData['monthly_pricing']);
+            // Save Monthly Pricing
+            foreach ($validatedData['monthly_pricing'] as $monthly) {
+                $parkingSpace->monthlyPricing()->create($monthly);
             }
 
-            // Spot Details
-            if ($request->filled('spot_details')) {
-                foreach ($validatedData['spot_details'] as $key => $spotDetail) {
-                    // Handle the icon image upload
-                    $imagePath = null;
-                    if (isset($spotDetail['icon']) && $spotDetail['icon']) {
-                        $image = $spotDetail['icon'];
-                        unset($spotDetail['icon']);  // Remove icon from the spot detail data
-
-                        // Upload the image and get the image path
-                        $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
-                    }
-
-                    // Add the uploaded image path to the spotDetail array
-                    if ($imagePath) {
-                        $spotDetail['icon'] = $imagePath; // Store the image path in the spot detail
-                    }
-
-                    // Create the SpotDetail record
-                    $parkingSpace->spotDetails()->create($spotDetail);
-                }
+            // Save Spot Details with icon image upload
+            foreach ($validatedData['spot_details'] as $key => $detail) {
+                $imagePath = Helper::fileUpload($request->file("spot_details.$key.icon"), 'spot_details_images', $key . '_' . getFileName($request->file("spot_details.$key.icon")));
+                $parkingSpace->spotDetails()->create([
+                    'icon' => $imagePath,
+                    'details' => $detail['details'],
+                    'status' => 'active',
+                ]);
             }
-            
-            // Commit transaction if everything is successful
+
             DB::commit();
-            
-            // Return success response with created parking space data
+
             return Helper::jsonResponse(true, 'Parking space created successfully', 200, ParkingSpaceResource::make($parkingSpace->load([
                 'driverInstructions',
                 'hourlyPricing.days',
                 'dailyPricing',
                 'monthlyPricing',
-                'spotDetails'
+                'spotDetails',
             ])));
 
         } catch (Exception $e) {
-            // Rollback transaction if error occurs
             DB::rollBack();
             Log::error("ParkingSpaceController::store => " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to create parking space' . $e->getMessage(), 500);
+            return Helper::jsonErrorResponse('Failed to create parking space: ' . $e->getMessage(), 500);
         }
     }
+
+    /**
+     * Update an existing parking space.
+     *
+     * This method validates and updates the details of a parking space identified by its slug.
+     * It updates fields such as title, type of spot, vehicle size, and various pricing details.
+     * It also handles the upload and update of gallery images, driver instructions, hourly, 
+     * daily, and monthly pricing, and spot details including icons.
+     *
+     * @param Request $request
+     * @param string $ParkingSpaceSlug
+     * @return JsonResponse
+     */
 
     public function update(Request $request, string $ParkingSpaceSlug): JsonResponse
     {
@@ -299,7 +423,7 @@ class ParkingSpaceController extends Controller
         try {
             DB::beginTransaction();
 
-            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->firstOrFail();
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->firstOrFail();
 
             // Handle gallery images
             $galleryImages = [];
@@ -314,12 +438,7 @@ class ParkingSpaceController extends Controller
             $validatedData['gallery_images'] = $galleryImages;
 
             // Update basic fields
-            $parkingSpace->update(array_merge(
-                $validatedData,
-                [
-                    'slug' => Helper::makeSlug($validatedData['title'], 'parking_spaces', $parkingSpace->id),
-                ]
-            ));
+            $parkingSpace->update($validatedData);
 
             // Delete and recreate instructions
             $parkingSpace->driverInstructions()->delete();
@@ -373,13 +492,13 @@ class ParkingSpaceController extends Controller
 
             DB::commit();
 
-            return Helper::jsonResponse(true, 'Parking space updated successfully', 200, $parkingSpace->load([
+            return Helper::jsonResponse(true, 'Parking space updated successfully', 200, ParkingSpaceResource::make($parkingSpace->load([
                 'driverInstructions',
                 'hourlyPricing.days',
                 'dailyPricing',
                 'monthlyPricing',
                 'spotDetails'
-            ]));
+            ])));
         } catch (Exception $e) {
             DB::rollBack();
             Log::error("ParkingSpaceController::update => " . $e->getMessage());
@@ -387,7 +506,14 @@ class ParkingSpaceController extends Controller
         }
     }
 
-    public function destroy(string $ParkingSpaceSlug)
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param string $ParkingSpaceSlug
+     * @return JsonResponse
+     */
+
+    public function destroy(string $ParkingSpaceSlug): JsonResponse
     {
         try {
             $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->firstOrFail();
