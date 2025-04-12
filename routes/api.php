@@ -69,4 +69,5 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
 
 // public api
 Route::get('/parking-spaces', [ParkingSpaceController::class, 'indexForUsers']);
+Route::get('/parking-spaces/hourly', [ParkingSpaceController::class, 'indexForUsersHourly']);
 Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'showForUsers']);
