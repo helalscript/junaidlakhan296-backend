@@ -10,7 +10,9 @@ use App\Http\Controllers\API\Auth\SocialLoginController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
+use App\Http\Controllers\API\V1\User\UserBookingController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
+use App\Http\Controllers\API\V1\User\UserVehicleController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -65,8 +67,10 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
     Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'showForHost']);
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
 });
-
-
+Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router) {
+    Route::get('/my-appointments', [UserBookingController::class, 'index']);
+    Route::apiResource('/my-vehicles', UserVehicleController::class);
+});
 // public api
 Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
 Route::get('/parking-spaces/hourly', [UserParkingSpaceController::class, 'indexForUsersHourly']);
