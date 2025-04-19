@@ -8,10 +8,8 @@ use App\Http\Controllers\API\Auth\RegisterController;
 use App\Http\Controllers\API\Auth\ResetPasswordController;
 use App\Http\Controllers\API\Auth\SocialLoginController;
 use App\Http\Controllers\API\Auth\UserController;
-use App\Http\Controllers\API\V1\AnonymousUserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
-use App\Http\Controllers\API\V1\ParkingSpaceController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
 use Illuminate\Support\Facades\Route;
 

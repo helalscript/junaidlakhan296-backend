@@ -17,3 +17,4 @@ jobs:
           server: 141.136.35.198
           username: developer
           password: "TaI2rBym5KmQ5dXh780G"
+          timeout: 60
