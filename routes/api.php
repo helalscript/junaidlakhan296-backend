@@ -10,7 +10,9 @@ use App\Http\Controllers\API\Auth\SocialLoginController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\AnonymousUserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
+use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
 use App\Http\Controllers\API\V1\ParkingSpaceController;
+use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -59,14 +61,15 @@ Route::get("dynamic-pages/single/{slug}", [HomePageController::class, "showDayna
 
 
 Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router) {
-    Route::get('/my-parking-spaces', [ParkingSpaceController::class, 'indexForHost']);
-    Route::post('/my-parking-spaces/create', [ParkingSpaceController::class, 'store']);
-    Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'update']);
-    Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'showForHost']);
-    Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'destroy']);
+    Route::get('/my-parking-spaces', [HostParkingSpaceController::class, 'indexForHost']);
+    Route::post('/my-parking-spaces/create', [HostParkingSpaceController::class, 'store']);
+    Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'update']);
+    Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'showForHost']);
+    Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
 });
 
 
 // public api
-Route::get('/parking-spaces', [ParkingSpaceController::class, 'indexForUsers']);
-Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [ParkingSpaceController::class, 'showForUsers']);
+Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
+Route::get('/parking-spaces/hourly', [UserParkingSpaceController::class, 'indexForUsersHourly']);
+Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);

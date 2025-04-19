@@ -16,9 +16,17 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('parking_space_id')->constrained('parking_spaces')->onDelete('cascade');
             $table->foreignId('vehicle_details_id')->constrained('vehicle_details')->onDelete('cascade');
+            $table->enum('pricing_type', ['hourly', 'daily', 'monthly']);
+            $table->unsignedBigInteger('pricing_id')->nullable();
+            $table->date('booking_date')->nullable();
+            $table->time('booking_time_start')->nullable();
+            $table->time('booking_time_end')->nullable();
             $table->timestamp('start_time');
-            $table->enum('status', ['pending', 'confirmed', 'cancelled','close'])->default('pending');
+            $table->timestamp('end_time')->nullable();
+            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'close'])->default('pending');
             $table->timestamps();
+            $table->index(['parking_space_id', 'booking_date', 'booking_time_start', 'booking_time_end'], 'booking_availability_index');
+        
         });
     }
 
