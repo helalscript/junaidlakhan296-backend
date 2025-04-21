@@ -57,15 +57,22 @@ namespace {$namespaceDeclaration};
 
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class {$className}
 {
+    protected \$user;
+
+    public function __construct()
+    {
+        \$this->user = Auth::user();
+    }
     /**
      * Fetch all resources.
      *
      * @return mixed
      */
-    public function index()
+    public function index(\$request)
     {
         try {
             
