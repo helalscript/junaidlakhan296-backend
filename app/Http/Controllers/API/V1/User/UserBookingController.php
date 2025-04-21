@@ -71,7 +71,6 @@ class UserBookingController extends Controller
 
         // Merge pricing_id into validated data
         $validatedData = array_merge($validatedData, $pricingData);
-       
 
         try {
             $booking = $this->userBookingService->store($validatedData);

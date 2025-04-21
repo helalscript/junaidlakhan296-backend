@@ -48,8 +48,9 @@ class BookingService
             $validatedData['booking_date'] = now();
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
-            // dd($validatedData);
+            // Create the booking
             $booking = Booking::create($validatedData);
+            return $booking;
         } catch (Exception $e) {
             Log::error("BookingService::store" . $e->getMessage());
             throw $e;
