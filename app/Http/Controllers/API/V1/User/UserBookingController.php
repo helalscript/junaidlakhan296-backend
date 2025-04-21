@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1\User;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Services\API\V1\User\Booking\BookingService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 class UserBookingController extends Controller
 {
     protected $user;
+    protected $userBookingService;
 
     /**
      * Set the authenticated user.
@@ -19,23 +21,23 @@ class UserBookingController extends Controller
      * This constructor method is called after all other service providers have
      * been registered, so we can rely on the Auth facade being available.
      */
-    public function __construct()
+    public function __construct(BookingService $userBookingService)
     {
         $this->user = auth()->user();
+        $this->userBookingService = $userBookingService;
     }
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $bookings = Booking::with('parkingSpace')->where('user_id', $this->user->id)->get();
+            $bookings = $this->userBookingService->index($request);
             return Helper::jsonResponse(true, 'Bookings fetched successfully', 200, $bookings, true);
         } catch (Exception $e) {
             Log::error("UserBookingController::index" . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to fetch parking spaces', 500);
+            return Helper::jsonErrorResponse('Failed to fetch parking spaces' . $e->getMessage(), 500);
         }
-
     }
 
     /**
@@ -43,16 +45,39 @@ class UserBookingController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validatedData = $request->validate([
-                'parking_space_id' => 'required|exists:parking_spaces,id',
+        $validatedData = $request->validate([
+            'parking_space_id' => 'required|exists:parking_spaces,id',
+            'vehicle_details_id' => 'required|exists:vehicle_details,id',
+            'number_of_slot' => 'required|integer|min:1',
+            'pricing_type' => 'required|in:hourly,daily,monthly',
+            'booking_time_start' => 'required|date_format:H:i',
+            'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+            'booking_date' => 'required|date|after_or_equal:today',
+        ]);
+        // Validate pricing_id based on pricing_type
+        if ($request->pricing_type === 'hourly') {
+            $pricingData = $request->validate([
+                'pricing_id' => 'required|exists:hourly_pricings,id',
             ]);
-            $validatedData['user_id'] = $this->user->id;
-            $booking = Booking::create($validatedData);
-            return Helper::jsonResponse(true, 'Booking created successfully', 200, $booking, true);
+        } elseif ($request->pricing_type === 'daily') {
+            $pricingData = $request->validate([
+                'pricing_id' => 'required|exists:daily_pricings,id',
+            ]);
+        } elseif ($request->pricing_type === 'monthly') {
+            $pricingData = $request->validate([
+                'pricing_id' => 'required|exists:monthly_pricings,id',
+            ]);
+        }
+
+        // Merge pricing_id into validated data
+        $validatedData = array_merge($validatedData, $pricingData);
+
+        try {
+            $booking = $this->userBookingService->store($validatedData);
+            return Helper::jsonResponse(true, 'Booking created successfully', 200, $booking);
         } catch (Exception $e) {
             Log::error("UserBookingController::store" . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to create booking', 500);
+            return Helper::jsonErrorResponse('Failed to create booking' . $e->getMessage(), 500);
         }
     }
 
@@ -62,8 +87,8 @@ class UserBookingController extends Controller
     public function show(string $id)
     {
         try {
-            $booking = Booking::with('parkingSpace')->where('id', $id)->first();
-            return Helper::jsonResponse(true, 'Booking fetched successfully', 200, $booking, true);
+            $booking = $this->userBookingService->show($id);
+            return Helper::jsonResponse(true, 'Booking fetched successfully', 200, $booking);
         } catch (Exception $e) {
             Log::error("UserBookingController::show" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch booking', 500);
@@ -81,7 +106,7 @@ class UserBookingController extends Controller
             ]);
             $validatedData['user_id'] = $this->user->id;
             $booking = Booking::where('id', $id)->update($validatedData);
-            return Helper::jsonResponse(true, 'Booking updated successfully', 200, $booking, true);
+            return Helper::jsonResponse(true, 'Booking updated successfully', 200, $booking);
         } catch (Exception $e) {
             Log::error("UserBookingController::update" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to update booking', 500);
@@ -94,8 +119,8 @@ class UserBookingController extends Controller
     public function destroy(string $id)
     {
         try {
-            $booking = Booking::where('id', $id)->delete();
-            return Helper::jsonResponse(true, 'Booking deleted successfully', 200, $booking, true);
+            $this->userBookingService->destroy($id);
+            return Helper::jsonResponse(true, 'Booking deleted successfully', 200);
         } catch (Exception $e) {
             Log::error("UserBookingController::destroy" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to delete booking', 500);

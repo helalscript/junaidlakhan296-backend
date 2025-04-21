@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1\User;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
+use App\Models\Booking;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
 use Carbon\Carbon;
@@ -230,7 +231,6 @@ class UserParkingSpaceController extends Controller
 
 
 
-
     public function indexForUsersHourly(Request $request)
     {
         try {
@@ -272,8 +272,42 @@ class UserParkingSpaceController extends Controller
                 ->when($endTime, function ($query, $endTime) {
                     $query->whereTime('end_time', '<=', $endTime);
                 });
+                
 
-            $result = $hourlyPricing->paginate($perPage);
+                $result = $hourlyPricing->paginate($perPage);
+
+                $transformedData = $result->getCollection()->map(function ($hourlyPricing) use ($request) {
+                    // Filter active bookings for this parking space during specified time
+                    $bookingsQuery = Booking::where('parking_space_id', $hourlyPricing->parking_space_id)
+                        ->whereNotIn('status', ['cancelled', 'close']);
+                
+                    // Optional: Filter by date/time range if provided
+                    if ($request->start_date) {
+                        $bookingsQuery->whereDate('start_time', '>=', $request->start_date);
+                    }
+                    if ($request->end_date) {
+                        $bookingsQuery->whereDate('end_time', '<=', $request->end_date);
+                    }
+                
+                    if ($request->start_time) {
+                        $bookingsQuery->whereTime('booking_time_start', '<=', $request->start_time);
+                    }
+                    if ($request->end_time) {
+                        $bookingsQuery->whereTime('booking_time_end', '>=', $request->end_time);
+                    }
+                
+                    // Sum up number_of_slot (default to 1 if null)
+                    $bookingCount = $bookingsQuery->get()->sum(function ($booking) {
+                        return $booking->number_of_slot ?? 1;
+                    });
+                
+                    $hourlyPricing->booking_count = $bookingCount;
+                    $hourlyPricing->available_slots = max(0, $hourlyPricing->parkingSpace->total_slots - $bookingCount);
+                
+                    return $hourlyPricing;
+                });
+                
+                $result->setCollection($transformedData);
 
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
         } catch (Exception $e) {
