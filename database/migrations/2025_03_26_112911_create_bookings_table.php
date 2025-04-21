@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('parking_space_id')->constrained('parking_spaces')->onDelete('cascade');
             $table->foreignId('vehicle_details_id')->constrained('vehicle_details')->onDelete('cascade');
+            $table->integer('number_of_slot')->nullable();
             $table->enum('pricing_type', ['hourly', 'daily', 'monthly']);
             $table->unsignedBigInteger('pricing_id')->nullable();
             $table->date('booking_date')->nullable();

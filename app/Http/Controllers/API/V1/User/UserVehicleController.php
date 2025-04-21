@@ -5,12 +5,15 @@ namespace App\Http\Controllers\API\V1\User;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\VehicleDetail;
+use App\Services\API\V1\User\Vehicle\VehicleService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class UserVehicleController extends Controller
 {
+
+    protected $userVehicleService;
     protected $user;
 
     /**
@@ -19,9 +22,10 @@ class UserVehicleController extends Controller
      * This constructor method is called after all other service providers have
      * been registered, so we can rely on the Auth facade being available.
      */
-    public function __construct()
+    public function __construct(VehicleService $userVehicleService)
     {
         $this->user = auth()->user();
+        $this->userVehicleService = $userVehicleService;
     }
 
     /**
@@ -30,8 +34,7 @@ class UserVehicleController extends Controller
     public function index(Request $request)
     {
         try {
-            $per_page = $request->per_page ?? 25;
-            $vehicles = VehicleDetail::where('user_id', $this->user->id)->paginate($per_page);
+            $vehicles = $this->userVehicleService->index($request->per_page ?? 25);
             return Helper::jsonResponse(true, 'Vehicles fetched successfully', 200, $vehicles, true);
         } catch (Exception $e) {
             Log::error("UserVehicleController::index" . $e->getMessage());
@@ -52,10 +55,8 @@ class UserVehicleController extends Controller
             'license_plate_number_eng' => 'required',
             'license_plate_number_ara' => 'required',
         ]);
-        // dd($validatedData);
         try {
-            $validatedData['user_id'] = $this->user->id;
-            $vehicle = VehicleDetail::create($validatedData);
+            $vehicle = $this->userVehicleService->store($validatedData);
             return Helper::jsonResponse(true, 'Vehicle created successfully', 200, $vehicle);
         } catch (Exception $e) {
             Log::error("UserVehicleController::store" . $e->getMessage());
@@ -68,7 +69,13 @@ class UserVehicleController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $vehicle = $this->userVehicleService->show($id);
+            return Helper::jsonResponse(true, 'Vehicle fetched successfully', 200, $vehicle);
+        } catch (Exception $e) {
+            Log::error("UserVehicleController::show" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch vehicle', 500);
+        }
     }
 
     /**
@@ -76,7 +83,21 @@ class UserVehicleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validatedData = $request->validate([
+            'registration_number' => 'required',
+            'type' => 'required',
+            'make' => 'required',
+            'model' => 'required',
+            'license_plate_number_eng' => 'required',
+            'license_plate_number_ara' => 'required',
+        ]);
+        try {
+            $vehicle = $this->userVehicleService->update($id, $validatedData);
+            return Helper::jsonResponse(true, 'Vehicle updated successfully', 200, $vehicle);
+        } catch (Exception $e) {
+            Log::error("UserVehicleController::update" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to update vehicle' . $e->getMessage(), 500);
+        }
     }
 
     /**
@@ -84,6 +105,12 @@ class UserVehicleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $this->userVehicleService->destroy($id);
+            return Helper::jsonResponse(true, 'Vehicle deleted successfully', 200);
+        } catch (Exception $e) {
+            Log::error("UserVehicleController::destroy" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to delete vehicle', 500);
+        }
     }
 }

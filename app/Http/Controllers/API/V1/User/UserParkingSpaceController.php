@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1\User;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
+use App\Models\Booking;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
 use Carbon\Carbon;
@@ -272,8 +273,17 @@ class UserParkingSpaceController extends Controller
                 ->when($endTime, function ($query, $endTime) {
                     $query->whereTime('end_time', '<=', $endTime);
                 });
+                
 
-            $result = $hourlyPricing->paginate($perPage);
+                $result = $hourlyPricing->paginate($perPage);
+
+                $transformedData = $result->getCollection()->map(function ($hourlyPricing) {
+                    $hourlyPricing->booking_count = Booking::where('parking_space_id', $hourlyPricing->parking_space_id)->count();
+                    return $hourlyPricing;
+                });
+                
+                $result->setCollection($transformedData);
+                dd($result->toArray());
 
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
         } catch (Exception $e) {
