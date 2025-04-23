@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
+            $table->string('unique_id')->unique();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('parking_space_id')->constrained('parking_spaces')->onDelete('cascade');
             $table->foreignId('vehicle_details_id')->constrained('vehicle_details')->onDelete('cascade');

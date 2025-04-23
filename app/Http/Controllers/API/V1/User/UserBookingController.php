@@ -51,12 +51,13 @@ class UserBookingController extends Controller
             'number_of_slot' => 'required|integer|min:1',
             'pricing_type' => 'required|in:hourly,daily,monthly',
             'booking_time_start' => 'required|date_format:H:i',
-            'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
-            'booking_date' => 'required|date|after_or_equal:today',
+
         ]);
         // Validate pricing_id based on pricing_type
         if ($request->pricing_type === 'hourly') {
             $pricingData = $request->validate([
+                'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+                'booking_date' => 'required|date|after_or_equal:today',
                 'pricing_id' => 'required|exists:hourly_pricings,id',
             ]);
         } elseif ($request->pricing_type === 'daily') {

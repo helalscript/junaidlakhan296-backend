@@ -9,6 +9,7 @@ class Booking extends Model
 {
     protected $fillable = [
         'user_id',
+        'unique_id',
         'parking_space_id',
         'vehicle_details_id',
         'number_of_slot',
@@ -24,6 +25,7 @@ class Booking extends Model
 
     protected $casts = [
         'user_id' => 'integer',
+        'unique_id' => 'string',
         'parking_space_id' => 'integer',
         'vehicle_details_id' => 'integer',
         'number_of_slot' => 'integer',
