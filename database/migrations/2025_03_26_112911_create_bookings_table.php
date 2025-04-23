@@ -20,10 +20,15 @@ return new class extends Migration
             $table->integer('number_of_slot')->nullable();
             $table->enum('pricing_type', ['hourly', 'daily', 'monthly']);
             $table->unsignedBigInteger('pricing_id')->nullable();
+            $table->string('estimated_hours')->nullable();
+            $table->decimal('estimated_price', 10, 2)->nullable();
+            $table->decimal('platform_fee', 10, 2)->nullable();
+            $table->decimal('total_price', 10, 2)->nullable();
             $table->date('booking_date')->nullable();
             $table->time('booking_time_start')->nullable();
             $table->time('booking_time_end')->nullable();
             $table->timestamp('start_time');
+            $table->timestamp('end_time')->nullable();
             $table->timestamp('end_time')->nullable();
             $table->enum('status', ['pending', 'confirmed','active', 'cancelled', 'close','completed'])->default('pending');
             $table->timestamps();
