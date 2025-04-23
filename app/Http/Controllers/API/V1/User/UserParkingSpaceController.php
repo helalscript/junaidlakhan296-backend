@@ -343,9 +343,9 @@ class UserParkingSpaceController extends Controller
         }
     }
 // Calculate user search duration (in hours)
-    private function calculateHour()
-    {
+    // private function calculateHour()
+    // {
 
-    }
+    // }
 
 }
