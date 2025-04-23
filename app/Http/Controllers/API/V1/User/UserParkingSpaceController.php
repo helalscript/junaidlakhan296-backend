@@ -30,7 +30,133 @@ class UserParkingSpaceController extends Controller
     {
         $this->user = auth()->user();
     }
+    /**
+     * Store a newly created parking space in the database.
+     *
+     * Validates the incoming request data and creates a new parking space along with
+     * associated driver instructions, pricing details, and spot details. Handles image
+     * uploads for gallery images and spot icons. If any step fails, the transaction is
+     * rolled back, and an error response is returned.
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
 
+    public function indexForUsersHourly(Request $request)
+    {
+        try {
+            $perPage = $request->per_page ?? 25;
+            // $startTime = $request->start_time;
+            // $endTime = $request->end_time;
+            $startTime = $request->start_time ?? now()->format('H:i');
+            $endTime = $request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $request->start_date ?? now()->format('Y-m-d');
+            $endDate = $request->end_date;
+            // dd($startTime.' '. $endTime.' '.$startDate);
+            // Get list of day names (e.g., Monday, Tuesday) from given dates
+            $dayNames = [];
+
+            if ($startDate && !$endDate) {
+                $dayNames[] = \Carbon\Carbon::parse($startDate)->format('l');
+            } elseif ($startDate && $endDate) {
+                $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+                foreach ($period as $date) {
+                    $day = $date->format('l');
+                    if (!in_array($day, $dayNames)) {
+                        $dayNames[] = $day;
+                    }
+                }
+            }
+            // dd($dayNames);
+            $hourlyPricing = HourlyPricing::with(['parkingSpace', 'days'])
+                ->where('status', 'active')
+                ->whereHas('parkingSpace', function ($q) {
+                    $q->where('status', 'available');
+                })
+                ->whereHas('days', function ($q) use ($dayNames) {
+                    if (!empty($dayNames)) {
+                        $q->whereIn('day', $dayNames);
+                    }
+                    $q->where('status', 'available'); // Filter days by status
+                })
+                ->when($startTime, function ($query, $startTime) {
+                    $query->whereTime('start_time', '<=', $startTime);
+                })
+                ->when($endTime, function ($query, $endTime) {
+                    $query->whereTime('end_time', '>=', $endTime);
+                });
+
+
+            $result = $hourlyPricing->paginate($perPage);
+
+            $transformedData = $result->getCollection()->map(function ($hourlyPricing) use ($request) {
+                // Filter active bookings for this parking space during specified time
+                $bookingsQuery = Booking::where('parking_space_id', $hourlyPricing->parking_space_id)
+                    ->whereNotIn('status', ['cancelled', 'close']);
+
+                // Optional: Filter by date/time range if provided
+                if ($request->start_date) {
+                    $bookingsQuery->whereDate('start_time', '>=', $request->start_date);
+                }
+                if ($request->end_date) {
+                    $bookingsQuery->whereDate('end_time', '<=', $request->end_date);
+                }
+
+                if ($request->start_time) {
+                    $bookingsQuery->whereTime('booking_time_start', '<=', $request->start_time);
+                }
+                if ($request->end_time) {
+                    $bookingsQuery->whereTime('booking_time_end', '>=', $request->end_time);
+                }
+
+                // Sum up number_of_slot (default to 1 if null)
+                $bookingCount = $bookingsQuery->get()->sum(function ($booking) {
+                    return $booking->number_of_slot ?? 1;
+                });
+
+                $hourlyPricing->booking_count = $bookingCount;
+                $hourlyPricing->available_slots = max(0, $hourlyPricing->parkingSpace->total_slots - $bookingCount);
+                // Calculate user search duration (in hours)
+                if ($request->start_time && $request->end_time && $request->start_date) {
+                    $start = Carbon::parse($request->start_time);
+                    $end = Carbon::parse($request->end_time);
+                    Log::info('start time: ' . $start . " " . 'end time: ' . $end);
+                    // Get float difference between times (same day)
+                    $dailyHours = round($start->floatDiffInHours($end), 2);
+                    // $dailyHours = $start->diffInMinutes($end) ;
+                    Log::info('Hours Count: ' . $dailyHours);
+
+                    // Count how many days
+                    if ($request->end_date) {
+                        $start_time_date = Carbon::parse("{$request->start_date} {$request->start_time}");
+                        $end_time_date = Carbon::parse("{$request->end_date} {$request->end_time}");
+                        Log::info('Start date ' . $start_time_date . " " . 'End date' . $end_time_date);
+                        $totalHoursCount = round($start_time_date->floatDiffInHours($end_time_date), 2);
+                        Log::info(' Total Days+Hours Count count: ' . $totalHoursCount);
+                    } else {
+                        $totalHoursCount = $dailyHours;
+                    }
+
+                    $totalHours = round($totalHoursCount, 2);
+                    Log::info('Total hours: ' . $totalHours);
+                    $hourlyPricing->estimated_hours = $totalHours;
+                    $hourlyPricing->estimated_price = $totalHours * $hourlyPricing->rate;
+                } else {
+                    $hourlyPricing->estimated_hours = null;
+                    $hourlyPricing->estimated_price = null;
+                }
+                return $hourlyPricing;
+            });
+
+            $result->setCollection($transformedData);
+
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
+        }
+    }
     public function indexForUsers(Request $request)
     {
         try {
@@ -216,104 +342,10 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to fetch parking space', 500);
         }
     }
-    /**
-     * Store a newly created parking space in the database.
-     *
-     * Validates the incoming request data and creates a new parking space along with
-     * associated driver instructions, pricing details, and spot details. Handles image
-     * uploads for gallery images and spot icons. If any step fails, the transaction is
-     * rolled back, and an error response is returned.
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     */
-
-
-
-    public function indexForUsersHourly(Request $request)
+// Calculate user search duration (in hours)
+    private function calculateHour()
     {
-        try {
-            $perPage = $request->per_page ?? 25;
-            $startTime = $request->start_time;
-            $endTime = $request->end_time;
-            $startDate = $request->start_date;
-            $endDate = $request->end_date;
 
-            // Get list of day names (e.g., Monday, Tuesday) from given dates
-            $dayNames = [];
-
-            if ($startDate && !$endDate) {
-                $dayNames[] = \Carbon\Carbon::parse($startDate)->format('l');
-            } elseif ($startDate && $endDate) {
-                $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
-                foreach ($period as $date) {
-                    $day = $date->format('l');
-                    if (!in_array($day, $dayNames)) {
-                        $dayNames[] = $day;
-                    }
-                }
-            }
-            // dd($dayNames);
-            $hourlyPricing = HourlyPricing::with(['parkingSpace', 'days'])
-                ->where('status', 'active')
-                ->whereHas('parkingSpace', function ($q) {
-                    $q->where('status', 'available');
-                })
-                ->whereHas('days', function ($q) use ($dayNames) {
-                    if (!empty($dayNames)) {
-                        $q->whereIn('day', $dayNames);
-                    }
-                    $q->where('status', 'available'); // Filter days by status
-                })
-                ->when($startTime, function ($query, $startTime) {
-                    $query->whereTime('start_time', '>=', $startTime);
-                })
-                ->when($endTime, function ($query, $endTime) {
-                    $query->whereTime('end_time', '<=', $endTime);
-                });
-                
-
-                $result = $hourlyPricing->paginate($perPage);
-
-                $transformedData = $result->getCollection()->map(function ($hourlyPricing) use ($request) {
-                    // Filter active bookings for this parking space during specified time
-                    $bookingsQuery = Booking::where('parking_space_id', $hourlyPricing->parking_space_id)
-                        ->whereNotIn('status', ['cancelled', 'close']);
-                
-                    // Optional: Filter by date/time range if provided
-                    if ($request->start_date) {
-                        $bookingsQuery->whereDate('start_time', '>=', $request->start_date);
-                    }
-                    if ($request->end_date) {
-                        $bookingsQuery->whereDate('end_time', '<=', $request->end_date);
-                    }
-                
-                    if ($request->start_time) {
-                        $bookingsQuery->whereTime('booking_time_start', '<=', $request->start_time);
-                    }
-                    if ($request->end_time) {
-                        $bookingsQuery->whereTime('booking_time_end', '>=', $request->end_time);
-                    }
-                
-                    // Sum up number_of_slot (default to 1 if null)
-                    $bookingCount = $bookingsQuery->get()->sum(function ($booking) {
-                        return $booking->number_of_slot ?? 1;
-                    });
-                
-                    $hourlyPricing->booking_count = $bookingCount;
-                    $hourlyPricing->available_slots = max(0, $hourlyPricing->parkingSpace->total_slots - $bookingCount);
-                
-                    return $hourlyPricing;
-                });
-                
-                $result->setCollection($transformedData);
-
-            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
-        } catch (Exception $e) {
-            Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
-        }
     }
 
 }
