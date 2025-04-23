@@ -57,7 +57,7 @@ class BookingService
             $validatedData['end_time'] = $endDateTime;
             $validatedData['unique_id'] = (string) Str::uuid();
             $this->checkPricingType($validatedData);
-            dd($validatedData);
+            // dd($validatedData);
             $this->checkParkingSlotAvailbelity($validatedData);
             // Create the booking
             $booking = Booking::create($validatedData);
