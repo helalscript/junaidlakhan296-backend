@@ -39,8 +39,8 @@ class UserPromoCode extends Model
     }
 
     // Optional: booking relationship if applicable
-    // public function booking()
-    // {
-    //     return $this->belongsTo(Booking::class);
-    // }
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
 }
