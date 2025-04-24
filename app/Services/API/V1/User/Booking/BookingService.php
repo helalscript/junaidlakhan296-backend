@@ -56,7 +56,12 @@ class BookingService
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
             $validatedData['unique_id'] = (string) Str::uuid();
-            $this->checkPricingType($validatedData);
+            $validatedData['estimated_hours'] = ;
+            $validatedData['estimated_price'] =  ;
+            $validatedData['platform_fee'] = $this->platformFee();
+            $validatedData['total_price'] = ;
+           $checkPricingType= $this->checkPricingType($validatedData);
+           $singlePrice= $checkPricingType->price;
             // dd($validatedData);
             $this->checkParkingSlotAvailbelity($validatedData);
             // Create the booking
@@ -196,19 +201,29 @@ class BookingService
                 throw new Exception(' Hourly pricing not found', 404);
             }
             Log::info($hourlyPricing);
+            return $hourlyPricing;
         } elseif ($validatedData['pricing_type'] == 'daily') {
             $dailyPricing = DailyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
             if (!$dailyPricing) {
                 throw new Exception('Daily pricing not found', 404);
             }
             Log::info($dailyPricing);
+            return $dailyPricing;
         } elseif ($validatedData['pricing_type'] == 'monthly') {
             $monthlyPricing = MonthlyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
             if (!$monthlyPricing) {
                 throw new Exception('Monthly pricing not found', 404);
             }
             Log::info($monthlyPricing);
+            return $monthlyPricing;
         }
         ;
+    }
+
+    private function platformFee()
+    {
+        $platform_fee = PlatformSetting::where('status', 'active')->Where('key','vat')->first();
+        Log::info("Platform fee: ".$platform_fee);
+        return $platform_fee->value??0;
     }
 }

@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->string('estimated_hours')->nullable();
-            $table->decimal('estimated_price', 10, 2)->nullable();
-            $table->decimal('platform_fee', 10, 2)->nullable();
-            $table->decimal('total_price', 10, 2)->nullable();
+            $table->string('per_hour_price')->nullable()->after('pricing_id');
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropColumn(['estimated_hours', 'estimated_price', 'platform_fee', 'total_price']);
+            $table->dropColumn('per_hour_price');
         });
     }
 };

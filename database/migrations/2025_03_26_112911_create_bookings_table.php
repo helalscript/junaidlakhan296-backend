@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('number_of_slot')->nullable();
             $table->enum('pricing_type', ['hourly', 'daily', 'monthly']);
             $table->unsignedBigInteger('pricing_id')->nullable();
+            $table->string('per_hour_price')->nullable();
             $table->string('estimated_hours')->nullable();
             $table->decimal('estimated_price', 10, 2)->nullable();
             $table->decimal('platform_fee', 10, 2)->nullable();
