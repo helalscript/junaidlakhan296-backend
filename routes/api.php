@@ -80,6 +80,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router)
 
 
 // public api
-Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
+// Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
 Route::get('/parking-spaces/hourly', [UserParkingSpaceController::class, 'indexForUsersHourly']);
-Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);
+Route::get('/parking-spaces/hourly/single/{id}', [UserParkingSpaceController::class, 'showForUsersHourly']);
+// Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);

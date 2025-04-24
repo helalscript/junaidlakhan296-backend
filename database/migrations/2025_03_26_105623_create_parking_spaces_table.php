@@ -24,9 +24,12 @@ return new class extends Migration {
             $table->longText('address')->nullable();
             $table->json('gallery_images')->nullable();
             $table->string('slug')->unique();
+            $table->boolean('is_verified')->default(false);
             $table->enum('status', ['available', 'unavailable', 'sold-out', 'close'])->default('available');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['latitude', 'longitude']);
         });
     }
 

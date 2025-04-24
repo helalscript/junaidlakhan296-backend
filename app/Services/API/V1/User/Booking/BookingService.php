@@ -7,6 +7,7 @@ use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\MonthlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -56,9 +57,17 @@ class BookingService
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
             $validatedData['unique_id'] = (string) Str::uuid();
-            $this->checkPricingType($validatedData);
+            
+            $validatedData['platform_fee'] = $this->platformFee();
+            $checkPricingType= $this->checkPricingType($validatedData);
+            // $validatedData['estimated_hours'] = ;
+            // $validatedData['estimated_price'] =  ;
+            // $validatedData['total_price'] = ;
+           $singlePrice= $checkPricingType->rate;
+           $validatedData['per_hour_price'] =$singlePrice ;
             // dd($validatedData);
             $this->checkParkingSlotAvailbelity($validatedData);
+            dd($validatedData);
             // Create the booking
             $booking = Booking::create($validatedData);
             DB::commit();
@@ -195,20 +204,50 @@ class BookingService
             if (!$hourlyPricing) {
                 throw new Exception(' Hourly pricing not found', 404);
             }
+            $startTime = $validatedData['booking_time_start'] ?? now()->format('H:i');
+            $endTime = $validatedData['booking_time_end'] ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $validatedData['booking_date'] ?? now()->format('Y-m-d');
+            $endDate = $validatedData['end_date'];
+            
+            if ($startTime && $endTime) {
+                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                if ($endDate) {
+                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                } else {
+                    $totalHours = $dailyHours;
+                }
+    
+                $hourlyPricing->estimated_hours = round($totalHours, 2);
+                $hourlyPricing->estimated_price = round($totalHours * $hourlyPricing->rate, 2);
+            }
             Log::info($hourlyPricing);
+            return $hourlyPricing;
+
+
+
+
         } elseif ($validatedData['pricing_type'] == 'daily') {
             $dailyPricing = DailyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
             if (!$dailyPricing) {
                 throw new Exception('Daily pricing not found', 404);
             }
             Log::info($dailyPricing);
+            return $dailyPricing;
         } elseif ($validatedData['pricing_type'] == 'monthly') {
             $monthlyPricing = MonthlyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
             if (!$monthlyPricing) {
                 throw new Exception('Monthly pricing not found', 404);
             }
             Log::info($monthlyPricing);
+            return $monthlyPricing;
         }
         ;
+    }
+
+    private function platformFee()
+    {
+        $platform_fee = PlatformSetting::where('status', 'active')->Where('key','vat')->first();
+        Log::info("Platform fee: ".$platform_fee);
+        return $platform_fee->value??0;
     }
 }
