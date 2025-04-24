@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\indexForUserHourlyResource;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
 use App\Models\Booking;
 use App\Models\HourlyPricing;
@@ -54,6 +55,11 @@ class UserParkingSpaceController extends Controller
             $startDate = $request->start_date ?? now()->format('Y-m-d');
             $endDate = $request->end_date;
             // dd($startTime.' '. $endTime.' '.$startDate);
+            $latitude = $request->latitude ?? 12.9716770;
+            $longitude = $request->longitude ?? 77.5946770;
+            $radius = $request->radius ?? 500;
+
+
             // Get list of day names (e.g., Monday, Tuesday) from given dates
             $dayNames = [];
 
@@ -69,23 +75,39 @@ class UserParkingSpaceController extends Controller
                 }
             }
             // dd($dayNames);
-            $hourlyPricing = HourlyPricing::with(['parkingSpace', 'days'])
-                ->where('status', 'active')
-                ->whereHas('parkingSpace', function ($q) {
-                    $q->where('status', 'available')->where('is_verified', true);
-                })
+            $haversine = "(6371 * acos(cos(radians(?)) 
+                        * cos(radians(parking_spaces.latitude)) 
+                        * cos(radians(parking_spaces.longitude) - radians(?)) 
+                        + sin(radians(?)) 
+                        * sin(radians(parking_spaces.latitude))))";
+
+            $hourlyPricing = HourlyPricing::with([
+                'parkingSpace.driverInstructions',
+                'parkingSpace.reviews',
+                'parkingSpace.spotDetails',
+                'days'
+            ])
+                ->join('parking_spaces', 'hourly_pricings.parking_space_id', '=', 'parking_spaces.id')
+                ->where('hourly_pricings.status', 'active')
+                ->where('parking_spaces.status', 'available')
+                ->where('parking_spaces.is_verified', true)
+                ->whereNull('parking_spaces.deleted_at')
+                ->whereRaw("$haversine <= ?", [$latitude, $longitude, $latitude, $radius])
+                ->select('hourly_pricings.*')
+                ->selectRaw("$haversine AS distance", [$latitude, $longitude, $latitude])
                 ->whereHas('days', function ($q) use ($dayNames) {
                     if (!empty($dayNames)) {
                         $q->whereIn('day', $dayNames);
                     }
-                    $q->where('status', 'available'); // Filter days by status
+                    $q->where('status', 'available');
                 })
                 ->when($startTime, function ($query, $startTime) {
                     $query->whereTime('start_time', '<=', $startTime);
                 })
                 ->when($endTime, function ($query, $endTime) {
                     $query->whereTime('end_time', '>=', $endTime);
-                });
+                })
+                ->orderBy('distance', 'asc');
 
 
             $result = $hourlyPricing->paginate($perPage);
@@ -151,7 +173,7 @@ class UserParkingSpaceController extends Controller
 
             $result->setCollection($transformedData);
 
-            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, indexForUserHourlyResource::collection($result), true);
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);

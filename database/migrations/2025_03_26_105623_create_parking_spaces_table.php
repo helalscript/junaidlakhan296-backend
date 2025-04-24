@@ -28,6 +28,8 @@ return new class extends Migration {
             $table->enum('status', ['available', 'unavailable', 'sold-out', 'close'])->default('available');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['latitude', 'longitude']);
         });
     }
 
