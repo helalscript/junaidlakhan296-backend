@@ -179,6 +179,102 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
         }
     }
+
+    public function showForUsersHourly(Request $request, $id)
+    {
+        try {
+            $latitude = $request->latitude ?? 12.9716770;
+            $longitude = $request->longitude ?? 77.5946770;
+
+            $startTime = $request->start_time ?? now()->format('H:i');
+            $endTime = $request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $request->start_date ?? now()->format('Y-m-d');
+            $endDate = $request->end_date;
+
+            $hourlyPricing = HourlyPricing::with([
+                'parkingSpace.driverInstructions',
+                'parkingSpace.reviews',
+                'parkingSpace.spotDetails',
+                'days'
+            ])
+                ->where('status', 'active')
+                ->findOrFail($id);
+
+            $parkingSpace = $hourlyPricing->parkingSpace;
+
+            if (
+                !$parkingSpace ||
+                $parkingSpace->status !== 'available' ||
+                !$parkingSpace->is_verified ||
+                $parkingSpace->deleted_at
+            ) {
+                return Helper::jsonErrorResponse('Parking space not available.', 404);
+            }
+
+            // Distance Calculation (Haversine Formula)
+            $distance = 6371 * acos(
+                cos(deg2rad($latitude)) *
+                cos(deg2rad($parkingSpace->latitude)) *
+                cos(deg2rad($parkingSpace->longitude) - deg2rad($longitude)) +
+                sin(deg2rad($latitude)) *
+                sin(deg2rad($parkingSpace->latitude))
+            );
+
+            $hourlyPricing->distance = round($distance, 2);
+
+            // Booking Calculation
+            $bookingsQuery = Booking::where('parking_space_id', $parkingSpace->id)
+                ->whereNotIn('status', ['cancelled', 'close']);
+
+            if ($startDate) {
+                $bookingsQuery->whereDate('start_time', '>=', $startDate);
+            }
+            if ($endDate) {
+                $bookingsQuery->whereDate('end_time', '<=', $endDate);
+            }
+            if ($startTime) {
+                $bookingsQuery->whereTime('booking_time_start', '<=', $startTime);
+            }
+            if ($endTime) {
+                $bookingsQuery->whereTime('booking_time_end', '>=', $endTime);
+            }
+
+            $bookingCount = $bookingsQuery->get()->sum(function ($booking) {
+                return $booking->number_of_slot ?? 1;
+            });
+
+            $hourlyPricing->booking_count = $bookingCount;
+            $hourlyPricing->available_slots = max(0, $parkingSpace->total_slots - $bookingCount);
+
+            // Estimate Time and Price
+            if ($startTime && $endTime && $startDate) {
+                $start = Carbon::parse($startTime);
+                $end = Carbon::parse($endTime);
+                $dailyHours = round($start->floatDiffInHours($end), 2);
+
+                if ($endDate) {
+                    $start_time_date = Carbon::parse("{$startDate} {$startTime}");
+                    $end_time_date = Carbon::parse("{$endDate} {$endTime}");
+                    $totalHours = round($start_time_date->floatDiffInHours($end_time_date), 2);
+                } else {
+                    $totalHours = $dailyHours;
+                }
+
+                $hourlyPricing->estimated_hours = $totalHours;
+                $hourlyPricing->estimated_price = $totalHours * $hourlyPricing->rate;
+            } else {
+                $hourlyPricing->estimated_hours = null;
+                $hourlyPricing->estimated_price = null;
+            }
+
+            return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, $hourlyPricing);
+            // return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, new indexForUserHourlyResource($hourlyPricing));
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch hourly pricing. ' . $e->getMessage(), 500);
+        }
+    }
+
     public function indexForUsers(Request $request)
     {
         try {

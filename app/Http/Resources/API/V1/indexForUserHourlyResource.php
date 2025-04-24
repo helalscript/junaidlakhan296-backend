@@ -19,16 +19,17 @@ class indexForUserHourlyResource extends JsonResource
             'id' => $this->id,
             'parking_space_id' => $this->parking_space_id,
             'parking_space_title' => optional($this->parkingSpace)->title,
-            'parking_space_per_hour_rate' => optional($this->parkingSpace)->rate,
+            'per_hour_rate' => $this->rate,
+            'available_slots' => $this->available_slots,
             'parking_space_slug' => optional($this->parkingSpace)->slug,
-            'parking_space_images' => optional($this->parkingSpace)->gallery_images,
-            'parking_space_latitude' => optional($this->parkingSpace)->gallery_latitude,
-            'parking_space_longitude' => optional($this->parkingSpace)->gallery_longitude,
+            'parking_space_images' => optional($this->parkingSpace)->gallery_images[0] ?? null,
+            'parking_space_latitude' => optional($this->parkingSpace)->latitude,
+            'parking_space_longitude' => optional($this->parkingSpace)->longitude,
             'parking_space_address' => optional($this->parkingSpace)->address,
-            'parking_space_status' => optional($this->parkingSpace)->status,
             'estimated_hours' => $this->estimated_hours,
             'estimated_price' => $this->estimated_price,
             'distance' => $this->distance,
+            'status' => ($this->available_slots > 0) ? 'available' : 'unavailable',
         ];
     }
 }
