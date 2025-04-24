@@ -22,13 +22,14 @@ class UserParkingSpaceService
     {
         $perPage = $request->per_page ?? 25;
         $startTime = $request->start_time ?? now()->format('H:i');
-        $endTime = $request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i');
+        $isStartTime = $request->start_time ?? null;
+        $endTime = $isStartTime ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
         $startDate = $request->start_date ?? now()->format('Y-m-d');
         $endDate = $request->end_date;
         $latitude = $request->latitude ?? 12.9716770;
         $longitude = $request->longitude ?? 77.5946770;
         $radius = $request->radius ?? 500;
-
+        // dd($endTime);
         $dayNames = [];
         if ($startDate && !$endDate) {
             $dayNames[] = Carbon::parse($startDate)->format('l');
@@ -79,6 +80,8 @@ class UserParkingSpaceService
 
     public function transformPricingData($result, $startTime, $endTime, $startDate, $endDate)
     {
+        // dd($startTime. $endTime. $startDate. $endDate);
+        Log::info('hourly pricing', [$startTime, $endTime, $startDate, $endDate]);
         return $result->getCollection()->map(function ($pricing) use ($startTime, $endTime, $startDate, $endDate) {
             $bookingsQuery = Booking::where('parking_space_id', $pricing->parking_space_id)
                 ->whereNotIn('status', ['cancelled', 'close', 'completed']);

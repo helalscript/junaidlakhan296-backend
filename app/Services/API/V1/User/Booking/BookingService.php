@@ -7,6 +7,7 @@ use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\MonthlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -57,15 +58,16 @@ class BookingService
             $validatedData['end_time'] = $endDateTime;
             $validatedData['unique_id'] = (string) Str::uuid();
             
-            $validatedData['estimated_hours'] = ;
-            $validatedData['estimated_price'] =  ;
             $validatedData['platform_fee'] = $this->platformFee();
-            $validatedData['total_price'] = ;
-           $checkPricingType= $this->checkPricingType($validatedData);
+            $checkPricingType= $this->checkPricingType($validatedData);
+            // $validatedData['estimated_hours'] = ;
+            // $validatedData['estimated_price'] =  ;
+            // $validatedData['total_price'] = ;
            $singlePrice= $checkPricingType->rate;
            $validatedData['per_hour_price'] =$singlePrice ;
             // dd($validatedData);
             $this->checkParkingSlotAvailbelity($validatedData);
+            dd($validatedData);
             // Create the booking
             $booking = Booking::create($validatedData);
             DB::commit();
@@ -202,8 +204,28 @@ class BookingService
             if (!$hourlyPricing) {
                 throw new Exception(' Hourly pricing not found', 404);
             }
+            $startTime = $validatedData['booking_time_start'] ?? now()->format('H:i');
+            $endTime = $validatedData['booking_time_end'] ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $validatedData['booking_date'] ?? now()->format('Y-m-d');
+            $endDate = $validatedData['end_date'];
+            
+            if ($startTime && $endTime) {
+                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                if ($endDate) {
+                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                } else {
+                    $totalHours = $dailyHours;
+                }
+    
+                $hourlyPricing->estimated_hours = round($totalHours, 2);
+                $hourlyPricing->estimated_price = round($totalHours * $hourlyPricing->rate, 2);
+            }
             Log::info($hourlyPricing);
             return $hourlyPricing;
+
+
+
+
         } elseif ($validatedData['pricing_type'] == 'daily') {
             $dailyPricing = DailyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
             if (!$dailyPricing) {

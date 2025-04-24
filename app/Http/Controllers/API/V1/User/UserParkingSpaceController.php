@@ -33,20 +33,31 @@ class UserParkingSpaceController extends Controller
     }
     public function indexForUsersHourly(Request $request)
     {
+        $validatedData = $request->validate([
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d|after:start_date',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:10',
+        ]);
+        // dd($validatedData);
         try {
+            $isStartTime = $validatedData['start_time'] ?? null;
             $result = $this->userParkingSpaceService->getHourlyPricing($request);
-            // dd($result);
+
             $transformedData = $this->userParkingSpaceService->transformPricingData(
                 $result,
-                $request->start_time ?? now()->format('H:i'),
-                $request->end_time ?? (new Carbon($request->start_time))->addHour()->format('H:i'),
-                $request->start_dat ?? now()->format('Y-m-d'),
-                $request->end_date
+                $validatedData['start_time'] ?? now()->format('H:i'),
+                $isStartTime ? ($validatedData['end_time'] ?? (new Carbon($validatedData['start_time'] ?? now()->format('H:i')))->addHour()->format('H:i')) : (new Carbon($validatedData['start_time'] ?? now()->format('H:i')))->addHour()->format('H:i'),
+                $validatedData['start_date'] ?? now()->format('Y-m-d'),
+                $validatedData['end_date'] ?? null
             );
             $result->setCollection($transformedData);
 
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, indexForUserHourlyResource::collection($result), true);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
         }
@@ -56,8 +67,8 @@ class UserParkingSpaceController extends Controller
         try {
             $pricing = $this->userParkingSpaceService->getHourlyPricingDetails($id, $request);
             return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new showForUserHourlyResource($pricing));
-        } catch (\Exception $e) {
-            \Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch pricing details. ' . $e->getMessage(), 500);
         }
     }
