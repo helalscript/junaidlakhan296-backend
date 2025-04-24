@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\indexForUserHourlyResource;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
+use App\Http\Resources\API\V1\showForUserHourlyResource;
 use App\Models\Booking;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
@@ -58,7 +59,7 @@ class UserParkingSpaceController extends Controller
             $latitude = $request->latitude ?? 12.9716770;
             $longitude = $request->longitude ?? 77.5946770;
             $radius = $request->radius ?? 500;
-
+            // dd($startDate);
 
             // Get list of day names (e.g., Monday, Tuesday) from given dates
             $dayNames = [];
@@ -83,7 +84,9 @@ class UserParkingSpaceController extends Controller
 
             $hourlyPricing = HourlyPricing::with([
                 'parkingSpace.driverInstructions',
-                'parkingSpace.reviews',
+                'parkingSpace.reviews' => function ($query) {
+                    $query->where('status', 'approved');
+                },
                 'parkingSpace.spotDetails',
                 'days'
             ])
@@ -112,24 +115,24 @@ class UserParkingSpaceController extends Controller
 
             $result = $hourlyPricing->paginate($perPage);
 
-            $transformedData = $result->getCollection()->map(function ($hourlyPricing) use ($request) {
+            $transformedData = $result->getCollection()->map(function ($hourlyPricing) use ($request, $startTime, $endTime, $startDate, $endDate) {
+                Log::info('startTime ' . $startTime . ' endTime ' . $endTime . ' startDate ' . $startDate . ' endDate ' . $endDate);
                 // Filter active bookings for this parking space during specified time
                 $bookingsQuery = Booking::where('parking_space_id', $hourlyPricing->parking_space_id)
-                    ->whereNotIn('status', ['cancelled', 'close']);
+                    ->whereNotIn('status', ['cancelled', 'close', 'completed']);
 
                 // Optional: Filter by date/time range if provided
-                if ($request->start_date) {
-                    $bookingsQuery->whereDate('start_time', '>=', $request->start_date);
+                if ($startDate) {
+                    $bookingsQuery->whereDate('start_time', '>=', $startDate);
                 }
-                if ($request->end_date) {
-                    $bookingsQuery->whereDate('end_time', '<=', $request->end_date);
+                if ($endDate) {
+                    $bookingsQuery->whereDate('end_time', '<=', $endDate);
                 }
-
-                if ($request->start_time) {
-                    $bookingsQuery->whereTime('booking_time_start', '<=', $request->start_time);
+                if ($startTime) {
+                    $bookingsQuery->whereTime('booking_time_start', '<=', $startTime);
                 }
-                if ($request->end_time) {
-                    $bookingsQuery->whereTime('booking_time_end', '>=', $request->end_time);
+                if ($endTime) {
+                    $bookingsQuery->whereTime('booking_time_end', '>=', $endTime);
                 }
 
                 // Sum up number_of_slot (default to 1 if null)
@@ -140,19 +143,19 @@ class UserParkingSpaceController extends Controller
                 $hourlyPricing->booking_count = $bookingCount;
                 $hourlyPricing->available_slots = max(0, $hourlyPricing->parkingSpace->total_slots - $bookingCount);
                 // Calculate user search duration (in hours)
-                if ($request->start_time && $request->end_time && $request->start_date) {
-                    $start = Carbon::parse($request->start_time);
-                    $end = Carbon::parse($request->end_time);
+                if ($startTime && $endTime && $startDate) {
+                    // dd($startTime.' '. $endTime.' '.$startDate);
+                    $start = Carbon::parse($startTime);
+                    $end = Carbon::parse($endTime);
                     Log::info('start time: ' . $start . " " . 'end time: ' . $end);
                     // Get float difference between times (same day)
                     $dailyHours = round($start->floatDiffInHours($end), 2);
-                    // $dailyHours = $start->diffInMinutes($end) ;
                     Log::info('Hours Count: ' . $dailyHours);
 
                     // Count how many days
-                    if ($request->end_date) {
-                        $start_time_date = Carbon::parse("{$request->start_date} {$request->start_time}");
-                        $end_time_date = Carbon::parse("{$request->end_date} {$request->end_time}");
+                    if ($endDate) {
+                        $start_time_date = Carbon::parse("{$startDate} {$startTime}");
+                        $end_time_date = Carbon::parse("{$endDate} {$endTime}");
                         Log::info('Start date ' . $start_time_date . " " . 'End date' . $end_time_date);
                         $totalHoursCount = round($start_time_date->floatDiffInHours($end_time_date), 2);
                         Log::info(' Total Days+Hours Count count: ' . $totalHoursCount);
@@ -168,11 +171,21 @@ class UserParkingSpaceController extends Controller
                     $hourlyPricing->estimated_hours = null;
                     $hourlyPricing->estimated_price = null;
                 }
+
+                // Calculate review count and average rating
+                $reviews = $hourlyPricing->parkingSpace->reviews;
+                $reviewCount = $reviews->count();
+                $reviewAverage = $reviewCount > 0 ? round($reviews->avg('rating'), 2) : 0;
+
+                $hourlyPricing->review_count = $reviewCount;
+                $hourlyPricing->average_rating = $reviewAverage;
+
                 return $hourlyPricing;
             });
 
             $result->setCollection($transformedData);
 
+            // return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, indexForUserHourlyResource::collection($result), true);
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
@@ -193,7 +206,9 @@ class UserParkingSpaceController extends Controller
 
             $hourlyPricing = HourlyPricing::with([
                 'parkingSpace.driverInstructions',
-                'parkingSpace.reviews',
+                'parkingSpace.reviews' => function ($query) {
+                    $query->where('status', 'approved');
+                },
                 'parkingSpace.spotDetails',
                 'days'
             ])
@@ -245,7 +260,13 @@ class UserParkingSpaceController extends Controller
 
             $hourlyPricing->booking_count = $bookingCount;
             $hourlyPricing->available_slots = max(0, $parkingSpace->total_slots - $bookingCount);
+            // Calculate review count and average rating
+            $reviews = $hourlyPricing->parkingSpace->reviews;
+            $reviewCount = $reviews->count();
+            $reviewAverage = $reviewCount > 0 ? round($reviews->avg('rating'), 2) : 0;
 
+            $hourlyPricing->review_count = $reviewCount;
+            $hourlyPricing->average_rating = $reviewAverage;
             // Estimate Time and Price
             if ($startTime && $endTime && $startDate) {
                 $start = Carbon::parse($startTime);
@@ -267,8 +288,9 @@ class UserParkingSpaceController extends Controller
                 $hourlyPricing->estimated_price = null;
             }
 
-            return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, $hourlyPricing);
-            // return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, new indexForUserHourlyResource($hourlyPricing));
+
+            // return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, $hourlyPricing);
+            return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, new showForUserHourlyResource($hourlyPricing));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch hourly pricing. ' . $e->getMessage(), 500);
