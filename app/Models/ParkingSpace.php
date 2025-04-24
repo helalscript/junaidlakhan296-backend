@@ -26,6 +26,7 @@ class ParkingSpace extends Model
         'address',
         'gallery_images',
         'slug',
+        'is_verified',
         'status',
     ];
 
@@ -43,6 +44,7 @@ class ParkingSpace extends Model
         'address' => 'string',
         'gallery_images' => 'array',
         'slug' => 'string',
+        'is_verified' => 'boolean',
         'status' => 'string',
         'deleted_at' => 'datetime',
     ];

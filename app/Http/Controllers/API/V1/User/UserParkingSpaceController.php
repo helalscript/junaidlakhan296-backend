@@ -72,7 +72,7 @@ class UserParkingSpaceController extends Controller
             $hourlyPricing = HourlyPricing::with(['parkingSpace', 'days'])
                 ->where('status', 'active')
                 ->whereHas('parkingSpace', function ($q) {
-                    $q->where('status', 'available');
+                    $q->where('status', 'available')->where('is_verified', true);
                 })
                 ->whereHas('days', function ($q) use ($dayNames) {
                     if (!empty($dayNames)) {
@@ -168,6 +168,7 @@ class UserParkingSpaceController extends Controller
             $end_time = $request->end_time ?? null;
 
             $parkingSpaces = ParkingSpace::where('status', 'available')
+                ->where('is_verified', true)
                 ->withAvg([
                     'reviews as average_rating' => function ($query) {
                         $query->where('status', 'approved');
@@ -303,6 +304,7 @@ class UserParkingSpaceController extends Controller
     {
         try {
             $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)
+                ->where('is_verified', true)
                 ->withAvg([
                     'reviews as average_rating' => function ($query) {
                         $query->where('status', 'approved');
@@ -342,7 +344,7 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to fetch parking space', 500);
         }
     }
-// Calculate user search duration (in hours)
+    // Calculate user search duration (in hours)
     // private function calculateHour()
     // {
 

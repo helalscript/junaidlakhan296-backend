@@ -218,6 +218,8 @@ class HostParkingSpaceController extends Controller
             $parkingSpaceData['unique_id'] = (string) Str::uuid();
             $parkingSpaceData['user_id'] = auth()->id();
             $parkingSpaceData['slug'] = Helper::makeSlug($validatedData['title'], 'parking_spaces');
+            // here option for future use verify
+            $parkingSpaceData['is_verified'] = true;
             $parkingSpaceData['status'] = 'available';
 
             $parkingSpace = ParkingSpace::create($parkingSpaceData);

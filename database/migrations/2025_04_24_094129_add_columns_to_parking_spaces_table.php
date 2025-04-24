@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->string('per_hour_price')->nullable()->after('pricing_id');
+        Schema::table('parking_spaces', function (Blueprint $table) {
+            $table->boolean('is_verified')->default(false);
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->dropColumn('per_hour_price');
+        Schema::table('parking_spaces', function (Blueprint $table) {
+            $table->dropColumn('is_verified');
         });
     }
 };

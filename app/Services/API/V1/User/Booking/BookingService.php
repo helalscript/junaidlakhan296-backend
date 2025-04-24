@@ -56,12 +56,14 @@ class BookingService
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
             $validatedData['unique_id'] = (string) Str::uuid();
+            
             $validatedData['estimated_hours'] = ;
             $validatedData['estimated_price'] =  ;
             $validatedData['platform_fee'] = $this->platformFee();
             $validatedData['total_price'] = ;
            $checkPricingType= $this->checkPricingType($validatedData);
-           $singlePrice= $checkPricingType->price;
+           $singlePrice= $checkPricingType->rate;
+           $validatedData['per_hour_price'] =$singlePrice ;
             // dd($validatedData);
             $this->checkParkingSlotAvailbelity($validatedData);
             // Create the booking
