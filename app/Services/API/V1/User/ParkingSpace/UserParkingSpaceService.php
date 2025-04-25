@@ -134,7 +134,7 @@ class UserParkingSpaceService
         ])->findOrFail($id);
 
         $startTime = $request->start_time ?? now()->format('H:i');
-        $endTime = $request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i');
+        $endTime = $request->start_time ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
         $startDate = $request->start_date ?? now()->format('Y-m-d');
         $endDate = $request->end_date;
 

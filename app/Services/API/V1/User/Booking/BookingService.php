@@ -50,15 +50,16 @@ class BookingService
         try {
             DB::beginTransaction();
             // Combine date + time to generate full timestamps
-            $startDateTime = Carbon::parse($validatedData['booking_date'] . ' ' . $validatedData['booking_time_start']);
-            $endDateTime = Carbon::parse($validatedData['booking_date'] . ' ' . $validatedData['booking_time_end']);
-            $validatedData['user_id'] = $this->user->id;
-            $validatedData['booking_date'] = now();
+            $startDateTime = Carbon::parse($validatedData['booking_date_start'] . ' ' . $validatedData['booking_time_start']);
+            $endDateTime = Carbon::parse($validatedData['booking_date_end'] . ' ' . $validatedData['booking_time_end']);
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
+
+            $validatedData['user_id'] = $this->user->id;
             $validatedData['unique_id'] = (string) Str::uuid();
-            
+            // dd($validatedData);
             $validatedData['platform_fee'] = $this->platformFee();
+            dd($this->platformFee()->toArray());
             $checkPricingType= $this->checkPricingType($validatedData);
             // $validatedData['estimated_hours'] = ;
             // $validatedData['estimated_price'] =  ;
@@ -150,11 +151,11 @@ class BookingService
             ->whereNotIn('status', ['cancelled', 'completed', 'close']);
 
         // Optional: Filter by date/time range if provided
-        if ($validatedData['booking_date']) {
-            $bookingsQuery->whereDate('start_time', '>=', $validatedData['booking_date']);
+        if ($validatedData['booking_date_start']) {
+            $bookingsQuery->whereDate('start_time', '>=', $validatedData['booking_date_start']);
         }
-        if ($validatedData['booking_date']) {
-            $bookingsQuery->whereDate('end_time', '<=', $validatedData['booking_date']);
+        if ($validatedData['booking_date_end']) {
+            $bookingsQuery->whereDate('end_time', '<=', $validatedData['booking_date_end']);
         }
         if ($validatedData['start_time']) {
             $bookingsQuery->whereTime('booking_time_start', '<=', $validatedData['start_time']);
@@ -185,7 +186,7 @@ class BookingService
         if ($validatedData['pricing_type'] == 'hourly') {
             $dayNames = [];
 
-            if ($startDate = $validatedData['booking_date']) {
+            if ($startDate = $validatedData['booking_date_start']) {
                 $dayNames[] = Carbon::parse($startDate)->format('l');
             }
             $hourlyPricing = HourlyPricing::where('id', $validatedData['pricing_id'])
@@ -206,7 +207,7 @@ class BookingService
             }
             $startTime = $validatedData['booking_time_start'] ?? now()->format('H:i');
             $endTime = $validatedData['booking_time_end'] ?? (new Carbon($startTime))->addHour()->format('H:i');
-            $startDate = $validatedData['booking_date'] ?? now()->format('Y-m-d');
+            $startDate = $validatedData['booking_date_start'] ?? now()->format('Y-m-d');
             $endDate = $validatedData['end_date'];
             
             if ($startTime && $endTime) {
@@ -247,7 +248,9 @@ class BookingService
     private function platformFee()
     {
         $platform_fee = PlatformSetting::where('status', 'active')->Where('key','vat')->first();
-        Log::info("Platform fee: ".$platform_fee);
-        return $platform_fee->value??0;
+        $platform_fee = PlatformSetting::where('status', 'active')->get();
+        // Log::info("Platform fee: ".$platform_fee);
+        return $platform_fee;
+        // return $platform_fee->value??0;
     }
 }
