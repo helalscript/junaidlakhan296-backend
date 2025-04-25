@@ -47,6 +47,7 @@ class Booking extends Model
         'booking_time_start' => 'datetime',
         'booking_time_end' => 'datetime',
         'start_time' => 'datetime',
+        'end_time' => 'datetime',
         'status' => 'string',
     ];
 
@@ -80,5 +81,18 @@ class Booking extends Model
     public function platformFee()
     {
         return $this->hasMany(BookingPlatformFee::class);
+    }
+
+    
+    // Accessor for booking_date_start (only date part)
+    public function getBookingDateStartAttribute($value)
+    {
+        return Carbon::parse($value)->format('Y-m-d');
+    }
+
+    // Accessor for booking_date_end (only date part)
+    public function getBookingDateEndAttribute($value)
+    {
+        return Carbon::parse($value)->format('Y-m-d');
     }
 }

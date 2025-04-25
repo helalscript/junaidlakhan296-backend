@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('booking_platform_fees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
-            $table->foreignId('platform_setting_id')->nullable()->constrained('platform_fees')->onDelete('set null');
+            $table->foreignId('platform_setting_id')->nullable()->constrained('platform_settings')->onDelete('set null');
             $table->string('key');
             $table->decimal('value', 10, 2);
             $table->timestamps();
