@@ -11,6 +11,7 @@ use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
 use App\Http\Controllers\API\V1\User\UserBookingController;
+use App\Http\Controllers\API\V1\User\UserNotificationController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
 use App\Http\Controllers\API\V1\User\UserVehicleController;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,8 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
 Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router) {
     Route::apiResource('/my-bookings', UserBookingController::class);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
+    // Route::apiResource('/my-notifications', UserNotificationController::class);
+    Route::get('/my-notifications-setting', [UserNotificationController::class, 'getAllNotifications']);
 });
 
 
