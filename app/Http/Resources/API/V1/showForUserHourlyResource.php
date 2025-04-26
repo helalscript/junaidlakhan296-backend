@@ -38,6 +38,7 @@ class showForUserHourlyResource extends JsonResource
                         'reviews' => ReviewResource::collection($this->parkingSpace->reviews),
                         'review_count' => $this->review_count,
                         'average_rating' => $this->average_rating,
+                        'platform_fee' => $this->platform_fee,
                     ];
                 }
             ),

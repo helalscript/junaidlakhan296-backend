@@ -54,6 +54,8 @@ class UserBookingController extends Controller
             'booking_date_end' => 'required|date|after_or_equal:booking_date_start',
             'booking_time_start' => 'required|date_format:H:i',
             'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+        ], [
+            'vehicle_details_id.required' => 'The vehicle details field is required.',
         ]);
         // dd($validatedData);
         // Validate pricing_id based on pricing_type

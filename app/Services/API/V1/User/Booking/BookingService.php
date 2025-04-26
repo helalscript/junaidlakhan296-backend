@@ -28,16 +28,78 @@ class BookingService
      *
      * @return mixed
      */
+
     public function index($request)
     {
         try {
-            $bookings = Booking::with('parkingSpace')->where('user_id', $this->user->id)->paginate($request->per_page ?? 25);
+            $status = $request->status ?? 'active';
+            $bookings = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+                ->where('user_id', $this->user->id)
+                ->select('id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->where('status', $status)
+                ->latest()
+                ->paginate($request->per_page ?? 25);
+
+            $bookings->getCollection()->transform(function ($booking) {
+                $now = Carbon::now();
+                $start = Carbon::parse($booking->start_time);
+                $end = Carbon::parse($booking->end_time);
+
+                $booking->is_critical = false;
+                $booking->is_expired = false;
+                $booking->is_running = false;
+
+                if ($now->lt($start)) {
+                    // Before start time
+                    $diffInMinutes = $now->diffInMinutes($start);
+
+                    if ($diffInMinutes <= 10) {
+                        $booking->is_critical = true;
+                    }
+
+                    $hours = floor($diffInMinutes / 60);
+                    $minutes = $diffInMinutes % 60;
+
+                    if ($hours > 0) {
+                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To Start Parking";
+                    } else {
+                        $booking->parking_status = "{$minutes} Minute(s) Left To Start Parking";
+                    }
+
+                } elseif ($now->between($start, $end)) {
+                    // Parking Running
+                    $diffInMinutes = $now->diffInMinutes($end);
+                    $booking->is_running = true;
+
+                    if ($diffInMinutes <= 10) {
+                        $booking->is_critical = true;
+                    }
+
+                    $hours = floor($diffInMinutes / 60);
+                    $minutes = $diffInMinutes % 60;
+
+                    if ($hours > 0) {
+                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To End Parking";
+                    } else {
+                        $booking->parking_status = "{$minutes} Minute(s) Left To End Parking";
+                    }
+
+                } else {
+                    // After end time
+                    $booking->is_expired = true;
+                    $booking->parking_status = "Parking Time Ended";
+                }
+
+                return $booking;
+            });
+
             return $bookings;
         } catch (Exception $e) {
-            Log::error("BookingService::index" . $e->getMessage());
+            Log::error("BookingService::index " . $e->getMessage());
             throw $e;
         }
     }
+
 
 
     /**
@@ -68,9 +130,9 @@ class BookingService
             // $validatedData['total_price'] = ;
             $singlePrice = $checkPricingType->rate;
             $validatedData['per_hour_price'] = $singlePrice;
-            
+
             $this->checkParkingSlotAvailbelity($validatedData);
-          
+
             // Create the booking
             $booking = Booking::create($validatedData);
             $this->platformFeeAssign($booking->id);
@@ -246,19 +308,72 @@ class BookingService
      * @param int $id
      * @return mixed
      */
-    public function show(int $id)
+
+    public function show($id)
     {
         try {
-            $booking = Booking::with('parkingSpace')->where('id', $id)->where('user_id', $this->user->id)->first();
-            if (!$booking) {
-                throw new Exception('Booking not found or you do not own this booking', 404);
+            $booking = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+                ->where('user_id', $this->user->id)
+                ->select('id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->findOrFail($id);
+
+            $now = Carbon::now();
+            $start = Carbon::parse($booking->start_time);
+            $end = Carbon::parse($booking->end_time);
+
+            $booking->is_critical = false;
+            $booking->is_expired = false;
+            $booking->is_running = false;
+
+            if ($now->lt($start)) {
+                // Before parking starts
+                $diffInMinutes = $now->diffInMinutes($start);
+
+                if ($diffInMinutes <= 10) {
+                    $booking->is_critical = true;
+                }
+
+                $hours = floor($diffInMinutes / 60);
+                $minutes = $diffInMinutes % 60;
+
+                if ($hours > 0) {
+                    $booking->parking_status = "{$hours} Hour(s) {$minutes} Minute(s) Left To Start Parking";
+                } else {
+                    $booking->parking_status = "{$minutes} Minute(s) Left To Start Parking";
+                }
+
+            } elseif ($now->between($start, $end)) {
+                // Parking is running
+                $diffInMinutes = $now->diffInMinutes($end);
+                $booking->is_running = true;
+
+                if ($diffInMinutes <= 10) {
+                    $booking->is_critical = true;
+                }
+
+                $hours = floor($diffInMinutes / 60);
+                $minutes = $diffInMinutes % 60;
+
+                if ($hours > 0) {
+                    $booking->parking_status = "{$hours} Hour(s) {$minutes} Minute(s) Left To End Parking";
+                } else {
+                    $booking->parking_status = "{$minutes} Minute(s) Left To End Parking";
+                }
+
+            } else {
+                // Parking ended
+                $booking->is_expired = true;
+                $booking->parking_status = "Parking Time Ended";
             }
+
             return $booking;
+
         } catch (Exception $e) {
-            Log::error("BookingService::show" . $e->getMessage());
+            Log::error("BookingService::show " . $e->getMessage());
             throw $e;
         }
     }
+
 
 
     /**

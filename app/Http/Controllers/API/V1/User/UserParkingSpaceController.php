@@ -64,6 +64,16 @@ class UserParkingSpaceController extends Controller
     }
     public function showForUsersHourly($id, Request $request)
     {
+        $validatedData = $request->validate([
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d|after:start_date',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:10',
+        ]);
+        // dd($validatedData);
         try {
             $pricing = $this->userParkingSpaceService->getHourlyPricingDetails($id, $request);
             return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new showForUserHourlyResource($pricing));
