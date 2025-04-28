@@ -136,14 +136,5 @@ class User extends Authenticatable implements JWTSubject
         }
     }
 
-    public function customNotifications()
-    {
-        return $this->belongsToMany(
-            CustomNotification::class,
-            'user_custom_notifications',
-            'user_id',
-            'custom_notification_id'
-        )->withPivot('status') // get user's active/inactive status
-            ->withTimestamps();
-    }
+
 }

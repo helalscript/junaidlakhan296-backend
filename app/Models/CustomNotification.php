@@ -27,5 +27,6 @@ class CustomNotification extends Model
         'status' => 'string', 
     ];
 
+
 }
 

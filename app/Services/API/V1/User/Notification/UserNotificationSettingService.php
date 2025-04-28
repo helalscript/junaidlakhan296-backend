@@ -2,6 +2,7 @@
 
 namespace App\Services\API\V1\User\Notification;
 
+use App\Models\UserCustomNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -18,13 +19,16 @@ class UserNotificationSettingService
      * Update a specific resource.
      *
      * @param int $id
-     * @param array $validatedData
      * @return mixed
      */
-    public function update(int $id, array $validatedData)
+    public function updateUserNotification(int $id)
     {
         try {
-
+            $notifications = UserCustomNotification::where('user_id', $this->user->id)
+                ->where('id', $id)->firstOrFail();
+            $notifications->status = $notifications->status == 'active' ? 'inactive' : 'active';
+            $notifications->save();
+            return $notifications;
         } catch (Exception $e) {
             Log::error("UserNotificationService::update" . $e->getMessage());
             throw $e;
@@ -36,10 +40,12 @@ class UserNotificationSettingService
     {
         try {
             $per_page = $request->has('per_page') ? $request->per_page : 25;
-            $notifications = $this->user->customNotifications()
-                ->where('custom_notifications.status', 'active') // notification must be active
+            $notifications = UserCustomNotification::where('user_id', $this->user->id)
+                ->with('customNotification')
+                ->whereHas('customNotification', function ($query) {
+                    $query->where('status', 'active');
+                })
                 ->paginate($per_page);
-
             return $notifications;
         } catch (Exception $e) {
             Log::error("UserNotificationService::userNotificationSettings" . $e->getMessage());
