@@ -15,11 +15,13 @@ return new class extends Migration {
             $table->foreignId('booking_id')->nullable()->constrained('bookings')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('transaction_id')->nullable()->constrained('transactions')->onDelete('cascade');
+            $table->foreignId('promo_code_id')->nullable()->constrained('promo_codes')->onDelete('set null');
             $table->string('transaction_number')->nullable();
             $table->string('payment_method')->nullable();
-            $table->string('payment_id')->nullable();
+            $table->string('payment_intent_id')->nullable();
+            $table->string('client_secret')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->enum('status', ['pending', 'success', 'cancelled', 'closed'])->default('pending');
+            $table->enum('status', ['pending', 'success', 'cancelled', 'failed', 'closed', 'refunded'])->default('pending');
             $table->timestamps();
         });
     }

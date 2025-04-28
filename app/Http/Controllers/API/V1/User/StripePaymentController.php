@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\PromoCode;
 use Illuminate\Http\Request;
 use App\Enums\NotificationType;
 use App\Models\FirebaseTokens;
@@ -11,6 +12,7 @@ use App\Models\Payment;
 use App\Models\StripeSetting;
 use App\Notifications\GuestRequestNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Stripe\PaymentIntent;
 use App\Helpers\Helper;
 use App\Models\Booking;
@@ -27,25 +29,45 @@ use UnexpectedValueException;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Exception\SignatureVerificationException;
+use function GuzzleHttp\json_encode;
 class StripePaymentController extends Controller
 {
     public function createPaymentIntent(Request $request)
     {
         $validateData = $request->validate([
             'booking_unique_id' => 'required|exists:bookings,unique_id',
+            'promo_code_id' => 'nullable|exists:promo_codes,id',
             // 'amount'     => 'required|numeric',
         ]);
         try {
+            DB::beginTransaction();
             // user id
             $user_id = Auth::id();
+            $promo_code_value = 0;
 
+            if (!empty($validateData['promo_code_id'])) {
+                $promo_code = PromoCode::withCount('userPromoCodes')
+                    ->where('id', $validateData['promo_code_id'])
+                    ->whereColumn('uses_limit', '>', 'user_promo_codes_count') // compare columns properly
+                    ->whereDoesntHave('userPromoCodes', function ($query) use ($user_id) {
+                        $query->where('user_id', $user_id);
+                    })
+                    ->first();
+
+                if (!$promo_code) {
+                    Log::error('StripePaymentController::createPaymentIntent:- Promo code not found or max use limit reached. for user ' . $user_id);
+                    return Helper::jsonErrorResponse('Promo code not found or max use limit reached.', 404);
+                }
+
+                $promo_code_value = $promo_code->value;
+            }
 
             // Check if the order is found
             $booking = Booking::where('user_id', $user_id)
                 ->where('unique_id', $validateData['booking_unique_id'])
                 ->whereNotIn('status', ['cancelled', 'completed', 'close'])
                 ->whereDoesntHave('payment', function ($query) {
-                    $query->where('status', 'paid');
+                    $query->whereIn('status', ['success', 'cancelled', 'closed', 'refunded']);
                 })
                 ->first();
             // dd($booking);
@@ -84,12 +106,27 @@ class StripePaymentController extends Controller
                 ],
             ]);
 
+            $payment = Payment::create([
+                'booking_id' => $booking->id,
+                'user_id' => $user_id,
+                'transaction_id' => null,
+                'promo_code_id' => $validateData['promo_code_id'] ?? null,
+                'transaction_number' => $transactionId,
+                'payment_method' => 'online',
+                'payment_intent_id' => $paymentIntent->id,
+                'client_secret' => $paymentIntent->client_secret,
+                'amount' => $amount,
+                'status' => 'pending',
+            ]);
+            DB::commit();
             return Helper::jsonResponse(true, 'Payment Intent created successfully.', 200, [
                 'client_secret' => $paymentIntent->client_secret,
             ]);
         } catch (ApiErrorException $e) {
+            DB::rollBack();
             return Helper::jsonResponse(false, 'Stripe API error: ' . $e->getMessage(), 500);
         } catch (Exception $e) {
+            DB::rollBack();
             return Helper::jsonResponse(false, 'General error: ' . $e->getMessage(), 500);
         }
     }
@@ -134,36 +171,29 @@ class StripePaymentController extends Controller
 
     protected function handlePaymentSuccess($paymentIntent): void
     {
-        //* Record the successful payment in the database
-        $payment = Payment::create([
-            'booking_id' => $paymentIntent->metadata->booking_id,
-            'user_id' => $paymentIntent->metadata->user_id,
-            'transaction_id' => $paymentIntent->metadata->transaction_id,
-            'transaction_number' => $paymentIntent->metadata->transaction_number,
-            'payment_method' => $paymentIntent->metadata->payment_method,
-            'payment_id' => $paymentIntent->metadata->payment_id,
-            'amount' => $paymentIntent->metadata->amount,
-            'status' => 'paid',
-        ]);
+        Log::info('StripePaymentController::handlePaymentSuccess:- ' . json_encode($paymentIntent));
+        $payment = Payment::where('booking_id', $paymentIntent->metadata->booking_id)
+            ->where('transaction_id', $paymentIntent->metadata->transaction_id)
+            ->where('payment_intent_id', $paymentIntent->id)->first();
 
-        $user = User::find($paymentIntent->metadata->user_id);
-
+        $payment->status = 'success';
+        $payment->save();
+        Log::info("StripePaymentController::handlePaymentSuccess:- Payment success: " . $payment);
+        // send notification
+        // $user = User::find($paymentIntent->metadata->user_id);
     }
 
     protected function handlePaymentFailure($paymentIntent): void
     {
-        Log::info("Payment failed: " . $paymentIntent);
+        Log::info("StripePaymentController::handlePaymentFailure:- Payment failed: " . json_encode($paymentIntent));
         //* Record the failure payment in the database
-        $payment = Payment::create([
-            'user_id' => $paymentIntent->metadata->user_id,
-            'order_id' => $paymentIntent->metadata->order_id,
-            'hotel_id' => $paymentIntent->metadata->hotel_id,
-            'amount' => $paymentIntent->amount / 100,
-            'transaction_id' => $paymentIntent->metadata->transaction_id,
-            'payment_method' => $paymentIntent->metadata->payment_method,
-            'status' => 'unpaid',
-        ]);
+        $payment = Payment::where('booking_id', $paymentIntent->metadata->booking_id)
+            ->where('transaction_id', $paymentIntent->metadata->transaction_id)
+            ->where('payment_intent_id', $paymentIntent->id)->first();
 
+        $payment->status = 'failed';
+        $payment->save();
+        Log::info("StripePaymentController::handlePaymentFailure:- Payment failed: " . $payment);
 
         // $guest = User::find($paymentIntent->metadata->user_id);
         // $notificationData = [
