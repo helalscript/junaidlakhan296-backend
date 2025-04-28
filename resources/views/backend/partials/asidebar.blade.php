@@ -32,7 +32,38 @@ $systemSetting = App\Models\SystemSetting::first();
             <li class="menu-title small text-uppercase">
                 <span class="menu-title-text">APPS</span>
             </li>
+            <!-- Contact Support Message Menu Item -->
+            <li class="menu-item open">
+                <a href="{{ route('admin_contact_us.index') }}"
+                    class="menu-link {{ request()->routeIs('admin_contact_us.index') ? 'active' : '' }}">
+                    <span class="material-symbols-outlined menu-icon">content_paste</span>
+                    <span class="title">Contact Support Message</span>
+                </a>
+            </li>
+            <!-- Faqs Menu Item -->
+            <li class="menu-item {{ request()->routeIs('faqs.*') ? 'open' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle active">
+                    <span class="material-symbols-outlined menu-icon">help</span>
+                    <span class="title">Faqs</span>
+                </a>
+                <ul class="menu-sub">
+                    <!-- Account Settings Submenu -->
+                    <li class="menu-item ">
+                        <a href="{{ route('faqs.index') }}"
+                            class="menu-link {{ request()->routeIs('faqs.index') ? 'active' : '' }} ">
+                            Faqs List
+                        </a>
+                    </li>
+                    <!-- Change Password Submenu -->
+                    <li class="menu-item">
+                        <a href="{{ route('faqs.create') }}"
+                            class="menu-link {{ request()->routeIs('faqs.create') ? 'active' : '' }}">
+                            Add New Faqs
+                        </a>
+                    </li>
 
+                </ul>
+            </li>
             <!-- gods Menu Item -->
             {{-- <li class="menu-item {{ request()->routeIs('gods.*') ? 'open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle active">

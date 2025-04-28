@@ -1,12 +1,14 @@
 @extends('backend.app')
-@section('title', 'FAQ Page')
+@section('title', 'Contact Us')
 
-
+@push('styles')
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
+@endpush
 
 @section('content')
     <div class="main-content-container overflow-hidden">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-            <h3 class="mb-0">FAQ List</h3>
+            <h3 class="mb-0">Contact Us List</h3>
 
 
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
@@ -18,89 +20,84 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">FAQ Page </span>
+                        <span class="fw-medium">Contact Us</span>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">FAQ List</span>
+                        <span class="fw-medium">Contact Us List</span>
                     </li>
                 </ol>
             </nav>
         </div>
         {{-- ---------------------- --}}
-        
+        <div class="row justify-content-center">
 
-            <div class="col-xl-12 col-xxl-12 col-lg-12">
-                <div class="card bg-white border-0 rounded-3 mb-4">
-                    <div class="card-body p-0">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
-                            <span class="position-relative table-src-form me-0">
-                                <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
-                                <i
-                                    class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
-                            </span>
-                            <a href="{{ route('faqs.create') }}" class="btn btn-outline-primary py-1 px-2 px-sm-4 fs-14 fw-medium rounded-3 hover-bg">
-                                <span class="py-sm-1 d-block">
-                                    <i class="ri-add-line d-none d-sm-inline-block"></i>
-                                    <span>Add New Faq </span>
-                                </span>
-                            </a>
+
+            <div class="card bg-white border-0 rounded-3 ">
+                <div class="card-body p-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
+                        <span class="position-relative table-src-form me-0">
+                            <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
+                            <i
+                                class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
+                        </span>
+                        
+                    </div>
+
+                    <div class="default-table-area style-two all-products">
+                        <div class="table-responsive">
+                            <table class="table align-middle" id="basic_tables">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">First Name</th>
+                                        <th scope="col">Last Name</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Phone</th>
+                                        <th scope="col">Message</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div
+                            class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
+                            <span class="fs-12 fw-medium"></span>
+
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination mb-0 justify-content-center">
+                                    <li class="page-item">
+                                        <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
+                                            <i class="material-symbols-outlined">keyboard_arrow_left</i>
+                                        </a>
+                                    </li>
+                                    <!-- Pagination Container !-->
+                                    <li class="row " id="customPagination">
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
+                                            <i class="material-symbols-outlined">keyboard_arrow_right</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
 
-                        <div class="default-table-area style-two all-products">
-                            <div class="table-responsive">
-                                <table class="table align-middle" id="basic_tables">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">#</th>
-                                            <th scope="col">Question</th>
-                                            <th scope="col">Answer</th>
-                                            <th scope="col">Type</th>
-                                            <th scope="col">Status</th>
-                                            <th scope="col">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tbody>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div
-                                class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
-                                <span class="fs-12 fw-medium"></span>
 
-                                <nav aria-label="Page navigation example">
-                                    <ul class="pagination mb-0 justify-content-center">
-                                        <li class="page-item">
-                                            <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
-                                                <i class="material-symbols-outlined">keyboard_arrow_left</i>
-                                            </a>
-                                        </li>
-                                        <!-- Pagination Container !-->
-                                        <li class="row " id="customPagination">
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
-                                                <i class="material-symbols-outlined">keyboard_arrow_right</i>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </div>
-
-
-                        </div>
                     </div>
                 </div>
             </div>
-        
-        {{-- ---------------  --}}
+
+        </div>
+
 
     </div>
 
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('frontend/assets/js/plugins/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
     <!--buttons dataTables-->
     <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>
@@ -137,11 +134,8 @@
                 dom: "<'row justify-content-between table-topbar'<'col-md-6 col-sm-4 px-0'l>>tir",
 
                 ajax: {
-                    url: "{{ route('faqs.index') }}",
-                    type: "get",
-                    // success: function(data) {
-                    //     console.log(data);
-                    // }
+                    url: "{{ route('admin_contact_us.index') }}",
+                    type: "get"
                 },
                 columns: [{
                         data: 'DT_RowIndex',
@@ -150,8 +144,8 @@
                         searchable: false
                     },
                     {
-                        data: 'question',
-                        name: 'question',
+                        data: 'first_name',
+                        name: 'first_name',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -163,8 +157,8 @@
                         }
                     },
                     {
-                        data: 'answer',
-                        name: 'answer',
+                        data: 'last_name',
+                        name: 'last_name',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -176,8 +170,8 @@
                         }
                     },
                     {
-                        data: 'type',
-                        name: 'type',
+                        data: 'email',
+                        name: 'email',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -189,10 +183,30 @@
                         }
                     },
                     {
-                        data: 'status',
-                        name: 'status',
+                        data: 'phone',
+                        name: 'phone',
                         orderable: true,
-                        searchable: false
+                        searchable: true,
+                        render: function(data, type, row) {
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        data: 'message',
+                        name: 'message',
+                        orderable: true,
+                        searchable: true,
+                        render: function(data, type, row) {
+                            if (data.length > 1000) {
+                                return data.substring(0, 1000) + '...';
+                            } else {
+                                return data;
+                            }
+                        }
                     },
                     {
                         data: 'action',
@@ -301,20 +315,11 @@
     </script>
     <script src="{{ asset('backend/admin/assets/custom-actions.js') }}"></script>
     <script>
-        // Use the status change alert
-        function changeStatus(event, id) {
-            event.preventDefault();
-            let statusUrl = '{{ route('faqs.status', ':id') }}';
-            showStatusChangeAlert(id, statusUrl);
-        }
-
         // Use the delete confirm alert
         function deleteRecord(event, id) {
             event.preventDefault();
-            let deleteUrl = '{{ route('faqs.destroy', ':id') }}';
+            let deleteUrl = '{{ route('admin_contact_us.destroy', ':id') }}';
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
-
-
 @endpush
