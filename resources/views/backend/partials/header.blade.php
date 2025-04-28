@@ -38,7 +38,51 @@
                         </button>
                     </li>
                     <li class="header-right-item">
-                        
+                        <div class="dropdown notifications noti">
+                            <button class="btn btn-secondary border-0 p-0 position-relative"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="markAllRead()">
+                                
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
+                                    {{ Auth::user()->notifications()->whereNull('read_at')->count() }}
+                                </span>
+                                
+                                <span class="material-symbols-outlined">notifications</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-lg p-0 border-0 p-0 dropdown-menu-end">
+                                <div class="d-flex justify-content-between align-items-center title">
+                                    <span class="fw-semibold fs-15 text-secondary">Notifications <span
+                                            class="fw-normal text-body fs-14">({{ Auth::user()->notifications()->whereNull('read_at')->count() }})</span></span>
+                                    <button class="p-0 m-0 bg-transparent border-0 fs-14 text-primary"  onclick="deleteAllNotification()">Delete All</button>
+                                </div>
+
+                                <div class="max-h-217" data-simplebar id="notification-list">
+                                    @foreach (Auth::user()->notifications as $notification)
+                                    <div class="notification-menu {{ $notification->read_at ? '' : 'unseen' }}"  id="notification_{{ $notification->id }}">
+                                        <a href="{{ $notification->data['url'] ?? '' }}" class="dropdown-item" >
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="rounded bg-light" style="width: 40px; height: 40px; overflow: hidden;">
+                                                            <img src="{{ $notification->data['thumbnail'] ?? 'default-thumbnail.jpg' }}" 
+                                                                 alt="Notification Thumbnail" 
+                                                                 class="img-fluid rounded">
+                                                        </div>
+                                                    </div>
+                                                    {{-- <i
+                                                        class="material-symbols-outlined text-primary">sms</i> --}}
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <p>{{ $notification->data['type'] ?? 'Untitled Notification' }}</p>
+                                                    <span class="fs-13">{{ $notification->created_at->diffForHumans() }}</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    @endforeach
+                                    
+                                </div>
+                            </div>
+                        </div>
                     </li>
                     <li class="header-right-item">
                         <div class="dropdown admin-profile">

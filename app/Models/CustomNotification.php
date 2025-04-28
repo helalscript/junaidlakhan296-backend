@@ -14,6 +14,7 @@ class CustomNotification extends Model
         'title',
         'description',
         'type',
+        'role',
         'status'
     ];
 
@@ -21,9 +22,11 @@ class CustomNotification extends Model
     protected $casts = [
         'title' => 'string',
         'description' => 'string',
-        'status' => 'string', 
         'type' => 'string',   
+        'role' => 'string',
+        'status' => 'string', 
     ];
+
 
 }
 

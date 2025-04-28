@@ -50,14 +50,17 @@ class UserBookingController extends Controller
             'vehicle_details_id' => 'required|exists:vehicle_details,id',
             'number_of_slot' => 'required|integer|min:1',
             'pricing_type' => 'required|in:hourly,daily,monthly',
+            'booking_date_start' => 'required|date|after_or_equal:today',
+            'booking_date_end' => 'required|date|after_or_equal:booking_date_start',
             'booking_time_start' => 'required|date_format:H:i',
-
+            'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+        ], [
+            'vehicle_details_id.required' => 'The vehicle details field is required.',
         ]);
+        // dd($validatedData);
         // Validate pricing_id based on pricing_type
         if ($request->pricing_type === 'hourly') {
             $pricingData = $request->validate([
-                'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
-                'booking_date' => 'required|date|after_or_equal:today',
                 'pricing_id' => 'required|exists:hourly_pricings,id',
             ]);
         } elseif ($request->pricing_type === 'daily') {

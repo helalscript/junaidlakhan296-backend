@@ -4,6 +4,7 @@ namespace App\Services\API\V1\User\ParkingSpace;
 
 use App\Models\Booking;
 use App\Models\HourlyPricing;
+use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -124,56 +125,86 @@ class UserParkingSpaceService
     }
     public function getHourlyPricingDetails($id, $request)
     {
-        $pricing = HourlyPricing::with([
-            'parkingSpace.driverInstructions',
-            'parkingSpace.reviews' => function ($query) {
-                $query->where('status', 'approved');
-            },
-            'parkingSpace.spotDetails',
-            'days'
-        ])->findOrFail($id);
+        try {
+            $startTime = $request->start_time ?? now()->format('H:i');
+            $endTime = $request->start_time ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $request->start_date ?? now()->format('Y-m-d');
+            $endDate = $request->end_date;
+            // get day names
+            $dayNames = [];
+            if ($startDate && !$endDate) {
+                $dayNames[] = Carbon::parse($startDate)->format('l');
+            } elseif ($startDate && $endDate) {
+                $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+                foreach ($period as $date) {
+                    $day = $date->format('l');
+                    if (!in_array($day, $dayNames)) {
+                        $dayNames[] = $day;
+                    }
+                }
+            }
+            // Log::info($dayNames);
+            $pricing = HourlyPricing::with([
+                'parkingSpace.driverInstructions',
+                'parkingSpace.reviews' => function ($query) {
+                    $query->where('status', 'approved');
+                },
+                'parkingSpace.spotDetails',
+                'days'
+            ])
+                ->whereHas('days', function ($q) {
+                    $q->where('status', 'available');
+                })
+                ->when($startTime, fn($q) => $q->whereTime('start_time', '<=', $startTime))
+                ->when($endTime, fn($q) => $q->whereTime('end_time', '>=', $endTime))
+                ->findOrFail($id);
 
-        $startTime = $request->start_time ?? now()->format('H:i');
-        $endTime = $request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i');
-        $startDate = $request->start_date ?? now()->format('Y-m-d');
-        $endDate = $request->end_date;
+            $bookingsQuery = Booking::where('parking_space_id', $pricing->parking_space_id)
+                ->whereNotIn('status', ['cancelled', 'close', 'completed']);
 
-        $bookingsQuery = Booking::where('parking_space_id', $pricing->parking_space_id)
-            ->whereNotIn('status', ['cancelled', 'close', 'completed']);
-
-        if ($startDate) {
-            $bookingsQuery->whereDate('start_time', '>=', $startDate);
-        }
-        if ($endDate) {
-            $bookingsQuery->whereDate('end_time', '<=', $endDate);
-        }
-        if ($startTime) {
-            $bookingsQuery->whereTime('booking_time_start', '<=', $startTime);
-        }
-        if ($endTime) {
-            $bookingsQuery->whereTime('booking_time_end', '>=', $endTime);
-        }
-
-        $bookingCount = $bookingsQuery->get()->sum(fn($b) => $b->number_of_slot ?? 1);
-        $pricing->booking_count = $bookingCount;
-        $pricing->available_slots = max(0, $pricing->parkingSpace->total_slots - $bookingCount);
-
-        if ($startTime && $endTime) {
-            $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+            if ($startDate) {
+                $bookingsQuery->whereDate('start_time', '>=', $startDate);
+            }
             if ($endDate) {
-                $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
-            } else {
-                $totalHours = $dailyHours;
+                $bookingsQuery->whereDate('end_time', '<=', $endDate);
+            }
+            if ($startTime) {
+                $bookingsQuery->whereTime('booking_time_start', '<=', $startTime);
+            }
+            if ($endTime) {
+                $bookingsQuery->whereTime('booking_time_end', '>=', $endTime);
             }
 
-            $pricing->estimated_hours = round($totalHours, 2);
-            $pricing->estimated_price = round($totalHours * $pricing->rate, 2);
+            $bookingCount = $bookingsQuery->get()->sum(fn($b) => $b->number_of_slot ?? 1);
+            $pricing->booking_count = $bookingCount;
+            $pricing->available_slots = max(0, $pricing->parkingSpace->total_slots - $bookingCount);
+
+            if ($startTime && $endTime) {
+                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                if ($endDate) {
+                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                } else {
+                    $totalHours = $dailyHours;
+                }
+
+                $pricing->estimated_hours = round($totalHours, 2);
+                $pricing->estimated_price = round($totalHours * $pricing->rate, 2);
+            }
+
+            $reviews = $pricing->parkingSpace->reviews;
+            $pricing->review_count = $reviews->count();
+            $pricing->average_rating = $reviews->count() > 0 ? round($reviews->avg('rating'), 2) : 0;
+            $pricing->platform_fee = $this->platformFee() ?? [];
+            return $pricing;
+        } catch (Exception $e) {
+            Log::error("UserParkingSpaceService::getHourlyPricingDetails - " . $e->getMessage());
+            throw $e;
         }
+    }
 
-        $reviews = $pricing->parkingSpace->reviews;
-        $pricing->review_count = $reviews->count();
-        $pricing->average_rating = $reviews->count() > 0 ? round($reviews->avg('rating'), 2) : 0;
-
-        return $pricing;
+    private function platformFee()
+    {
+        $platformFee = PlatformSetting::where('status', 'active')->select('id', 'key', 'value')->get();
+        return $platformFee;
     }
 }

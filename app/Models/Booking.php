@@ -20,7 +20,8 @@ class Booking extends Model
         'estimated_price',
         'platform_fee',
         'total_price',
-        'booking_date',
+        'booking_date_start',
+        'booking_date_end',
         'booking_time_start',
         'booking_time_end',
         'start_time',
@@ -41,10 +42,12 @@ class Booking extends Model
         'estimated_price' => 'decimal:2',
         'platform_fee' => 'decimal:2',
         'total_price' => 'decimal:2',
-        'booking_date' => 'date',
+        'booking_date_start' => 'date',
+        'booking_date_end' => 'date',
         'booking_time_start' => 'datetime',
         'booking_time_end' => 'datetime',
         'start_time' => 'datetime',
+        'end_time' => 'datetime',
         'status' => 'string',
     ];
 
@@ -73,5 +76,28 @@ class Booking extends Model
     public function getBookingTimeEndAttribute($value)
     {
         return Carbon::parse($value)->format('H:i');
+    }
+
+    public function platformFee()
+    {
+        return $this->hasMany(BookingPlatformFee::class);
+    }
+
+    
+    // Accessor for booking_date_start (only date part)
+    public function getBookingDateStartAttribute($value)
+    {
+        return Carbon::parse($value)->format('Y-m-d');
+    }
+
+    // Accessor for booking_date_end (only date part)
+    public function getBookingDateEndAttribute($value)
+    {
+        return Carbon::parse($value)->format('Y-m-d');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
     }
 }

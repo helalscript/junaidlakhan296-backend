@@ -114,5 +114,27 @@ class User extends Authenticatable implements JWTSubject
         return $value;
     }
 
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            $user->assignCustomNotifications();
+        });
+    }
+
+    public function assignCustomNotifications()
+    {
+        $notifications = CustomNotification::where('type', $this->role)
+            ->where('status', 'active')
+            ->get();
+
+        foreach ($notifications as $notification) {
+            UserCustomNotification::create([
+                'user_id' => $this->id,
+                'custom_notification_id' => $notification->id,
+                'status' => 'active',
+            ]);
+        }
+    }
+
 
 }
