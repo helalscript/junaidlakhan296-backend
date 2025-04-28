@@ -9,6 +9,7 @@
  */
 
 
+use App\Http\Controllers\Web\Backend\CMS\FaqController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageHowItWorkContainerController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageSocialLinkContainerController;
@@ -57,6 +58,10 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   Route::resource('/dynamic-page', DynamicPageController::class)->names('dynamic_page');
   Route::post('/dynamic-page/status/{id}', [DynamicPageController::class, 'status'])->name('dynamic_page.status');
 
+  // Routes for FaqController
+  Route::resource('/faqs', FaqController::class)->names('faqs');
+  Route::post('/faqs/status/{id}', [FaqController::class, 'status'])->name('faqs.status');
+
 
   // Route Home Page CMS
   Route::get('/home-page/banner/index', [HomePageController::class, 'index'])->name('cms.home_page.banner.index');
@@ -76,7 +81,7 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   Route::resource('/home-page/why-choose-us/index', HomePageWhyChooseUsContainerController::class)->names('cms.home_page.why_choose_us')->except('show');
   Route::post('/home-page/why-choose-us/status/{id}', [HomePageWhyChooseUsContainerController::class, 'status'])->name('cms.home_page.why_choose_us.status');
   Route::Post('/cms/home-page/why-choose-us-update', [HomePageWhyChooseUsContainerController::class, 'WhyChooseUsContainerUpdate'])->name('cms.home_page.why_choose_us.why_choose_us_update');
-  
+
 });
 
 

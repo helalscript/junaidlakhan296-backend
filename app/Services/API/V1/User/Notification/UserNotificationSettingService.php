@@ -36,6 +36,7 @@ class UserNotificationSettingService
     }
 
 
+
     public function userNotificationSettings($request)
     {
         try {

@@ -1,13 +1,13 @@
 @extends('backend.app')
-@section('title', 'Gods List')
+@section('title', 'FAQ Page')
 
-@push('styles')
-@endpush
+
 
 @section('content')
     <div class="main-content-container overflow-hidden">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-            <h3 class="mb-0">Gods List</h3>
+            <h3 class="mb-0">FAQ List</h3>
+
 
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                 <ol class="breadcrumb align-items-center mb-0 lh-1">
@@ -18,77 +18,85 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Gods</span>
+                        <span class="fw-medium">FAQ Page </span>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Gods List</span>
+                        <span class="fw-medium">FAQ Page List</span>
                     </li>
                 </ol>
             </nav>
         </div>
+        {{-- ---------------------- --}}
+        
 
-        <div class="card bg-white border-0 rounded-3 mb-4">
-            <div class="card-body p-0">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
-                    <span class="position-relative table-src-form me-0">
-                        <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
-                        <i class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
-                    </span>
-                    <a href="{{ route('gods.create') }}"
-                        class="btn btn-outline-primary py-1 px-2 px-sm-4 fs-14 fw-medium rounded-3 hover-bg">
-                        <span class="py-sm-1 d-block">
-                            <i class="ri-add-line d-none d-sm-inline-block"></i>
-                            <span>Add New Gods</span>
-                        </span>
-                    </a>
-                </div>
+            <div class="col-xl-12 col-xxl-12 col-lg-12">
+                <div class="card bg-white border-0 rounded-3 mb-4">
+                    <div class="card-body p-0">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
+                            <span class="position-relative table-src-form me-0">
+                                <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
+                                <i
+                                    class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
+                            </span>
+                            <a href="javascript:void(0)"
+                                class="btn btn-outline-primary py-1 px-2 px-sm-4 fs-14 fw-medium rounded-3 hover-bg"
+                                data-bs-toggle="modal" data-bs-target="#CreateFaqContainer">
+                                <span class="py-sm-1 d-block">
+                                    <i class="ri-add-line d-none d-sm-inline-block"></i>
+                                    <span>Add New Faq Container Content</span>
+                                </span>
+                            </a>
+                        </div>
 
-                <div class="default-table-area style-two all-products">
-                    <div class="table-responsive">
-                        <table class="table align-middle" id="basic_tables">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Thumbnail</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Sub Title</th>
-                                    <th scope="col">Description Title</th>
-                                    <th scope="col">Description</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div class="default-table-area style-two all-products">
+                            <div class="table-responsive">
+                                <table class="table align-middle" id="basic_tables">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Question</th>
+                                            <th scope="col">Answer</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div
+                                class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
+                                <span class="fs-12 fw-medium"></span>
+
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination mb-0 justify-content-center">
+                                        <li class="page-item">
+                                            <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
+                                                <i class="material-symbols-outlined">keyboard_arrow_left</i>
+                                            </a>
+                                        </li>
+                                        <!-- Pagination Container !-->
+                                        <li class="row " id="customPagination">
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
+                                                <i class="material-symbols-outlined">keyboard_arrow_right</i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
+
+                        </div>
                     </div>
-                    <div
-                        class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
-                        <span class="fs-12 fw-medium"></span>
-
-                        <nav aria-label="Page navigation example">
-                            <ul class="pagination mb-0 justify-content-center">
-                                <li class="page-item">
-                                    <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
-                                        <i class="material-symbols-outlined">keyboard_arrow_left</i>
-                                    </a>
-                                </li>
-                                <!-- Pagination Container !-->
-                                <li class="row " id="customPagination">
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
-                                        <i class="material-symbols-outlined">keyboard_arrow_right</i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-
                 </div>
             </div>
-        </div>
+        
+        {{-- ---------------  --}}
+
     </div>
 
 @endsection
@@ -109,8 +117,8 @@
                 order: [],
                 destroy: true,
                 lengthMenu: [
-                    [10,25, 50, 100, 200, 500, -1],
-                    [10,25, 50, 100, 200, 500, "All"]
+                    [10, 25, 50, 100, 200, 500, -1],
+                    [10, 25, 50, 100, 200, 500, "All"]
                 ],
                 processing: true,
                 responsive: true,
@@ -128,11 +136,14 @@
                     loadingIndicator: false
                 },
                 // Remove the default search box
-                dom: "<'row justify-content-between table-topbar'<'col-md-2 col-sm-4 px-0'l>>tir",
+                dom: "<'row justify-content-between table-topbar'<'col-md-6 col-sm-4 px-0'l>>tir",
 
                 ajax: {
-                    url: "{{ route('gods.index') }}",
-                    type: "get"
+                    url: "{{ route('faqs.index') }}",
+                    type: "get",
+                    // success: function(data) {
+                    //     console.log(data);
+                    // }
                 },
                 columns: [{
                         data: 'DT_RowIndex',
@@ -141,14 +152,8 @@
                         searchable: false
                     },
                     {
-                        data: 'thumbnail',
-                        name: 'thumbnail',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'title',
-                        name: 'title',
+                        data: 'question',
+                        name: 'question',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -160,8 +165,8 @@
                         }
                     },
                     {
-                        data: 'sub_title',
-                        name: 'sub_title',
+                        data: 'answer',
+                        name: 'answer',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -173,21 +178,8 @@
                         }
                     },
                     {
-                        data: 'description_title',
-                        name: 'description_title',
-                        orderable: true,
-                        searchable: true,
-                        render: function(data, type, row) {
-                            if (data.length > 50) {
-                                return data.substring(0, 50) + '...';
-                            } else {
-                                return data;
-                            }
-                        }
-                    },
-                    {
-                        data: 'description',
-                        name: 'description',
+                        data: 'type',
+                        name: 'type',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -252,10 +244,11 @@
                     }
                 }
 
-               // Add first page and ellipsis if needed
-               if (startPage > 1) {
+                // Add first page and ellipsis if needed
+                if (startPage > 1) {
                     paginationContainer.append(
-                        ` <li class="page-item col-1"><a class="page-link active" href="#" data-page="1">1</a></li>`);
+                        ` <li class="page-item col-1"><a class="page-link active" href="#" data-page="1">1</a></li>`
+                    );
                     if (startPage > 2) {
                         paginationContainer.append(`<span class="ellipsis">...</span>`);
                     }
@@ -274,12 +267,14 @@
                         paginationContainer.append(`<span class="ellipsis">...</span>`);
                     }
                     paginationContainer.append(
-                        `<li class="page-item col-1"><a class="pagination-item page-link "  data-page="${totalPages}">${totalPages}</a></li>`);
+                        `<li class="page-item col-1"><a class="pagination-item page-link "  data-page="${totalPages}">${totalPages}</a></li>`
+                    );
                 }
 
                 // Click event for pagination items
                 $('.pagination-item').on('click', function(e) {
                     e.preventDefault();
+                    console.log('pagination-item')
                     const page = $(this).data('page');
                     if (!$(this).hasClass('disabled')) {
                         dTable.page(page - 1).draw('page'); // DataTables is 0-based index, so subtract 1
@@ -297,6 +292,7 @@
                 // Click event for 'Next' button
                 $('#nextPage').off().on('click', function(e) {
                     e.preventDefault();
+                    // console.log('nextPage')
                     if (currentPage < totalPages) {
                         dTable.page(currentPage).draw('page');
                     }
@@ -310,15 +306,17 @@
         // Use the status change alert
         function changeStatus(event, id) {
             event.preventDefault();
-            let statusUrl = '{{ route('gods.status', ':id') }}';
+            let statusUrl = '{{ route('faqs.status', ':id') }}';
             showStatusChangeAlert(id, statusUrl);
         }
 
         // Use the delete confirm alert
         function deleteRecord(event, id) {
             event.preventDefault();
-            let deleteUrl = '{{ route('gods.destroy', ':id') }}';
+            let deleteUrl = '{{ route('faqs.destroy', ':id') }}';
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
+
+
 @endpush
