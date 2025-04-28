@@ -10,6 +10,7 @@ use App\Http\Controllers\API\Auth\SocialLoginController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
+use App\Http\Controllers\API\V1\User\StripePaymentController;
 use App\Http\Controllers\API\V1\User\UserBookingController;
 use App\Http\Controllers\API\V1\User\UserContactSupportController;
 use App\Http\Controllers\API\V1\User\UserFaqController;
@@ -80,7 +81,9 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
 Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router) {
     Route::apiResource('/my-bookings', UserBookingController::class);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
+    Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
 });
+
 // only for user and host
 Route::group(['middleware' => ['auth:api', 'check_is_user_or_host']], function ($router) {
     Route::get('/faqs', [UserFaqController::class, 'index']);

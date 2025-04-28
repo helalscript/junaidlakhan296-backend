@@ -52,4 +52,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Transaction::class); // Foreign key 'transaction_id'
     }
+
+    public function isPaid()
+    {
+        return $this->status === 'paid';
+    }
 }

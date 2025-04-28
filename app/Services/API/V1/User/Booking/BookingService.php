@@ -35,7 +35,7 @@ class BookingService
             $status = $request->status ?? 'active';
             $bookings = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
                 ->where('user_id', $this->user->id)
-                ->select('id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id','unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('status', $status)
                 ->latest()
                 ->paginate($request->per_page ?? 25);
@@ -313,7 +313,7 @@ class BookingService
         try {
             $booking = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
                 ->where('user_id', $this->user->id)
-                ->select('id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id','unique_id','parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->findOrFail($id);
 
             $now = Carbon::now();
