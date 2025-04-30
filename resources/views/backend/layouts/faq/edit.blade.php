@@ -15,7 +15,7 @@
 
 <div class="main-content-container overflow-hidden">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h3 class="mb-0">Dynamic Page</h3>
+        <h3 class="mb-0">Faq Page</h3>
 
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb align-items-center mb-0 lh-1">
@@ -75,6 +75,22 @@
                             @enderror
                         </div>
                     </div>
+
+                    <div class="col-lg-12">
+                        <div class="form-group mb-4">
+                            <label class="label text-secondary">Type Select</label>
+                            <div class="form-group position-relative">
+                                <select name="type" class="form-control text-dark ps-5 h-55 @error('type') is-invalid @enderror">
+                                    <option value="user" {{ old('type', $data->type ?? '') == 'user' ? 'selected' : '' }}>user</option>
+                                    <option value="host" {{ old('type', $data->type ?? '') == 'host' ? 'selected' : '' }}>host</option>
+                                </select>
+                            </div>
+                            @error('type')
+                                <div id="type-error" class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
 
 
                 </div>
