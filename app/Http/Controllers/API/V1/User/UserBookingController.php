@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\userDashboardTransactionResource;
 use App\Models\Booking;
 use App\Services\API\V1\User\Booking\BookingService;
 use Exception;
@@ -146,7 +147,7 @@ class UserBookingController extends Controller
     {
         try {
             $data = $this->userBookingService->userDashboardTransactions($request);
-            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, $data);
+            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, userDashboardTransactionResource::collection($data), );
         } catch (Exception $e) {
             Log::error("UserBookingController::userDashboardData" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch dashboard data', 500);
