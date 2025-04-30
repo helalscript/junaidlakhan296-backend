@@ -8,6 +8,7 @@ use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\MonthlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\Payment;
 use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
@@ -33,7 +34,7 @@ class BookingService
     {
         try {
             $status = $request->status ?? 'active';
-            $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude','payment'])
+            $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('status', $status)
@@ -302,13 +303,14 @@ class BookingService
      * @return mixed
      */
 
-    public function show($id)
+    public function show($unique_id)
     {
         try {
-            $booking = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+            $booking = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
-                ->findOrFail($id);
+                ->where('unique_id', $unique_id)
+                ->firstOrFail();
 
             $now = Carbon::now();
             $start = Carbon::parse($booking->start_time);
@@ -406,5 +408,44 @@ class BookingService
             throw $e;
         }
     }
+
+
+    public function userDashboardData()
+    {
+        try {
+            $bookingCounts = Booking::where('user_id', $this->user->id)
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status');
+            $data = [
+                'booking_pending' => $bookingCounts['pending'] ?? 0,
+                'booking_active' => $bookingCounts['active'] ?? 0,
+                'booking_confirmed' => $bookingCounts['confirmed'] ?? 0,
+                'booking_cancelled' => $bookingCounts['cancelled'] ?? 0,
+                'booking_close' => $bookingCounts['close'] ?? 0,
+                'booking_completed' => $bookingCounts['completed'] ?? 0,
+            ];
+
+            return $data;
+        } catch (Exception $e) {
+            Log::error("BookingService::userDashboardData" . $e->getMessage());
+            throw $e;
+        }
+    }
+    public function userDashboardTransactions($request)
+    {
+        try {
+            $per_page = $request->per_page ?? 25;
+            $payments = Payment::where('user_id', $this->user->id)
+                ->select('id', 'transaction_number', 'booking_id', 'amount', 'status', 'created_at')
+                ->with(['booking.parkingSpace:id,address', 'booking:id,parking_space_id'])
+                ->paginate($per_page);
+            return $payments;
+        } catch (Exception $e) {
+            Log::error("BookingService::userDashboardData" . $e->getMessage());
+            throw $e;
+        }
+    }
+
 
 }
