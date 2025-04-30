@@ -72,7 +72,7 @@ class FaqController extends Controller
         $validatedData = $request->validate([
             'question' => 'required|string|max:255',
             'answer' => 'required|string',
-            'type' => 'required|in:user.admin,host',
+            'type' => 'required|in:user,admin,host',
         ]);
 
         try {
@@ -99,7 +99,9 @@ class FaqController extends Controller
      */
     public function edit(string $id)
     {
-        return view("backend.layouts.faq.create");
+        $data = Faq::findOrFail($id);
+
+        return view("backend.layouts.faq.edit", compact('data'));
     }
 
     /**
@@ -107,7 +109,21 @@ class FaqController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validatedData = $request->validate([
+            'question' => 'required|string|max:255',
+            'answer' => 'required|string',
+        ]);
+
+        try {
+            $data = Faq::findOrFail($id);
+            $data->update($validatedData);
+            flash()->success('Faq updated Successfully');
+            return redirect()->route('faqs.index');
+        } catch (Exception $e) {
+            Log::error("HomePageController::store" . $e->getMessage());
+            flash()->error('Faq updated Failed');
+            return redirect()->route('faqs.index');
+        }
     }
 
     public function destroy(string $id)
