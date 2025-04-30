@@ -82,6 +82,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router)
     Route::apiResource('/my-bookings', UserBookingController::class);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
     Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
+    // Route::get('/promo-code/test/{userId}/{code}', [StripePaymentController::class, 'assignPromoCodeToUser']);
 });
 
 //payments webhook

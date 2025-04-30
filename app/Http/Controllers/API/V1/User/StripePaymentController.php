@@ -180,6 +180,10 @@ class StripePaymentController extends Controller
         Log::info('payment data: ' . json_encode($payment));
         $payment->status = 'success';
         $payment->save();
+        if ($payment->promo_code && $payment->user_id) {
+            $this->assignPromoCodeToUser($payment->user_id, $payment->promo_code);
+        }
+
         Log::info("StripePaymentController::handlePaymentSuccess:- Payment success: " . $payment);
         // send notification
         // $user = User::find($paymentIntent->metadata->user_id);
@@ -250,15 +254,28 @@ class StripePaymentController extends Controller
         return $promo_code->value;
     }
 
-    private function assignPromoCodeToUser($userId, $code)
+    public function assignPromoCodeToUser($userId, $code)
     {
-        $userPromoCode = UserPromoCode::create([
-            'user_id' => $userId,
-        ]);
-        $userPromoCode->user_id = $this->user->id;
-        $userPromoCode->promo_code_id = $code;
-        $userPromoCode->save();
-        return $userPromoCode;
+        try {
+            $promo_code = PromoCode::where('code', $code)->first();
+            // dd($promo_code);
+            if (!$promo_code) {
+                Log::error('StripePaymentController::assignPromoCodeToUser:- Promo code not found. code: ' . $code . ' for user ' . $userId);
+                // return Helper::jsonErrorResponse('Promo code not found.', 404);
+                return true;
+            }
+            $userPromoCode = UserPromoCode::create([
+                'user_id' => $userId,
+                'promo_code_id' => $promo_code->id,
+                'start_time' => now(),
+                'end_time' => now(),
+            ]);
+            Log::info('StripePaymentController::assignPromoCodeToUser:- Promo code assigned to user. code: ' . $code . ' for user ' . $userId);
+            return $userPromoCode;
+        } catch (Exception $e) {
+            Log::error('StripePaymentController::assignPromoCodeToUser:- Promo code not found. code: ' . $code);
+            return Helper::jsonErrorResponse('Promo code not found.', 404);
+        }
     }
 
 }
