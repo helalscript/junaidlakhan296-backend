@@ -74,7 +74,7 @@ class FaqController extends Controller
             'answer' => 'required|string',
             'type' => 'required|in:user,admin,host',
         ]);
-
+// dd($validatedData);
         try {
             Faq::Create($validatedData);
             flash()->success('Faq created Successfully');
@@ -112,6 +112,7 @@ class FaqController extends Controller
         $validatedData = $request->validate([
             'question' => 'required|string|max:255',
             'answer' => 'required|string',
+            'type' => 'required|in:user,admin,host',
         ]);
 
         try {
