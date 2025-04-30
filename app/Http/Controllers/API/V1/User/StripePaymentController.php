@@ -14,6 +14,7 @@ use App\Models\StripeSetting;
 use App\Notifications\GuestRequestNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Str;
 use Stripe\PaymentIntent;
 use App\Helpers\Helper;
 use App\Models\Booking;
@@ -85,9 +86,8 @@ class StripePaymentController extends Controller
             // check this hotel set payment configarations
             $stripe_secret = Stripe::setApiKey(config('services.stripe.secret'));
             //calculation
-            $amount = ($booking->total_price - $promo_code_value) * 100; // total amount in cents
-
-            $transactionId = substr(uniqid('txn_booking', true), 0, 15);
+            $amount = ($booking->total_price - $promo_code_value ?? 0) * 100; // total amount in cents
+            $transactionId = substr('TXT-' . (string) Str::uuid(), 0, 15);
 
             // Create a payment intent with the calculated amount and metadata
             $paymentIntent = PaymentIntent::create([
@@ -111,7 +111,7 @@ class StripePaymentController extends Controller
                 'payment_method' => 'online',
                 'payment_intent_id' => $paymentIntent->id,
                 'client_secret' => $paymentIntent->client_secret,
-                'amount' => $booking->total_price,
+                'amount' => $amount / 100,
                 'promo_code' => $validateData['promo_code'] ?? null,
                 'status' => 'pending',
             ]);
@@ -180,6 +180,8 @@ class StripePaymentController extends Controller
         Log::info('payment data: ' . json_encode($payment));
         $payment->status = 'success';
         $payment->save();
+
+        //? Assign promo code to user
         if ($payment->promo_code && $payment->user_id) {
             $this->assignPromoCodeToUser($payment->user_id, $payment->promo_code);
         }
@@ -248,13 +250,13 @@ class StripePaymentController extends Controller
         // dd($promo_code->toArray());
         if (!$promo_code) {
             Log::error('StripePaymentController::checkPromoCodeBalance:- Promo code not found or max use limit reached. for user ' . $this->user->id);
-            return Helper::jsonErrorResponse('Promo code not found or max use limit reached.', 404);
+            throw new Exception('Promo code not found or max use limit reached.');
         }
 
         return $promo_code->value;
     }
 
-    public function assignPromoCodeToUser($userId, $code)
+    private function assignPromoCodeToUser($userId, $code)
     {
         try {
             $promo_code = PromoCode::where('code', $code)->first();

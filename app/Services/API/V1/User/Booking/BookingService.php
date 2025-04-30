@@ -33,7 +33,7 @@ class BookingService
     {
         try {
             $status = $request->status ?? 'active';
-            $bookings = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+            $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude','payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('status', $status)
