@@ -26,7 +26,7 @@
                     </a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">
-                    <span class="fw-medium">Dynamic Page</span>
+                    <span class="fw-medium">Faq Edit Page</span>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">
                     <span class="fw-medium">Edit</span>
@@ -40,37 +40,38 @@
 
 
             <div class="mb-4">
-                <h4 class="fs-20 mb-1">Dynamic Page</h4>
-                <p class="fs-15">Edit Dynamic Page here.</p>
+                <h4 class="fs-20 mb-1">Faq Page</h4>
+                <p class="fs-15">Edit Faq Page here.</p>
             </div>
 
-            <form action="{{ route('dynamic_page.update', $data->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('faqs.update', $data->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT') <!-- This is important for update actions -->
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="form-group mb-4">
-                            <label class="label text-secondary">Page Title</label>
+                            <label class="label text-secondary">Faq Question</label>
                             <div class="form-group position-relative">
                                 <input type="text"
-                                    class="form-control text-dark ps-5 h-55 @error('page_title') is-invalid @enderror"
-                                    name="page_title" value="{{ old('page_title', $data->page_title) }}" required
-                                    placeholder="Enter Page Title here">
+                                    class="form-control text-dark ps-5 h-55 @error('question') is-invalid @enderror"
+                                    name="question" value="{{ old('question', $data->question) }}" required
+                                    placeholder="Enter Faq Question here">
                             </div>
-                            @error('page_title')
-                                <div id="page_title-error" class="text-danger">{{ $message }}</div>
+                            @error('question')
+                                <div id="question-error" class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
+
                     <div class="col-lg-12">
                         <div class="form-group mb-4">
-                            <label class="label text-secondary">Page Content</label>
+                            <label class="label text-secondary">Faq Answer</label>
                             <div class="form-group position-relative">
-                                <textarea name="page_content" class="form-control @error('page_content') is-invalid @enderror" id="page_content" placeholder="Page Content here">{{ old('page_content', $data->page_content) }}</textarea>
+                                <textarea name="answer" class="form-control @error('answer') is-invalid @enderror" id="answer" placeholder="Page Content here">{{ old('answer', $data->answer) }}</textarea>
 
                             </div>
-                            @error('page_content')
-                                <div id="page_content-error" class="text-danger">{{ $message }}</div>
+                            @error('answer')
+                                <div id="answer-error" class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
@@ -80,7 +81,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="d-flex flex-wrap gap-3">
-                            <button type="reset" class="btn btn-danger py-2 px-4 fw-medium fs-16 text-white" onclick="window.location.href='{{route('dynamic_page.index')}}'">Cancel</button>
+                            <button type="reset" class="btn btn-danger py-2 px-4 fw-medium fs-16 text-white" onclick="window.location.href='{{route('faqs.index')}}'">Cancel</button>
                             <button type="submit" class="btn btn-primary py-2 px-4 fw-medium fs-16"> <i class="ri-check-line text-white fw-medium"></i> Update</button>
                         </div>
                     </div>
