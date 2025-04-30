@@ -35,7 +35,7 @@ class BookingService
             $status = $request->status ?? 'active';
             $bookings = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
                 ->where('user_id', $this->user->id)
-                ->select('id','unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('status', $status)
                 ->latest()
                 ->paginate($request->per_page ?? 25);
@@ -116,22 +116,16 @@ class BookingService
             $endDateTime = Carbon::parse($validatedData['booking_date_end'] . ' ' . $validatedData['booking_time_end'])->format('Y-m-d H:i:s');
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
-            // dd($startDateTime);
             $validatedData['user_id'] = $this->user->id;
             $validatedData['unique_id'] = (string) Str::uuid();
-            // dd($validatedData);
-
             $checkPricingType = $this->checkPricingType($validatedData);
             $validatedData['estimated_hours'] = $checkPricingType->estimated_hours;
             $validatedData['estimated_price'] = $checkPricingType->estimated_price;
             $validatedData['platform_fee'] = $this->platformFee($validatedData['estimated_price']);
-            // dd($validatedData);
-            // $validatedData['total_price'] = ;
+            $validatedData['total_price'] = ($checkPricingType->estimated_price + $validatedData['platform_fee']) * $validatedData['number_of_slot'];
             $singlePrice = $checkPricingType->rate;
             $validatedData['per_hour_price'] = $singlePrice;
-
             $this->checkParkingSlotAvailbelity($validatedData);
-
             // Create the booking
             $booking = Booking::create($validatedData);
             $this->platformFeeAssign($booking->id);
@@ -313,7 +307,7 @@ class BookingService
         try {
             $booking = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
                 ->where('user_id', $this->user->id)
-                ->select('id','unique_id','parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->findOrFail($id);
 
             $now = Carbon::now();

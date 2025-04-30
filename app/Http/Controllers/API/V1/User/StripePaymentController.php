@@ -32,6 +32,15 @@ use Stripe\Exception\SignatureVerificationException;
 use function GuzzleHttp\json_encode;
 class StripePaymentController extends Controller
 {
+
+
+    protected $user;
+
+    public function __construct()
+    {
+        $this->user = Auth::user();
+    }
+
     public function createPaymentIntent(Request $request)
     {
         $validateData = $request->validate([
@@ -46,31 +55,18 @@ class StripePaymentController extends Controller
             $promo_code_value = 0;
 
             if (!empty($validateData['promo_code_id'])) {
-                $promo_code = PromoCode::withCount('userPromoCodes')
-                    ->where('id', $validateData['promo_code_id'])
-                    ->whereColumn('uses_limit', '>', 'user_promo_codes_count') // compare columns properly
-                    ->whereDoesntHave('userPromoCodes', function ($query) use ($user_id) {
-                        $query->where('user_id', $user_id);
-                    })
-                    ->first();
-
-                if (!$promo_code) {
-                    Log::error('StripePaymentController::createPaymentIntent:- Promo code not found or max use limit reached. for user ' . $user_id);
-                    return Helper::jsonErrorResponse('Promo code not found or max use limit reached.', 404);
-                }
-
-                $promo_code_value = $promo_code->value;
+                $promo_code_value = $this->checkPromoCodeBalance($validateData['promo_code_id']);
             }
 
             // Check if the order is found
-            $booking = Booking::where('user_id', $user_id)
+            $booking = Booking::where('user_id', $this->user->id)
                 ->where('unique_id', $validateData['booking_unique_id'])
                 ->whereNotIn('status', ['cancelled', 'completed', 'close'])
-                ->whereDoesntHave('payment', function ($query) {
-                    $query->whereIn('status', ['success', 'cancelled', 'closed', 'refunded']);
-                })
+                // ->whereDoesntHave('payment', function ($query) {
+                //     $query->whereIn('status', ['success', 'cancelled', 'closed', 'refunded']);
+                // })
                 ->first();
-            // dd($booking);
+            // dd($booking->toArray());
             if (!$booking) {
                 return Helper::jsonErrorResponse('Bookings not found', 404);
             }
@@ -80,17 +76,16 @@ class StripePaymentController extends Controller
                 return Helper::jsonErrorResponse('This bokking has already been paid.', 400);
             }
 
-            // check this hotel set payment configarations
-            $stripe_secret = Stripe::setApiKey(config('services.stripe.key'));
 
-            if (!$stripe_secret) {
+            // dd(config('services.stripe.key'));
+            if (!config('services.stripe.secret')) {
                 return Helper::jsonErrorResponse('Payment facilities are not configured. Please contact support.', 404);
             }
-
-            // Stripe::setApiKey(Crypt::decryptString($stripe_secret->stripe_secret_key));
-
+            // check this hotel set payment configarations
+            $stripe_secret = Stripe::setApiKey(config('services.stripe.secret'));
             //calculation
             $amount = $booking->total_price * 100; // total amount in cents
+
             $transactionId = substr(uniqid('txn_booking', true), 0, 15);
 
             // Create a payment intent with the calculated amount and metadata
@@ -108,14 +103,14 @@ class StripePaymentController extends Controller
 
             $payment = Payment::create([
                 'booking_id' => $booking->id,
-                'user_id' => $user_id,
+                'user_id' => $this->user->id,
                 'transaction_id' => null,
                 'promo_code_id' => $validateData['promo_code_id'] ?? null,
                 'transaction_number' => $transactionId,
                 'payment_method' => 'online',
                 'payment_intent_id' => $paymentIntent->id,
                 'client_secret' => $paymentIntent->client_secret,
-                'amount' => $amount,
+                'amount' => $booking->total_price,
                 'status' => 'pending',
             ]);
             DB::commit();
@@ -131,29 +126,32 @@ class StripePaymentController extends Controller
         }
     }
 
-    public function handleWebhook(Request $request, $slug): JsonResponse
+    public function handleWebhook(Request $request): JsonResponse
     {
-
-        $stripe_secret = Stripe::setApiKey(config('services.stripe.key'));
+        Log::info('StripePaymentController::handleWebhook:- ' . json_encode($request->all()));
 
         $stripe_webhook_secret = Stripe::setApiKey(config('services.stripe.webhook_secret'));
 
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-        $endpointSecret = $stripe_webhook_secret;
-
+        $endpointSecret = config('services.stripe.webhook_secret');
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
+            Log::info('Stripe webhook event: ' . json_encode($event));
         } catch (UnexpectedValueException $e) {
+            Log::error('Stripe webhook error: ' . $e->getMessage());
             return Helper::jsonResponse(false, $e->getMessage(), 400, []);
         } catch (SignatureVerificationException $e) {
+            Log::error('Stripe webhook signature error: ' . $e->getMessage());
             return Helper::jsonResponse(false, $e->getMessage(), 400, []);
         }
 
         //? Handle the event based on its type
         try {
+
             switch ($event->type) {
                 case 'payment_intent.succeeded':
+                    Log::info('payment_intent.succeeded');
                     $this->handlePaymentSuccess($event->data->object);
                     return Helper::jsonResponse(true, 'Payment successful', 200, []);
 
@@ -172,10 +170,12 @@ class StripePaymentController extends Controller
     protected function handlePaymentSuccess($paymentIntent): void
     {
         Log::info('StripePaymentController::handlePaymentSuccess:- ' . json_encode($paymentIntent));
-        $payment = Payment::where('booking_id', $paymentIntent->metadata->booking_id)
-            ->where('transaction_id', $paymentIntent->metadata->transaction_id)
-            ->where('payment_intent_id', $paymentIntent->id)->first();
-
+        $payment = Payment::where('booking_id', $paymentIntent->metadata->booking_id)->first();
+        if (!$payment) {
+            Log::info('StripePaymentController::handlePaymentSuccess:- Payment not found');
+            return;
+        }
+        Log::info('payment data: ' . json_encode($payment));
         $payment->status = 'success';
         $payment->save();
         Log::info("StripePaymentController::handlePaymentSuccess:- Payment success: " . $payment);
@@ -188,8 +188,7 @@ class StripePaymentController extends Controller
         Log::info("StripePaymentController::handlePaymentFailure:- Payment failed: " . json_encode($paymentIntent));
         //* Record the failure payment in the database
         $payment = Payment::where('booking_id', $paymentIntent->metadata->booking_id)
-            ->where('transaction_id', $paymentIntent->metadata->transaction_id)
-            ->where('payment_intent_id', $paymentIntent->id)->first();
+            ->where('transaction_id', $paymentIntent->metadata->transaction_id)->first();
 
         $payment->status = 'failed';
         $payment->save();
@@ -227,6 +226,23 @@ class StripePaymentController extends Controller
         //     Log::warning('No Firebase tokens found for this user.');
         // }
     }
+    private function checkPromoCodeBalance($promo_code_id)
+    {
+        $promo_code = PromoCode::withCount('userPromoCodes')
+            ->where('id', $promo_code_id)
+            ->whereColumn('uses_limit', '>', 'user_promo_codes_count')
+            ->whereDoesntHave('userPromoCodes', function ($query) {
+                $query->where('user_id', $this->user->id);
+            })
+            ->first();
 
+        if (!$promo_code) {
+            Log::error('StripePaymentController::createPaymentIntent:- Promo code not found or max use limit reached. for user ' . $this->user->id);
+            return Helper::jsonErrorResponse('Promo code not found or max use limit reached.', 404);
+        }
+
+        return $promo_code->value;
+    }
 
 }
+

@@ -84,6 +84,9 @@ Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router)
     Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
 });
 
+//payments webhook
+Route::post('/payments-create/stripe', [StripePaymentController::class, 'handleWebhook']);
+
 // only for user and host
 Route::group(['middleware' => ['auth:api', 'check_is_user_or_host']], function ($router) {
     Route::get('/faqs', [UserFaqController::class, 'index']);
