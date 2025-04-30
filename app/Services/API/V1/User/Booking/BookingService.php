@@ -53,37 +53,48 @@ class BookingService
                 if ($now->lt($start)) {
                     // Before start time
                     $diffInMinutes = $now->diffInMinutes($start);
+                    $diffInDays = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
 
                     if ($diffInMinutes <= 10) {
                         $booking->is_critical = true;
                     }
 
-                    $hours = floor($diffInMinutes / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($hours > 0) {
-                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To Start Parking";
-                    } else {
-                        $booking->parking_status = "{$minutes} Minute(s) Left To Start Parking";
+                    $status = '';
+                    if ($diffInDays > 0) {
+                        $status .= "{$diffInDays} Day(s) ";
                     }
+                    if ($hours > 0) {
+                        $status .= "{$hours} Hour(s) ";
+                    }
+                    $status .= "{$minutes} Minute(s) Left To Start Parking";
+
+                    $booking->parking_status = $status;
 
                 } elseif ($now->between($start, $end)) {
                     // Parking Running
                     $diffInMinutes = $now->diffInMinutes($end);
+                    $diffInDays = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
+
                     $booking->is_running = true;
 
                     if ($diffInMinutes <= 10) {
                         $booking->is_critical = true;
                     }
 
-                    $hours = floor($diffInMinutes / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($hours > 0) {
-                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To End Parking";
-                    } else {
-                        $booking->parking_status = "{$minutes} Minute(s) Left To End Parking";
+                    $status = '';
+                    if ($diffInDays > 0) {
+                        $status .= "{$diffInDays} Day(s) ";
                     }
+                    if ($hours > 0) {
+                        $status .= "{$hours} Hour(s) ";
+                    }
+                    $status .= "{$minutes} Minute(s) Left To End Parking";
+
+                    $booking->parking_status = $status;
 
                 } else {
                     // After end time
@@ -93,6 +104,7 @@ class BookingService
 
                 return $booking;
             });
+
 
             return $bookings;
         } catch (Exception $e) {

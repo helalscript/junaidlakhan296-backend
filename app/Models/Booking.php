@@ -63,7 +63,7 @@ class Booking extends Model
 
     public function vehicleDetail()
     {
-        return $this->belongsTo(VehicleDetail::class);
+        return $this->belongsTo(VehicleDetail::class,'vehicle_details_id');
     }
 
     // Accessor for start_time (only time part)

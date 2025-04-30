@@ -147,7 +147,7 @@ class UserBookingController extends Controller
     {
         try {
             $data = $this->userBookingService->userDashboardTransactions($request);
-            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, userDashboardTransactionResource::collection($data), );
+            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, userDashboardTransactionResource::collection($data), true);
         } catch (Exception $e) {
             Log::error("UserBookingController::userDashboardData" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch dashboard data', 500);
