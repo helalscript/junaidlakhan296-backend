@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Booking;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Carbon\Carbon;
@@ -46,7 +47,7 @@ class CancelPendingPayments extends Command
                     }
                 }
             } catch (Exception $e) {
-                \Log::error('Failed to cancel payment intent for booking ' . $booking->id . ': ' . $e->getMessage());
+                Log::error('Failed to cancel payment intent for booking ' . $booking->id . ': ' . $e->getMessage());
             }
         }
 
