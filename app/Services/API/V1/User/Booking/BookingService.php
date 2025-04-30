@@ -8,6 +8,7 @@ use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\MonthlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\Payment;
 use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
@@ -33,7 +34,7 @@ class BookingService
     {
         try {
             $status = $request->status ?? 'active';
-            $bookings = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+            $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('status', $status)
@@ -52,37 +53,48 @@ class BookingService
                 if ($now->lt($start)) {
                     // Before start time
                     $diffInMinutes = $now->diffInMinutes($start);
+                    $diffInDays = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
 
                     if ($diffInMinutes <= 10) {
                         $booking->is_critical = true;
                     }
 
-                    $hours = floor($diffInMinutes / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($hours > 0) {
-                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To Start Parking";
-                    } else {
-                        $booking->parking_status = "{$minutes} Minute(s) Left To Start Parking";
+                    $status = '';
+                    if ($diffInDays > 0) {
+                        $status .= "{$diffInDays} Day(s) ";
                     }
+                    if ($hours > 0) {
+                        $status .= "{$hours} Hour(s) ";
+                    }
+                    $status .= "{$minutes} Minute(s) Left To Start Parking";
+
+                    $booking->parking_status = $status;
 
                 } elseif ($now->between($start, $end)) {
                     // Parking Running
                     $diffInMinutes = $now->diffInMinutes($end);
+                    $diffInDays = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
+
                     $booking->is_running = true;
 
                     if ($diffInMinutes <= 10) {
                         $booking->is_critical = true;
                     }
 
-                    $hours = floor($diffInMinutes / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($hours > 0) {
-                        $booking->parking_status = "{$hours}:{$minutes} Hour(s) Left To End Parking";
-                    } else {
-                        $booking->parking_status = "{$minutes} Minute(s) Left To End Parking";
+                    $status = '';
+                    if ($diffInDays > 0) {
+                        $status .= "{$diffInDays} Day(s) ";
                     }
+                    if ($hours > 0) {
+                        $status .= "{$hours} Hour(s) ";
+                    }
+                    $status .= "{$minutes} Minute(s) Left To End Parking";
+
+                    $booking->parking_status = $status;
 
                 } else {
                     // After end time
@@ -92,6 +104,7 @@ class BookingService
 
                 return $booking;
             });
+
 
             return $bookings;
         } catch (Exception $e) {
@@ -302,13 +315,14 @@ class BookingService
      * @return mixed
      */
 
-    public function show($id)
+    public function show($unique_id)
     {
         try {
-            $booking = Booking::with('parkingSpace:id,slug,title,gallery_images,address,latitude,longitude')
+            $booking = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
-                ->findOrFail($id);
+                ->where('unique_id', $unique_id)
+                ->firstOrFail();
 
             $now = Carbon::now();
             $start = Carbon::parse($booking->start_time);
@@ -406,5 +420,44 @@ class BookingService
             throw $e;
         }
     }
+
+
+    public function userDashboardData()
+    {
+        try {
+            $bookingCounts = Booking::where('user_id', $this->user->id)
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status');
+            $data = [
+                'booking_pending' => $bookingCounts['pending'] ?? 0,
+                'booking_active' => $bookingCounts['active'] ?? 0,
+                'booking_confirmed' => $bookingCounts['confirmed'] ?? 0,
+                'booking_cancelled' => $bookingCounts['cancelled'] ?? 0,
+                'booking_close' => $bookingCounts['close'] ?? 0,
+                'booking_completed' => $bookingCounts['completed'] ?? 0,
+            ];
+
+            return $data;
+        } catch (Exception $e) {
+            Log::error("BookingService::userDashboardData" . $e->getMessage());
+            throw $e;
+        }
+    }
+    public function userDashboardTransactions($request)
+    {
+        try {
+            $per_page = $request->per_page ?? 25;
+            $payments = Payment::where('user_id', $this->user->id)
+                ->select('id', 'transaction_number', 'booking_id', 'amount', 'status', 'created_at')
+                ->with(['booking.parkingSpace:id,address', 'booking:id,parking_space_id'])
+                ->paginate($per_page);
+            return $payments;
+        } catch (Exception $e) {
+            Log::error("BookingService::userDashboardData" . $e->getMessage());
+            throw $e;
+        }
+    }
+
 
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\API\Auth\SocialLoginController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
+use App\Http\Controllers\API\V1\Host\Reservation\HostReservationController;
 use App\Http\Controllers\API\V1\User\StripePaymentController;
 use App\Http\Controllers\API\V1\User\UserBookingController;
 use App\Http\Controllers\API\V1\User\UserContactSupportController;
@@ -73,16 +74,18 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
     Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'update']);
     Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'showForHost']);
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
-    // Route::apiResource('/my-reservations', HostReservationController::class);
+    Route::apiResource('/my-reservations', HostReservationController::class)->only('index', 'show');
 });
 
 
 // only for user
 Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router) {
+    Route::get('/user-dashboard-data', [UserBookingController::class, 'userDashboardData']);
+    Route::get('/user-dashboard-transactions', [UserBookingController::class, 'userDashboardTransactions']);
     Route::apiResource('/my-bookings', UserBookingController::class);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
     Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
-    // Route::get('/promo-code/test/{userId}/{code}', [StripePaymentController::class, 'assignPromoCodeToUser']);
+    // Route::get('/promo-code/test/{userId}/{code}', [StripePaymentController::class, 'assignPromoCodeToUser']); //for test
 });
 
 //payments webhook

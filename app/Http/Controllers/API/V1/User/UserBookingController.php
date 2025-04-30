@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\userDashboardTransactionResource;
 use App\Models\Booking;
 use App\Services\API\V1\User\Booking\BookingService;
 use Exception;
@@ -88,10 +89,10 @@ class UserBookingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $unique_id)
     {
         try {
-            $booking = $this->userBookingService->show($id);
+            $booking = $this->userBookingService->show($unique_id);
             return Helper::jsonResponse(true, 'Booking fetched successfully', 200, $booking);
         } catch (Exception $e) {
             Log::error("UserBookingController::show" . $e->getMessage());
@@ -128,6 +129,28 @@ class UserBookingController extends Controller
         } catch (Exception $e) {
             Log::error("UserBookingController::destroy" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to delete booking', 500);
+        }
+    }
+
+
+    public function userDashboardData()
+    {
+        try {
+            $data = $this->userBookingService->userDashboardData();
+            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, $data);
+        } catch (Exception $e) {
+            Log::error("UserBookingController::userDashboardData" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch dashboard data', 500);
+        }
+    }
+    public function userDashboardTransactions(Request $request)
+    {
+        try {
+            $data = $this->userBookingService->userDashboardTransactions($request);
+            return Helper::jsonResponse(true, 'Dashboard data fetched successfully', 200, userDashboardTransactionResource::collection($data), true);
+        } catch (Exception $e) {
+            Log::error("UserBookingController::userDashboardData" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch dashboard data', 500);
         }
     }
 }
