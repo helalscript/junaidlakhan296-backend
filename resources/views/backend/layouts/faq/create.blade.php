@@ -47,8 +47,7 @@
                     @csrf
                     @method('POST')
                     <div class="row">
-                        <input type="hidden" name="type" value="{{ Auth::user()->role }}">
-
+                        
                         <div class="col-lg-12">
                             <div class="form-group mb-4">
                                 <label class="label text-secondary">Faq Question</label>
@@ -76,10 +75,23 @@
                                 @enderror
                             </div>
                         </div>
-
+                        <div class="col-lg-12">
+                            <div class="form-group mb-4">
+                                <label class="label text-secondary">Type Select</label>
+                                <div class="form-group position-relative">
+                                    <select name="type" class="form-control text-dark ps-5 h-55 @error('type') is-invalid @enderror">
+                                        <option value="user">user</option>
+                                        <option value="host">host</option>
+                                    </select>
+                                </div>
+                                @error('type')
+                                    <div id="type-error" class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
 
                     </div>
-                    <div class="row">
+                    <div class="row mt-3">
                         <div class="col-lg-12">
                             <div class="d-flex flex-wrap gap-3">
                                 <button type="reset" class="btn btn-danger py-2 px-4 fw-medium fs-16 text-white"
