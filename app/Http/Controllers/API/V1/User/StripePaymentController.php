@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\PromoCode;
+use App\Models\UserPromoCode;
 use Illuminate\Http\Request;
 use App\Enums\NotificationType;
 use App\Models\FirebaseTokens;
@@ -45,7 +46,7 @@ class StripePaymentController extends Controller
     {
         $validateData = $request->validate([
             'booking_unique_id' => 'required|exists:bookings,unique_id',
-            'promo_code_id' => 'nullable|exists:promo_codes,id',
+            'promo_code' => 'nullable|exists:promo_codes,code',
             // 'amount'     => 'required|numeric',
         ]);
         try {
@@ -54,10 +55,10 @@ class StripePaymentController extends Controller
             $user_id = Auth::id();
             $promo_code_value = 0;
 
-            if (!empty($validateData['promo_code_id'])) {
-                $promo_code_value = $this->checkPromoCodeBalance($validateData['promo_code_id']);
+            if (!empty($validateData['promo_code'])) {
+                $promo_code_value = $this->checkPromoCodeBalance($validateData['promo_code']);
             }
-
+            // dd($promo_code_value);
             // Check if the order is found
             $booking = Booking::where('user_id', $this->user->id)
                 ->where('unique_id', $validateData['booking_unique_id'])
@@ -84,7 +85,7 @@ class StripePaymentController extends Controller
             // check this hotel set payment configarations
             $stripe_secret = Stripe::setApiKey(config('services.stripe.secret'));
             //calculation
-            $amount = $booking->total_price * 100; // total amount in cents
+            $amount = ($booking->total_price - $promo_code_value) * 100; // total amount in cents
 
             $transactionId = substr(uniqid('txn_booking', true), 0, 15);
 
@@ -105,12 +106,13 @@ class StripePaymentController extends Controller
                 'booking_id' => $booking->id,
                 'user_id' => $this->user->id,
                 'transaction_id' => null,
-                'promo_code_id' => $validateData['promo_code_id'] ?? null,
+                'promo_code_id' => null,
                 'transaction_number' => $transactionId,
                 'payment_method' => 'online',
                 'payment_intent_id' => $paymentIntent->id,
                 'client_secret' => $paymentIntent->client_secret,
                 'amount' => $booking->total_price,
+                'promo_code' => $validateData['promo_code'] ?? null,
                 'status' => 'pending',
             ]);
             DB::commit();
@@ -226,22 +228,37 @@ class StripePaymentController extends Controller
         //     Log::warning('No Firebase tokens found for this user.');
         // }
     }
-    private function checkPromoCodeBalance($promo_code_id)
+    private function checkPromoCodeBalance($code)
     {
         $promo_code = PromoCode::withCount('userPromoCodes')
-            ->where('id', $promo_code_id)
-            ->whereColumn('uses_limit', '>', 'user_promo_codes_count')
+            ->where('code', $code)
+            ->where('uses_limit', '>', function ($query) {
+                $query->selectRaw('count(*)')
+                    ->from('user_promo_codes')
+                    ->whereColumn('user_promo_codes.promo_code_id', 'promo_codes.id');
+            })
             ->whereDoesntHave('userPromoCodes', function ($query) {
                 $query->where('user_id', $this->user->id);
             })
             ->first();
-
+        // dd($promo_code->toArray());
         if (!$promo_code) {
-            Log::error('StripePaymentController::createPaymentIntent:- Promo code not found or max use limit reached. for user ' . $this->user->id);
+            Log::error('StripePaymentController::checkPromoCodeBalance:- Promo code not found or max use limit reached. for user ' . $this->user->id);
             return Helper::jsonErrorResponse('Promo code not found or max use limit reached.', 404);
         }
 
         return $promo_code->value;
+    }
+
+    private function assignPromoCodeToUser($userId, $code)
+    {
+        $userPromoCode = UserPromoCode::create([
+            'user_id' => $userId,
+        ]);
+        $userPromoCode->user_id = $this->user->id;
+        $userPromoCode->promo_code_id = $code;
+        $userPromoCode->save();
+        return $userPromoCode;
     }
 
 }

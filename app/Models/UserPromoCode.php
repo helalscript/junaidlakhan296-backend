@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class UserPromoCode extends Model
 {
     use HasFactory;
-    protected $table = 'user_promo_code';
+    protected $table = 'user_promo_codes';
 
     protected $fillable = [
         'user_id',

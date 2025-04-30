@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->string('payment_intent_id')->nullable();
             $table->string('client_secret')->nullable();
             $table->decimal('amount', 10, 2);
+            $table->string('promo_code')->nullable();
             $table->enum('status', ['pending', 'success', 'cancelled', 'failed', 'closed', 'refunded'])->default('pending');
             $table->timestamps();
         });
