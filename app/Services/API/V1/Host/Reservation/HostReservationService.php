@@ -199,7 +199,15 @@ class HostReservationService
     public function acceptReservation(string $unique_id)
     {
         try {
-            $reservation = Booking::where('unique_id', $unique_id)->firstOrFail();
+            $reservation = Booking::where('unique_id', $unique_id)
+                ->where('status', 'pending')
+                ->whereHas('payment', function ($query) {
+                    $query->where('status', 'success');
+                })
+                ->first();
+            if (!$reservation) {
+                throw new Exception('Reservation not found or already accepted.');
+            }
             $reservation->status = 'confirmed';
             $reservation->save();
             return $reservation;
@@ -213,15 +221,23 @@ class HostReservationService
         try {
             DB::beginTransaction();
             $reservation = Booking::where('unique_id', $unique_id)
-                ->with(['payment:id,booking_id,status'])
-                ->firstOrFail();
+                ->where('status', 'pending')
+                ->whereHas('payment', function ($query) {
+                    $query->where('status', 'success');
+                })
+                ->with(['payment:id,booking_id,payment_intent_id,status'])
+                ->first();
+            if (!$reservation) {
+                throw new Exception('Reservation not found or already accepted.');
+            }
             $reservation->status = 'cancelled';
             $reservation->save();
+
             // Refund payment using StripePaymentController or ideally a PaymentService
             $this->stripePaymentService->refundPayment($reservation->payment->payment_intent_id);
-            // $paymentIntentId = $reservation->payment->payment_intent_id;
-            // $stripePayment = new StripePaymentController(); // Ideally inject this via the service container
-            // $stripePayment->refundPayment(new \Illuminate\Http\Request(['payment_intent_id' => $paymentIntentId]));
+            $paymentIntentId = $reservation->payment->payment_intent_id;
+            $stripePayment = new StripePaymentController(); // Ideally inject this via the service container
+            $stripePayment->refundPayment(new \Illuminate\Http\Request(['payment_intent_id' => $paymentIntentId]));
 
             DB::commit();
             return $reservation;
