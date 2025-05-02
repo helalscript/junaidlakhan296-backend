@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\API\V1\indexForUserHourlyResource;
-use App\Http\Resources\API\V1\showForUserHourlyResource;
+use App\Http\Resources\API\V1\IndexForUserHourlyResource;
+use App\Http\Resources\API\V1\ShowForUserHourlyResource;
 use App\Models\Booking;
 use App\Models\HourlyPricing;
 use App\Services\API\V1\User\ParkingSpace\UserParkingSpaceService;
@@ -56,7 +56,7 @@ class UserParkingSpaceController extends Controller
             );
             $result->setCollection($transformedData);
 
-            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, indexForUserHourlyResource::collection($result), true);
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserHourlyResource::collection($result), true);
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
@@ -76,7 +76,7 @@ class UserParkingSpaceController extends Controller
         // dd($validatedData);
         try {
             $pricing = $this->userParkingSpaceService->getHourlyPricingDetails($id, $request);
-            return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new showForUserHourlyResource($pricing));
+            return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new ShowForUserHourlyResource($pricing));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch pricing details. ' . $e->getMessage(), 500);
@@ -224,7 +224,7 @@ class UserParkingSpaceController extends Controller
     //         $result->setCollection($transformedData);
 
     //         // return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
-    //         return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, indexForUserHourlyResource::collection($result), true);
+    //         return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserHourlyResource::collection($result), true);
     //     } catch (Exception $e) {
     //         Log::error("ParkingSpaceController::indexForUsersHourly - " . $e->getMessage());
     //         return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
@@ -328,7 +328,7 @@ class UserParkingSpaceController extends Controller
 
 
     //         // return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, $hourlyPricing);
-    //         return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, new showForUserHourlyResource($hourlyPricing));
+    //         return Helper::jsonResponse(true, 'Hourly pricing fetched successfully', 200, new ShowForUserHourlyResource($hourlyPricing));
     //     } catch (Exception $e) {
     //         Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
     //         return Helper::jsonErrorResponse('Failed to fetch hourly pricing. ' . $e->getMessage(), 500);
