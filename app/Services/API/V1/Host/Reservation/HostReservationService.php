@@ -221,6 +221,14 @@ class HostReservationService
                 ->groupBy('status')
                 ->pluck(DB::raw('count(*) as count'), 'status');
 
+            //total earnings
+            $totalEarnings = Booking::whereIn('parking_space_id', $userParkingSpaces)
+                ->whereHas('payment', function ($query) {
+                    $query->whereIn('status', ['success', 'refunded']);
+                })
+                ->where('status', 'completed')
+                ->sum('total_price');
+
             $data = [
                 'booking_pending' => $totalReservations['pending'] ?? 0,
                 'booking_active' => $totalReservations['active'] ?? 0,
@@ -228,6 +236,7 @@ class HostReservationService
                 'booking_cancelled' => $totalReservations['cancelled'] ?? 0,
                 'booking_close' => $totalReservations['close'] ?? 0,
                 'booking_completed' => $totalReservations['completed'] ?? 0,
+                'total_earnings' => $totalEarnings ?? 0,
             ];
             return $data;
         } catch (Exception $e) {
