@@ -5,7 +5,7 @@ namespace App\Http\Resources\API\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class hostReservationIndexResource extends JsonResource
+class HostReservationIndexResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
