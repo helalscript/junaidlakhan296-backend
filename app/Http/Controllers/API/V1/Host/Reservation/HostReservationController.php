@@ -28,7 +28,7 @@ class HostReservationController extends Controller
             return Helper::jsonResponse(true, 'Reservations fetched successfully', 200, hostReservationIndexResource::collection($reservations), true);
         } catch (Exception $e) {
             Log::error("HostReservationController::index" . $e->getMessage());
-            throw $e;
+            return Helper::jsonErrorResponse('Failed to fetch reservations', 403);
         }
     }
 
@@ -42,7 +42,7 @@ class HostReservationController extends Controller
             return Helper::jsonResponse(true, 'Reservation fetched successfully', 200, $reservation);
         } catch (Exception $e) {
             Log::error("HostReservationController::show" . $e->getMessage());
-            throw $e;
+            return Helper::jsonErrorResponse('Failed to fetch reservation', 403);
         }
     }
 
@@ -53,7 +53,7 @@ class HostReservationController extends Controller
             return Helper::jsonResponse(true, 'Reservation accepted successfully', 200, $reservation);
         } catch (Exception $e) {
             Log::error("HostReservationController::acceptReservation" . $e->getMessage());
-            throw $e;
+            return Helper::jsonErrorResponse('Failed to accept reservation', 403);
         }
     }
 
@@ -64,7 +64,7 @@ class HostReservationController extends Controller
             return Helper::jsonResponse(true, 'Reservation cancle successfully', 200, $reservation);
         } catch (Exception $e) {
             Log::error("HostReservationController::cancleReservation" . $e->getMessage());
-            throw $e;
+            return Helper::jsonErrorResponse('Failed to cancle reservation', 403);
         }
     }
 }
