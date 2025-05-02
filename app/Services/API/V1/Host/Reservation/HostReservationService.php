@@ -9,6 +9,7 @@ use App\Services\API\V1\User\StripePayment\StripePaymentService;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,10 +32,14 @@ class HostReservationService
     {
         try {
             $per_page = $request->per_page ?? 25;
+            $status = $request->status ?? null; //'pending', 'confirmed', 'active', 'cancelled', 'close', 'completed'
             $userParkingSpaces = ParkingSpace::where('user_id', $this->user->id)->pluck('id')->toArray();
             $reservation = Booking::whereIn('parking_space_id', $userParkingSpaces)
                 ->whereHas('payment', function ($query) {
                     $query->whereIn('status', ['success', 'refunded']);
+                })
+                ->when($status, function ($query) use ($status) {
+                    $query->where('status', $status);
                 })
                 ->with(['user:id,name,avatar', 'parkingSpace:id,address,title'])
                 ->select('id', 'unique_id', 'parking_space_id', 'user_id', 'start_time', 'end_time', 'total_price', 'estimated_hours', 'estimated_price', 'status', 'created_at')
@@ -42,67 +47,7 @@ class HostReservationService
                 ->paginate($per_page);
             // filter added time for reservation
             $reservation->getCollection()->transform(function ($booking) {
-                $now = Carbon::now();
-                $start = Carbon::parse($booking->start_time);
-                $end = Carbon::parse($booking->end_time);
-
-                $booking->is_critical = false;
-                $booking->is_expired = false;
-                $booking->is_running = false;
-
-                if ($now->lt($start)) {
-                    // Before start time
-                    $diffInMinutes = $now->diffInMinutes($start);
-                    $diffInDays = floor($diffInMinutes / (60 * 24));
-                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($diffInMinutes <= 10) {
-                        $booking->is_critical = true;
-                    }
-
-                    $status = '';
-                    if ($diffInDays > 0) {
-                        $status .= "{$diffInDays} Day(s) ";
-                    }
-                    if ($hours > 0) {
-                        $status .= "{$hours} Hour(s) ";
-                    }
-                    $status .= "{$minutes} Minute(s) Left To Start Parking";
-
-                    $booking->parking_status = $status;
-
-                } elseif ($now->between($start, $end)) {
-                    // Parking Running
-                    $diffInMinutes = $now->diffInMinutes($end);
-                    $diffInDays = floor($diffInMinutes / (60 * 24));
-                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    $booking->is_running = true;
-
-                    if ($diffInMinutes <= 10) {
-                        $booking->is_critical = true;
-                    }
-
-                    $status = '';
-                    if ($diffInDays > 0) {
-                        $status .= "{$diffInDays} Day(s) ";
-                    }
-                    if ($hours > 0) {
-                        $status .= "{$hours} Hour(s) ";
-                    }
-                    $status .= "{$minutes} Minute(s) Left To End Parking";
-
-                    $booking->parking_status = $status;
-
-                } else {
-                    // After end time
-                    $booking->is_expired = true;
-                    $booking->parking_status = "Parking Time Ended";
-                }
-
-                return $booking;
+                return $this->applyTimeStatus($booking);
             });
 
             return $reservation;
@@ -129,64 +74,8 @@ class HostReservationService
                 ->with(['payment:id,booking_id,status', 'user:id,name,avatar,email,phone', 'parkingSpace:id,title,address,description,latitude,longitude', 'parkingSpace.spotDetails:id,parking_space_id,icon,details', 'vehicleDetail:id,registration_number,type,make,model,license_plate_number_eng,license_plate_number_ara'])
                 ->select('id', 'unique_id', 'parking_space_id', 'vehicle_details_id', 'user_id', 'start_time', 'end_time', 'total_price', 'estimated_hours', 'estimated_price', 'status', 'created_at')
                 ->firstOrFail();
-
-            // Time status logic
-            $now = Carbon::now();
-            $start = Carbon::parse($booking->start_time);
-            $end = Carbon::parse($booking->end_time);
-
-            $booking->is_critical = false;
-            $booking->is_expired = false;
-            $booking->is_running = false;
-
-            if ($now->lt($start)) {
-                $diffInMinutes = $now->diffInMinutes($start);
-                $diffInDays = floor($diffInMinutes / (60 * 24));
-                $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                $minutes = $diffInMinutes % 60;
-
-                if ($diffInMinutes <= 10) {
-                    $booking->is_critical = true;
-                }
-
-                $status = '';
-                if ($diffInDays > 0) {
-                    $status .= "{$diffInDays} Day(s) ";
-                }
-                if ($hours > 0) {
-                    $status .= "{$hours} Hour(s) ";
-                }
-                $status .= "{$minutes} Minute(s) Left To Start Parking";
-
-                $booking->parking_status = $status;
-
-            } elseif ($now->between($start, $end)) {
-                $diffInMinutes = $now->diffInMinutes($end);
-                $diffInDays = floor($diffInMinutes / (60 * 24));
-                $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                $minutes = $diffInMinutes % 60;
-
-                $booking->is_running = true;
-
-                if ($diffInMinutes <= 10) {
-                    $booking->is_critical = true;
-                }
-
-                $status = '';
-                if ($diffInDays > 0) {
-                    $status .= "{$diffInDays} Day(s) ";
-                }
-                if ($hours > 0) {
-                    $status .= "{$hours} Hour(s) ";
-                }
-                $status .= "{$minutes} Minute(s) Left To End Parking";
-
-                $booking->parking_status = $status;
-
-            } else {
-                $booking->is_expired = true;
-                $booking->parking_status = "Parking Time Ended";
-            }
+            // filter added time for reservation
+            $booking = $this->applyTimeStatus($booking);
 
             return $booking;
 
@@ -206,17 +95,21 @@ class HostReservationService
                 })
                 ->first();
             if (!$reservation) {
-                throw new Exception('Reservation not found or already accepted.');
+                throw new ModelNotFoundException('Reservation not found or already accepted.');
             }
             $reservation->status = 'confirmed';
             $reservation->save();
             return $reservation;
         } catch (Exception $e) {
-            Log::error("HostReservationController::acceptReservation" . $e->getMessage());
+            Log::error("HostReservationService::acceptReservation failed", [
+                'unique_id' => $unique_id,
+                'user_id' => optional($this->user)->id,
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
-    public function cancleReservation(string $unique_id)
+    public function cancelReservation(string $unique_id)
     {
         try {
             DB::beginTransaction();
@@ -228,22 +121,143 @@ class HostReservationService
                 ->with(['payment:id,booking_id,payment_intent_id,status'])
                 ->first();
             if (!$reservation) {
-                throw new Exception('Reservation not found or already accepted.');
+                throw new ModelNotFoundException('Reservation not found or already accepted.');
             }
             $reservation->status = 'cancelled';
             $reservation->save();
 
-            // Refund payment using StripePaymentController or ideally a PaymentService
+            // Refund payment if applicable
             $this->stripePaymentService->refundPayment($reservation->payment->payment_intent_id);
-            $paymentIntentId = $reservation->payment->payment_intent_id;
-            $stripePayment = new StripePaymentController(); // Ideally inject this via the service container
-            $stripePayment->refundPayment(new \Illuminate\Http\Request(['payment_intent_id' => $paymentIntentId]));
 
             DB::commit();
             return $reservation;
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error("HostReservationController::cancleReservation" . $e->getMessage());
+            Log::error("HostReservationService::cancelReservation failed", [
+                'unique_id' => $unique_id,
+                'user_id' => optional($this->user)->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+
+    private function applyTimeStatus($booking)
+    {
+        $now = Carbon::now();
+        $start = Carbon::parse($booking->start_time);
+        $end = Carbon::parse($booking->end_time);
+
+        $booking->is_critical = false;
+        $booking->is_expired = false;
+        $booking->is_running = false;
+
+        if ($now->lt($start)) {
+            // Before start time
+            $diffInMinutes = $now->diffInMinutes($start);
+            $diffInDays = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
+
+            if ($diffInMinutes <= 10) {
+                $booking->is_critical = true;
+            }
+
+            $status = '';
+            if ($diffInDays > 0) {
+                $status .= "{$diffInDays} Day(s) ";
+            }
+            if ($hours > 0) {
+                $status .= "{$hours} Hour(s) ";
+            }
+            $status .= "{$minutes} Minute(s) Left To Start Parking";
+
+            $booking->parking_status = $status;
+
+        } elseif ($now->between($start, $end)) {
+            // Parking Running
+            $diffInMinutes = $now->diffInMinutes($end);
+            $diffInDays = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
+
+            $booking->is_running = true;
+
+            if ($diffInMinutes <= 10) {
+                $booking->is_critical = true;
+            }
+
+            $status = '';
+            if ($diffInDays > 0) {
+                $status .= "{$diffInDays} Day(s) ";
+            }
+            if ($hours > 0) {
+                $status .= "{$hours} Hour(s) ";
+            }
+            $status .= "{$minutes} Minute(s) Left To End Parking";
+
+            $booking->parking_status = $status;
+
+        } else {
+            // After end time
+            $booking->is_expired = true;
+            $booking->parking_status = "Parking Time Ended";
+        }
+
+        return $booking;
+    }
+
+    public function hostDashboardData()
+    {
+        try {
+
+            $userParkingSpaces = ParkingSpace::where('user_id', $this->user->id)->pluck('id')->toArray();
+
+            $totalReservations = Booking::whereIn('parking_space_id', $userParkingSpaces)
+                ->whereHas('payment', function ($query) {
+                    $query->whereIn('status', ['success', 'refunded']);
+                })
+                ->groupBy('status')
+                ->pluck(DB::raw('count(*) as count'), 'status');
+
+            $data = [
+                'booking_pending' => $totalReservations['pending'] ?? 0,
+                'booking_active' => $totalReservations['active'] ?? 0,
+                'booking_confirmed' => $totalReservations['confirmed'] ?? 0,
+                'booking_cancelled' => $totalReservations['cancelled'] ?? 0,
+                'booking_close' => $totalReservations['close'] ?? 0,
+                'booking_completed' => $totalReservations['completed'] ?? 0,
+            ];
+            return $data;
+        } catch (Exception $e) {
+            Log::error("HostReservationService::hostDashboardData" . $e->getMessage());
+            throw $e;
+        }
+    }
+    public function hostDashboardTransactions($request)
+    {
+        try {
+            $per_page = $request->per_page ?? 25;
+            $transaction_search = $request->transaction_search ?? null;
+            $userParkingSpaces = ParkingSpace::where('user_id', $this->user->id)->pluck('id')->toArray();
+            $transactions = Booking::whereIn('parking_space_id', $userParkingSpaces)
+                ->whereHas('payment', function ($query) {
+                    $query->whereIn('status', ['success', 'refunded']);
+                })
+                ->when($transaction_search, function ($query) use ($transaction_search) {
+                    $query->whereHas('payment', function ($query) use ($transaction_search) {
+                        $query->where('transaction_number', 'like', '%' . $transaction_search . '%');
+                    });
+                })
+                ->with(['payment:id,booking_id,transaction_number,amount,status', 'user:id,name,avatar', 'parkingSpace:id,address,title'])
+                ->select('id', 'unique_id', 'parking_space_id', 'user_id', 'start_time', 'end_time', 'total_price', 'estimated_hours', 'estimated_price', 'status', 'created_at')
+                ->latest()
+                ->paginate($per_page);
+
+            return $transactions;
+        } catch (Exception $e) {
+            Log::error("HostReservationService::hostDashboardTransactions" . $e->getMessage());
             throw $e;
         }
     }

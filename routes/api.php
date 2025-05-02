@@ -69,6 +69,8 @@ Route::get("dynamic-pages/single/{slug}", [HomePageController::class, "showDayna
 
 //only for host
 Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router) {
+    Route::get('/host-dashboard-data', [HostReservationController::class, 'hostDashboardData']);
+    Route::get('/host-dashboard-transactions', [HostReservationController::class, 'hostDashboardTransactions']);
     Route::get('/my-parking-spaces', [HostParkingSpaceController::class, 'indexForHost']);
     Route::post('/my-parking-spaces/create', [HostParkingSpaceController::class, 'store']);
     Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'update']);
@@ -76,7 +78,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
     Route::apiResource('/my-reservations', HostReservationController::class)->only('index', 'show');
     Route::post('/my-reservations/accept/{ReservationUniqueId}', [HostReservationController::class, 'acceptReservation']);
-    Route::post('/my-reservations/cancle/{ReservationUniqueId}', [HostReservationController::class, 'cancleReservation']);
+    Route::post('/my-reservations/cancle/{ReservationUniqueId}', [HostReservationController::class, 'cancelReservation']);
 });
 
 
