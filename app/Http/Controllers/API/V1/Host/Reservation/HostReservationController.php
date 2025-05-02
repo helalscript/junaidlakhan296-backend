@@ -46,19 +46,25 @@ class HostReservationController extends Controller
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function acceptReservation(string $unique_id)
     {
-        //
+        try {
+            $reservation = $this->hostReservationService->acceptReservation($unique_id);
+            return Helper::jsonResponse(true, 'Reservation accepted successfully', 200, $reservation);
+        } catch (Exception $e) {
+            Log::error("HostReservationController::acceptReservation" . $e->getMessage());
+            throw $e;
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function cancleReservation(string $unique_id)
     {
-        //
+        try {
+            $reservation = $this->hostReservationService->cancleReservation($unique_id);
+            return Helper::jsonResponse(true, 'Reservation cancle successfully', 200, $reservation);
+        } catch (Exception $e) {
+            Log::error("HostReservationController::cancleReservation" . $e->getMessage());
+            throw $e;
+        }
     }
 }

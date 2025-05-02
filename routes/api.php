@@ -75,6 +75,8 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
     Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'showForHost']);
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
     Route::apiResource('/my-reservations', HostReservationController::class)->only('index', 'show');
+    Route::post('/my-reservations/accept/{ReservationUniqueId}', [HostReservationController::class, 'acceptReservation']);
+    Route::post('/my-reservations/cancle/{ReservationUniqueId}', [HostReservationController::class, 'cancleReservation']);
 });
 
 
@@ -93,6 +95,7 @@ Route::post('/payments-create/stripe', [StripePaymentController::class, 'handleW
 
 // only for user and host
 Route::group(['middleware' => ['auth:api', 'check_is_user_or_host']], function ($router) {
+    // Route::post('/payments-refund/stripe', [StripePaymentController::class, 'refundPayment']);
     Route::get('/faqs', [UserFaqController::class, 'index']);
     Route::post('/contact-support-message/sent', [UserContactSupportController::class, 'store']);
     Route::apiResource('/my-notifications-setting', UserNotificationSettingController::class)->only('index', 'update');

@@ -5,42 +5,35 @@ namespace App\Http\Controllers\API\V1\User;
 use App\Http\Controllers\Controller;
 use App\Models\PromoCode;
 use App\Models\UserPromoCode;
+use App\Services\API\V1\User\StripePayment\StripePaymentService;
 use Illuminate\Http\Request;
-use App\Enums\NotificationType;
-use App\Models\FirebaseTokens;
-use App\Models\Order;
 use App\Models\Payment;
-use App\Models\StripeSetting;
-use App\Notifications\GuestRequestNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Str;
 use Stripe\PaymentIntent;
 use App\Helpers\Helper;
 use App\Models\Booking;
-use App\Models\Hotel;
-use App\Models\User;
 use Stripe\Exception\ApiErrorException;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use UnexpectedValueException;
-use Stripe\Account;
-use Stripe\AccountLink;
 use Stripe\Exception\SignatureVerificationException;
 use function GuzzleHttp\json_encode;
+use Stripe\Refund;
+
 class StripePaymentController extends Controller
 {
-
-
     protected $user;
+    protected $stripePaymentService;
 
-    public function __construct()
+    public function __construct(StripePaymentService $stripePaymentService)
     {
         $this->user = Auth::user();
+        $this->stripePaymentService = $stripePaymentService;
     }
 
     public function createPaymentIntent(Request $request)
@@ -279,6 +272,56 @@ class StripePaymentController extends Controller
             return Helper::jsonErrorResponse('Promo code not found.', 404);
         }
     }
+
+    public function refundPayment($payment_intent_id)
+    {
+        try {
+            $this->stripePaymentService->refundPayment($payment_intent_id);
+            return Helper::jsonResponse(true, 'Payment refunded successfully.', 200);
+        } catch (Exception $e) {
+            Log::error("StripePaymentController::refundPayment" . $e->getMessage());
+            return Helper::jsonErrorResponse($e->getMessage(), 400);
+        }
+    }
+    
+    // public function refundPayment($payment_intent_id)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+    //         Stripe::setApiKey(config('services.stripe.secret'));
+
+    //         // Fetch the payment from your DB
+    //         $payment = Payment::where('payment_intent_id', $payment_intent_id)->first();
+
+    //         if (!$payment || $payment->status !== 'success') {
+    //             return Helper::jsonErrorResponse('Payment not found or already refunded/failed.', 404);
+    //         }
+
+    //         // Refund the payment
+    //         $refund = Refund::create([
+    //             'payment_intent' => $payment->payment_intent_id,
+    //         ]);
+    //         Log::info('StripePaymentController::refundPayment:- Refund created: ' . json_encode($refund));
+
+    //         // Update the payment record
+    //         $payment->status = 'refunded';
+    //         $payment->save();
+    //         Log::info('StripePaymentController::refundPayment:- Payment updated: ' . json_encode($payment));
+    //         DB::commit();
+    //         return Helper::jsonResponse(true, 'Payment refunded successfully.', 200, [
+    //             'refund_id' => $refund->id,
+    //             'status' => $refund->status,
+    //         ]);
+    //     } catch (ApiErrorException $e) {
+    //         DB::rollBack();
+    //         Log::error('StripePaymentController::refundPayment:- ' . $e->getMessage());
+    //         return Helper::jsonErrorResponse('Stripe API Error: ' . $e->getMessage(), 500);
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('StripePaymentController::refundPayment:- ' . $e->getMessage());
+    //         return Helper::jsonErrorResponse('Error: ' . $e->getMessage(), 500);
+    //     }
+    // }
 
 }
 

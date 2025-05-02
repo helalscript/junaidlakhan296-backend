@@ -2,9 +2,12 @@
 
 namespace App\Services\API\V1\Host\Reservation;
 
+use App\Http\Controllers\API\V1\User\StripePaymentController;
 use App\Models\Booking;
 use App\Models\ParkingSpace;
+use App\Services\API\V1\User\StripePayment\StripePaymentService;
 use Carbon\Carbon;
+use DB;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -12,10 +15,12 @@ use Illuminate\Support\Facades\Auth;
 class HostReservationService
 {
     protected $user;
+    protected $stripePaymentService;
 
-    public function __construct()
+    public function __construct(StripePaymentService $stripePaymentService)
     {
         $this->user = Auth::user();
+        $this->stripePaymentService = $stripePaymentService;
     }
     /**
      * Fetch all resources.
@@ -121,8 +126,8 @@ class HostReservationService
                 ->whereHas('payment', function ($query) {
                     $query->whereIn('status', ['success', 'refunded']);
                 })
-                ->with(['payment:id,booking_id,status', 'user:id,name,avatar,email,phone', 'parkingSpace:id,title,address,description,latitude,longitude','parkingSpace.spotDetails:id,parking_space_id,icon,details','vehicleDetail:id,registration_number,type,make,model,license_plate_number_eng,license_plate_number_ara'])
-                ->select('id', 'unique_id', 'parking_space_id', 'vehicle_details_id','user_id', 'start_time', 'end_time', 'total_price', 'estimated_hours', 'estimated_price', 'status', 'created_at')
+                ->with(['payment:id,booking_id,status', 'user:id,name,avatar,email,phone', 'parkingSpace:id,title,address,description,latitude,longitude', 'parkingSpace.spotDetails:id,parking_space_id,icon,details', 'vehicleDetail:id,registration_number,type,make,model,license_plate_number_eng,license_plate_number_ara'])
+                ->select('id', 'unique_id', 'parking_space_id', 'vehicle_details_id', 'user_id', 'start_time', 'end_time', 'total_price', 'estimated_hours', 'estimated_price', 'status', 'created_at')
                 ->firstOrFail();
 
             // Time status logic
@@ -191,52 +196,38 @@ class HostReservationService
         }
     }
 
-
-    /**
-     * Show the form for editing a resource.
-     *
-     * @param int $id
-     * @return void
-     */
-    public function edit(int $id)
+    public function acceptReservation(string $unique_id)
     {
         try {
-
+            $reservation = Booking::where('unique_id', $unique_id)->firstOrFail();
+            $reservation->status = 'confirmed';
+            $reservation->save();
+            return $reservation;
         } catch (Exception $e) {
-            Log::error("HostReservationService::edit" . $e->getMessage());
+            Log::error("HostReservationController::acceptReservation" . $e->getMessage());
             throw $e;
         }
     }
-
-    /**
-     * Update a specific resource.
-     *
-     * @param int $id
-     * @param array $validatedData
-     * @return mixed
-     */
-    public function update(int $id, array $validatedData)
+    public function cancleReservation(string $unique_id)
     {
         try {
+            DB::beginTransaction();
+            $reservation = Booking::where('unique_id', $unique_id)
+                ->with(['payment:id,booking_id,status'])
+                ->firstOrFail();
+            $reservation->status = 'cancelled';
+            $reservation->save();
+            // Refund payment using StripePaymentController or ideally a PaymentService
+            $this->stripePaymentService->refundPayment($reservation->payment->payment_intent_id);
+            // $paymentIntentId = $reservation->payment->payment_intent_id;
+            // $stripePayment = new StripePaymentController(); // Ideally inject this via the service container
+            // $stripePayment->refundPayment(new \Illuminate\Http\Request(['payment_intent_id' => $paymentIntentId]));
 
+            DB::commit();
+            return $reservation;
         } catch (Exception $e) {
-            Log::error("HostReservationService::update" . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete a specific resource.
-     *
-     * @param int $id
-     * @return mixed
-     */
-    public function destroy(int $id)
-    {
-        try {
-            // Logic to delete a specific resource
-        } catch (Exception $e) {
-            Log::error("HostReservationService::destroy" . $e->getMessage());
+            DB::rollBack();
+            Log::error("HostReservationController::cancleReservation" . $e->getMessage());
             throw $e;
         }
     }
