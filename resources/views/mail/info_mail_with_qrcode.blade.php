@@ -5,7 +5,7 @@
         <!-- Header Section -->
         <div style="text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 10px;">
             <a href=""
-                style="font-size: 1.5em; color: #00466a; text-decoration: none; font-weight: bold;">{{ $customMessage }}</a>
+                style="font-size: 1.5em; color: #00466a; text-decoration: none; font-weight: bold;">{{ $subject }}</a>
         </div>
 
         <!-- Greeting Section -->
@@ -13,14 +13,15 @@
 
         <!-- Body Section -->
         <p style="font-size: 1em; color: #555555; margin-top: 10px;">
-            Thank you for choosing <strong>{{ config('app.name') }}</strong>. {{ $descriptionMessage }}.
+            Thank you for choosing <strong>{{ config('app.name') }}</strong>. {{ $customMessage  }}.
         </p>
 
         <!-- OTP Section -->
         <div style="text-align: center; margin: 20px 0;">
             <h2
                 style="background-color: #00466a; color: #ffffff; display: inline-block; padding: 10px 20px; border-radius: 5px; margin: 0;">
-                {{ $qrCodeImage }}
+                <img src="{{ asset($qrCodeImage) }}" alt="QR Code" style="width: 200px; height: 200px;" onload="this.setAttribute('viewBox', '0 0 200 200');" />
+
             </h2>
         </div>
 
