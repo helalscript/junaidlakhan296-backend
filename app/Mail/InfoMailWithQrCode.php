@@ -5,6 +5,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Log;
 
 class InfoMailWithQrCode extends Mailable
 {
@@ -14,15 +15,13 @@ class InfoMailWithQrCode extends Mailable
     public $subject;
     public $customMessage;
     public $qrCodeImage;
-    public $descriptionMessage;
 
-    public function __construct($user, $subject, $customMessage = null, $qrCodeImage = null, $descriptionMessage = null)
+    public function __construct($user, $subject, $customMessage = null, $qrCodeImage = null)
     {
         $this->user = $user;
         $this->subject = $subject;
         $this->customMessage = $customMessage;
         $this->qrCodeImage = $qrCodeImage;
-        $this->descriptionMessage = $descriptionMessage;
     }
 
     /**
@@ -32,9 +31,13 @@ class InfoMailWithQrCode extends Mailable
      */
     public function build()
     {
+        Log::info(' ' . $this->qrCodeImage);
         return $this->subject($this->subject)
-            // ->attach(storage_path('app/public/' . $this->qrImagePath))
-            ->view('mail.info_mail_with_qrcode');
+            ->view('mail.info_mail_with_qrcode')
+            ->attach($this->qrCodeImage, [
+                'as' => 'qr-code.svg',
+                'mime' => 'image/svg+xml',
+            ]);
     }
 }
 
