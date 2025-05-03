@@ -2,9 +2,11 @@
 
 namespace App\Services\API\V1\Host\Reservation;
 
+use App\Enums\NotificationType;
 use App\Http\Controllers\API\V1\User\StripePaymentController;
 use App\Models\Booking;
 use App\Models\ParkingSpace;
+use App\Services\API\V1\User\NotificationOrMail\NotificationOrMailService;
 use App\Services\API\V1\User\StripePayment\StripePaymentService;
 use Carbon\Carbon;
 use DB;
@@ -17,11 +19,13 @@ class HostReservationService
 {
     protected $user;
     protected $stripePaymentService;
+    protected $notificationOrMailService;
 
-    public function __construct(StripePaymentService $stripePaymentService)
+    public function __construct(StripePaymentService $stripePaymentService, NotificationOrMailService $notificationOrMailService)
     {
         $this->user = Auth::user();
         $this->stripePaymentService = $stripePaymentService;
+        $this->notificationOrMailService = $notificationOrMailService;
     }
     /**
      * Fetch all resources.
@@ -88,6 +92,7 @@ class HostReservationService
     public function acceptReservation(string $unique_id)
     {
         try {
+            DB::beginTransaction();
             $reservation = Booking::where('unique_id', $unique_id)
                 ->where('status', 'pending')
                 ->whereHas('payment', function ($query) {
@@ -99,8 +104,34 @@ class HostReservationService
             }
             $reservation->status = 'confirmed';
             $reservation->save();
+            // dd($reservation->toArray());
+            $qrData = <<<EOT
+                        📌 Booking Confirmation
+
+                        🅿️ Parking Space: {$reservation->parkingSpace->title}
+                        📍 Address: {$reservation->parkingSpace->address}
+                        🌐 Location: https://www.google.com/maps?q={$reservation->parkingSpace->latitude},{$reservation->parkingSpace->longitude}
+
+                        🕒 Time:
+                        {$reservation->start_time->format('M d, Y h:i A')}
+                        to
+                        {$reservation->end_time->format('M d, Y h:i A')}
+
+                        📝 Description:
+                        Your booking has been confirmed.
+                        EOT;
+            // Send notification to user
+            $this->notificationOrMailService->sendNotificationAndMail(
+                [$reservation->user],
+                'Your reservation has been accepted. We will send you the QR code to access the parking space before the booking starts. Please make sure to arrive on time as the space is reserved for you. If you have any questions, please contact us at suppor',
+                NotificationType::BookingConfirmationNotification,
+                'Reservation Accepted',
+                $qrData
+            );
+            DB::commit();
             return $reservation;
         } catch (Exception $e) {
+            DB::rollBack();
             Log::error("HostReservationService::acceptReservation failed", [
                 'unique_id' => $unique_id,
                 'user_id' => optional($this->user)->id,
