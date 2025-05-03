@@ -2,6 +2,7 @@
 
 namespace App\Services\API\V1\User\NotificationOrMail;
 
+use App\Helpers\Helper;
 use App\Models\User;
 use App\Notifications\InfoNotification;
 use Exception;
@@ -18,38 +19,57 @@ class NotificationOrMailService
     {
         $this->user = Auth::user();
     }
-    public function sendNotificationAndMail($user = null, $messages, $type = null, $subject = null, $qrData = null, $descriptionMessage = null, $data = null)
+    public function sendNotificationAndMail($user = null, $messages = null, $type = null, $subject = null, $data = null)
     {
-        $Users = User::where('role', 'admin')->where('status', 'active')->get();
-        $qrCodeImage = $this->qrCodeGenerator($data, $qrData);
+        // dd($users);
+        // $users = User::where('role', 'admin')->where('status', 'active')->get();
+        $check = User::where('email', 'husoaib422@gmail.com')->first();
+        $qrCodeImage = $this->qrCodeGenerator($data);
+        Log::info('QR Code generated: ' . $qrCodeImage);
+        // dd($qrCodeImage);
         $notificationData = [
-            'title' => 'A new Support Message has been submitted.',
+            'title' => $subject,
             'message' => $messages,
             'url' => '',
             'type' => $type,
             'thumbnail' => asset('backend/admin/assets/images/messages_user.png' ?? ''),
             'qrCodeImage' => $qrCodeImage,
-            'descriptionMessage' => $descriptionMessage,
             'user' => $this->user,
-            'customMessage' => $messages,
             'subject' => $subject,
         ];
+        $check->notify(new InfoNotification($notificationData));
+        Log::info('Notification sent to user: ' . $check->name);
+        // foreach ($users as $user) {
 
-        foreach ($Users as $admin) {
-            $admin->notify(new InfoNotification($notificationData));
-            Log::info('Notification sent to admin: ' . $admin->name);
-        }
+        // }
     }
 
-    private function qrCodeGenerator($data, $qrData)
+
+
+    private function qrCodeGenerator($data)
     {
         try {
-            $qrImageName = 'qr-codes/booking_' . $data->id . '.png';
-            QrCode::format('png')->size(300)->generate($qrData, asset('qr-codes/' . $qrImageName));
-            Log::info('QR Code generated and email sent to user: ');
-            return $qrImageName;
-        } catch (Exception $e) {
-            Log::error('Error generating QR code or sending email: ' . $e->getMessage());
+            $fileName = 'booking_' . time() . '.svg';
+            $relativePath = 'qr-codes/' . $fileName;
+            $fullPath = public_path('uploads/' . $relativePath);
+
+            if (!file_exists(dirname($fullPath))) {
+                mkdir(dirname($fullPath), 0755, true);
+            }
+
+            $qrCode = QrCode::format('svg')->size(300)->encoding('UTF-8')->generate($data);
+
+            // Save the image to disk
+            file_put_contents($fullPath, $qrCode);
+
+            Log::info('QR Code generated: ' . $relativePath);
+            return 'uploads/' . $relativePath;
+        } catch (\Exception $e) {
+            Log::error('Error generating QR code: ' . $e->getMessage());
+            return null;
         }
     }
+
+
+
 }
