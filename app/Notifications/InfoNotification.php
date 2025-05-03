@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Mail\InfoMailWithQrCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,7 +14,7 @@ class InfoNotification extends Notification
     use Queueable;
 
     private $requestData;
-   
+
     /**
      * Create a new notification instance.
      */
@@ -36,12 +37,14 @@ class InfoNotification extends Notification
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(object $notifiable)
     {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+        return (new InfoMailWithQrCode(
+            $this->requestData['user'],
+            $this->requestData['title'],
+            $this->requestData['message'],
+            $this->requestData['qrCodeImage'],
+        ))->to($notifiable->email);
     }
 
     /**
