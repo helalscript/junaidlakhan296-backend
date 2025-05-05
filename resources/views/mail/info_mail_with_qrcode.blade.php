@@ -19,9 +19,9 @@
         <!-- OTP Section -->
         <div style="text-align: center; margin: 20px 0;">
             <h2
+            
                 style="background-color: #00466a; color: #ffffff; display: inline-block; padding: 10px 20px; border-radius: 5px; margin: 0;">
-                <img src="{{ asset($qrCodeImage) }}" alt="QR Code" style="width: 200px; height: 200px;" onload="this.setAttribute('viewBox', '0 0 200 200');" />
-
+                <img src="{{ asset($qrCodeImage) }}" alt="QR Code" style="width: 200px; height: 200px;" />
             </h2>
         </div>
 
