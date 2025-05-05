@@ -1,6 +1,7 @@
 <?php
 namespace App\Mail;
 
+use File;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -34,10 +35,7 @@ class InfoMailWithQrCode extends Mailable
         Log::info(' ' . $this->qrCodeImage);
         return $this->subject($this->subject)
             ->view('mail.info_mail_with_qrcode');
-            // ->attach($this->qrCodeImage, [
-            //     'as' => 'qr-code.svg',
-            //     'mime' => 'image/svg+xml',
-            // ]);
     }
+
 }
 
