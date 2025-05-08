@@ -18,6 +18,7 @@ use App\Http\Controllers\API\V1\User\UserContactSupportController;
 use App\Http\Controllers\API\V1\User\UserFaqController;
 use App\Http\Controllers\API\V1\User\UserNotificationSettingController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
+use App\Http\Controllers\API\V1\User\UserReviewController;
 use App\Http\Controllers\API\V1\User\UserVehicleController;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +90,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router)
     Route::apiResource('/my-bookings', UserBookingController::class);
     Route::post('/my-bookings/extend-request', [UserBookingController::class, 'bookingExtendRequestView']);
     Route::post('/my-bookings/extend-request-create', [UserBookingController::class, 'bookingExtendRequestStore']);
+    Route::post('/my-bookings/given-review', [UserReviewController::class, 'store']);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
     Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
     // Route::get('/promo-code/test/{userId}/{code}', [StripePaymentController::class, 'assignPromoCodeToUser']); //for test
