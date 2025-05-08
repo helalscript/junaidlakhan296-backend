@@ -148,7 +148,9 @@ class UserParkingSpaceService
             $pricing = HourlyPricing::with([
                 'parkingSpace.driverInstructions',
                 'parkingSpace.reviews' => function ($query) {
-                    $query->where('status', 'approved');
+                    $query->where('status', 'approved')
+                        ->select('id', 'parking_space_id', 'user_id', 'comment', 'rating', 'created_at')
+                        ->with('user:id,name,avatar');
                 },
                 'parkingSpace.spotDetails',
                 'days'
