@@ -5,15 +5,15 @@
         <!-- Header Section -->
         <div style="text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 10px;">
             <a href=""
-                style="font-size: 1.5em; color: #00466a; text-decoration: none; font-weight: bold;">{{ $subject }}</a>
+                style="font-size: 1.5em; color: #00466a; text-decoration: none; font-weight: bold;">{{ $subject??'no subject set' }}</a>
         </div>
 
         <!-- Greeting Section -->
-        <p style="font-size: 1.1em; color: #333333; margin-top: 20px;">Hello, {{ $user->name }}</p>
+        <p style="font-size: 1.1em; color: #333333; margin-top: 20px;">Hello, {{ $user->name??'' }}</p>
 
         <!-- Body Section -->
         <p style="font-size: 1em; color: #555555; margin-top: 10px;">
-            Thank you for choosing <strong>{{ config('app.name') }}</strong>. {{ $customMessage  }}.
+            Thank you for choosing <strong>{{ config('app.name') }}</strong>. {{ $customMessage??''  }}.
         </p>
 
         <!-- OTP Section -->
@@ -21,7 +21,7 @@
             <h2
             
                 style="background-color: #00466a; color: #ffffff; display: inline-block; padding: 10px 20px; border-radius: 5px; margin: 0;">
-                <img src="{{ asset($qrCodeImage) }}" alt="QR Code" style="width: 200px; height: 200px;" />
+                <img src="{{ asset($qrCodeImage??'') }}" alt="QR Code" style="width: 200px; height: 200px;" />
             </h2>
         </div>
 
