@@ -135,7 +135,7 @@ class HostParkingSpaceController extends Controller
         }
     }
 
-    
+
     /**
      * Store a newly created parking space in the database.
      *
@@ -176,7 +176,7 @@ class HostParkingSpaceController extends Controller
             'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.*.start_time',
             'hourly_pricing.*.days' => 'required|array|min:1',
             'hourly_pricing.*.days.*.day' => 'required|string',
-            'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
+            // 'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
 
             // Daily Pricing
             'daily_pricing' => 'required|array',
@@ -433,9 +433,15 @@ class HostParkingSpaceController extends Controller
     public function destroy(string $ParkingSpaceSlug): JsonResponse
     {
         try {
-            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->firstOrFail();
             DB::beginTransaction();
-
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->first();
+            if (!$parkingSpace) {
+                return Helper::jsonErrorResponse('Parking space not found', 404);
+            }
+            // check if the parking space is booked actively
+            if ($parkingSpace->bookings()->where('status', 'active')->count() > 0) {
+                return Helper::jsonErrorResponse('You cannot delete this parking space because it is currently being used.', 400);
+            }
             // Delete associated driver instructions
             $parkingSpace->driverInstructions()->delete();
             // Delete associated hourly pricing
