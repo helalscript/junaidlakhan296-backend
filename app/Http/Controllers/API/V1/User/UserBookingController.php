@@ -158,7 +158,7 @@ class UserBookingController extends Controller
                 'extend_time' => 'required|numeric|min:1',
                 'extend_type' => 'required|in:hourly,daily,monthly',
             ]);
-            $appVersion = 1;
+            $appVersion = 1; // in future this will be dynamic and booking will be extended only if the app version is greater than this
             if ($appVersion) {
                 return Helper::jsonErrorResponse('Booking Extension not Available', 400);
             }
