@@ -11,11 +11,11 @@ use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\V1\CMS\HomePageController;
 use App\Http\Controllers\API\V1\Host\HostParkingSpaceController;
 use App\Http\Controllers\API\V1\Host\Reservation\HostReservationController;
+use App\Http\Controllers\API\V1\User\NotificationController;
 use App\Http\Controllers\API\V1\User\StripePaymentController;
 use App\Http\Controllers\API\V1\User\UserBookingController;
 use App\Http\Controllers\API\V1\User\UserContactSupportController;
 use App\Http\Controllers\API\V1\User\UserFaqController;
-use App\Http\Controllers\API\V1\User\UserNotificationController;
 use App\Http\Controllers\API\V1\User\UserNotificationSettingController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
 use App\Http\Controllers\API\V1\User\UserVehicleController;
@@ -101,6 +101,12 @@ Route::group(['middleware' => ['auth:api', 'check_is_user_or_host']], function (
     Route::get('/faqs', [UserFaqController::class, 'index']);
     Route::post('/contact-support-message/sent', [UserContactSupportController::class, 'store']);
     Route::apiResource('/my-notifications-setting', UserNotificationSettingController::class)->only('index', 'update');
+
+    //Notifications route
+    Route::get('/my-notifications', [NotificationController::class, 'index']);
+    Route::post('/my-notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/my-notifications-delete/{id}', [NotificationController::class, 'delete']);
+    Route::delete('/my-notifications-delete-all', [NotificationController::class, 'deleteAll']);
 });
 
 
