@@ -87,6 +87,8 @@ Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router)
     Route::get('/user-dashboard-data', [UserBookingController::class, 'userDashboardData']);
     Route::get('/user-dashboard-transactions', [UserBookingController::class, 'userDashboardTransactions']);
     Route::apiResource('/my-bookings', UserBookingController::class);
+    Route::post('/my-bookings/extend-request', [UserBookingController::class, 'bookingExtendRequestView']);
+    Route::post('/my-bookings/extend-request-create', [UserBookingController::class, 'bookingExtendRequestStore']);
     Route::apiResource('/my-vehicles', UserVehicleController::class);
     Route::post('/payments/stripe', [StripePaymentController::class, 'createPaymentIntent']);
     // Route::get('/promo-code/test/{userId}/{code}', [StripePaymentController::class, 'assignPromoCodeToUser']); //for test
