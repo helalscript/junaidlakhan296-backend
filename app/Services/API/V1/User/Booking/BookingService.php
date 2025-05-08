@@ -2,6 +2,7 @@
 
 namespace App\Services\API\V1\User\Booking;
 
+use App\Enums\NotificationType;
 use App\Models\Booking;
 use App\Models\BookingPlatformFee;
 use App\Models\DailyPricing;
@@ -10,6 +11,7 @@ use App\Models\MonthlyPricing;
 use App\Models\ParkingSpace;
 use App\Models\Payment;
 use App\Models\PlatformSetting;
+use App\Services\API\V1\User\NotificationOrMail\NotificationOrMailService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -20,9 +22,11 @@ use Str;
 class BookingService
 {
     protected $user;
-    public function __construct()
+    protected $notificationOrMailService;
+    public function __construct(NotificationOrMailService $notificationOrMailService)
     {
         $this->user = Auth::user();
+        $this->notificationOrMailService = $notificationOrMailService;
     }
     /**
      * Fetch all resources.
@@ -33,79 +37,16 @@ class BookingService
     public function index($request)
     {
         try {
-            $status = $request->status ?? 'active';
+            $status = $request->status;
             $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
                 ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
-                ->where('status', $status)
+                ->when($status, fn($query) => $query->where('status', $status))
                 ->latest()
                 ->paginate($request->per_page ?? 25);
-
             $bookings->getCollection()->transform(function ($booking) {
-                $now = Carbon::now();
-                $start = Carbon::parse($booking->start_time);
-                $end = Carbon::parse($booking->end_time);
-
-                $booking->is_critical = false;
-                $booking->is_expired = false;
-                $booking->is_running = false;
-
-                if ($now->lt($start)) {
-                    // Before start time
-                    $diffInMinutes = $now->diffInMinutes($start);
-                    $diffInDays = floor($diffInMinutes / (60 * 24));
-                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    if ($diffInMinutes <= 10) {
-                        $booking->is_critical = true;
-                    }
-
-                    $status = '';
-                    if ($diffInDays > 0) {
-                        $status .= "{$diffInDays} Day(s) ";
-                    }
-                    if ($hours > 0) {
-                        $status .= "{$hours} Hour(s) ";
-                    }
-                    $status .= "{$minutes} Minute(s) Left To Start Parking";
-
-                    $booking->parking_status = $status;
-
-                } elseif ($now->between($start, $end)) {
-                    // Parking Running
-                    $diffInMinutes = $now->diffInMinutes($end);
-                    $diffInDays = floor($diffInMinutes / (60 * 24));
-                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
-                    $minutes = $diffInMinutes % 60;
-
-                    $booking->is_running = true;
-
-                    if ($diffInMinutes <= 10) {
-                        $booking->is_critical = true;
-                    }
-
-                    $status = '';
-                    if ($diffInDays > 0) {
-                        $status .= "{$diffInDays} Day(s) ";
-                    }
-                    if ($hours > 0) {
-                        $status .= "{$hours} Hour(s) ";
-                    }
-                    $status .= "{$minutes} Minute(s) Left To End Parking";
-
-                    $booking->parking_status = $status;
-
-                } else {
-                    // After end time
-                    $booking->is_expired = true;
-                    $booking->parking_status = "Parking Time Ended";
-                }
-
-                return $booking;
+                return $this->applyTimeStatus($booking);
             });
-
-
             return $bookings;
         } catch (Exception $e) {
             Log::error("BookingService::index " . $e->getMessage());
@@ -125,10 +66,21 @@ class BookingService
         try {
             DB::beginTransaction();
             // Combine date + time to generate full timestamps
-            $startDateTime = Carbon::parse($validatedData['booking_date_start'] . ' ' . $validatedData['booking_time_start'])->format('Y-m-d H:i:s');
-            $endDateTime = Carbon::parse($validatedData['booking_date_end'] . ' ' . $validatedData['booking_time_end'])->format('Y-m-d H:i:s');
+            // $startDateTime = Carbon::parse($validatedData['booking_date_start'] . ' ' . $validatedData['booking_time_start'])->format('Y-m-d H:i:s');
+            // $endDateTime = Carbon::parse($validatedData['booking_date_end'] . ' ' . $validatedData['booking_time_end'])->format('Y-m-d H:i:s');
+
+            $startDateTime = Carbon::parse($validatedData['start_time'])->format('Y-m-d H:i:s');
+            $endDateTime = Carbon::parse($validatedData['end_time'])->format('Y-m-d H:i:s');
+            // dd($startDateTime);
             $validatedData['start_time'] = $startDateTime;
             $validatedData['end_time'] = $endDateTime;
+
+            $validatedData['booking_date_start'] = Carbon::parse($validatedData['start_time'])->format('Y-m-d');
+            $validatedData['booking_date_end'] = Carbon::parse($validatedData['end_time'])->format('Y-m-d');
+            $validatedData['booking_time_start'] = Carbon::parse($validatedData['start_time'])->format('H:i:s');
+            $validatedData['booking_time_end'] = Carbon::parse($validatedData['end_time'])->format('H:i:s');
+            // dd($validatedData);
+
             $validatedData['user_id'] = $this->user->id;
             $validatedData['unique_id'] = (string) Str::uuid();
             $checkPricingType = $this->checkPricingType($validatedData);
@@ -142,6 +94,30 @@ class BookingService
             // Create the booking
             $booking = Booking::create($validatedData);
             $this->platformFeeAssign($booking->id);
+            // notification send
+            $qrData = <<<EOT
+            📌 Booking Confirmation
+
+            🅿️ Parking Space: {$booking->parkingSpace->title}
+            📍 Address: {$booking->parkingSpace->address}
+            🌐 Location: https://www.google.com/maps?q={$booking->parkingSpace->latitude},{$booking->parkingSpace->longitude}
+
+            🕒 Time:
+            {$booking->start_time->format('M d, Y h:i A')}
+            to
+            {$booking->end_time->format('M d, Y h:i A')}
+
+            📝 Description:
+            Your booking has been confirmed.
+            EOT;
+            // Send notification to user
+            $this->notificationOrMailService->sendNotificationAndMail(
+                $booking?->parkingSpace?->user,
+                'You have a new reservation request. Please check your dashboard. within 1hr not accept or auto reject the request',
+                NotificationType::NewReservationReceivedNotification,
+                'New Reservation Received',
+                $qrData
+            );
             DB::commit();
             return $booking;
         } catch (Exception $e) {
@@ -212,6 +188,7 @@ class BookingService
                     }
                 }
             }
+            Log::info('Booking day names: ' . json_encode($dayNames));
             $hourlyPricing = HourlyPricing::where('id', $validatedData['pricing_id'])
                 ->whereHas('days', function ($q) use ($dayNames) {
                     if (!empty($dayNames)) {
@@ -225,7 +202,7 @@ class BookingService
                         ->whereTime('end_time', '>=', $validatedData['booking_time_end']);
                 })
                 ->first();
-            // Log::info($dayNames);
+
             if (!$hourlyPricing) {
                 throw new Exception(' Hourly pricing not found', 404);
             }
@@ -332,46 +309,8 @@ class BookingService
             $booking->is_expired = false;
             $booking->is_running = false;
 
-            if ($now->lt($start)) {
-                // Before parking starts
-                $diffInMinutes = $now->diffInMinutes($start);
-
-                if ($diffInMinutes <= 10) {
-                    $booking->is_critical = true;
-                }
-
-                $hours = floor($diffInMinutes / 60);
-                $minutes = $diffInMinutes % 60;
-
-                if ($hours > 0) {
-                    $booking->parking_status = "{$hours} Hour(s) {$minutes} Minute(s) Left To Start Parking";
-                } else {
-                    $booking->parking_status = "{$minutes} Minute(s) Left To Start Parking";
-                }
-
-            } elseif ($now->between($start, $end)) {
-                // Parking is running
-                $diffInMinutes = $now->diffInMinutes($end);
-                $booking->is_running = true;
-
-                if ($diffInMinutes <= 10) {
-                    $booking->is_critical = true;
-                }
-
-                $hours = floor($diffInMinutes / 60);
-                $minutes = $diffInMinutes % 60;
-
-                if ($hours > 0) {
-                    $booking->parking_status = "{$hours} Hour(s) {$minutes} Minute(s) Left To End Parking";
-                } else {
-                    $booking->parking_status = "{$minutes} Minute(s) Left To End Parking";
-                }
-
-            } else {
-                // Parking ended
-                $booking->is_expired = true;
-                $booking->parking_status = "Parking Time Ended";
-            }
+            // filter added time for reservation
+            $booking = $this->applyTimeStatus($booking);
 
             return $booking;
 
@@ -459,5 +398,68 @@ class BookingService
         }
     }
 
+    private function applyTimeStatus($booking)
+    {
+        $now = Carbon::now();
+        $start = Carbon::parse($booking->start_time);
+        $end = Carbon::parse($booking->end_time);
 
+        $booking->is_critical = false;
+        $booking->is_expired = false;
+        $booking->is_running = false;
+
+        if ($now->lt($start)) {
+            // Before start time
+            $diffInMinutes = $now->diffInMinutes($start);
+            $diffInDays = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
+
+            if ($diffInMinutes <= 10) {
+                $booking->is_critical = true;
+            }
+
+            $status = '';
+            if ($diffInDays > 0) {
+                $status .= "{$diffInDays} Day(s) ";
+            }
+            if ($hours > 0) {
+                $status .= "{$hours} Hour(s) ";
+            }
+            $status .= "{$minutes} Minute(s) Left To Start Parking";
+
+            $booking->parking_status = $status;
+
+        } elseif ($now->between($start, $end)) {
+            // Parking Running
+            $diffInMinutes = $now->diffInMinutes($end);
+            $diffInDays = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
+
+            $booking->is_running = true;
+
+            if ($diffInMinutes <= 10) {
+                $booking->is_critical = true;
+            }
+
+            $status = '';
+            if ($diffInDays > 0) {
+                $status .= "{$diffInDays} Day(s) ";
+            }
+            if ($hours > 0) {
+                $status .= "{$hours} Hour(s) ";
+            }
+            $status .= "{$minutes} Minute(s) Left To End Parking";
+
+            $booking->parking_status = $status;
+
+        } else {
+            // After end time
+            $booking->is_expired = true;
+            $booking->parking_status = "Parking Time Ended";
+        }
+
+        return $booking;
+    }
 }

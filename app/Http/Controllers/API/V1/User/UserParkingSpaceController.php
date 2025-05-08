@@ -79,7 +79,7 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new ShowForUserHourlyResource($pricing));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to fetch pricing details. ' . $e->getMessage(), 500);
+            return Helper::jsonErrorResponse('Failed to fetch pricing details.' , 500);
         }
     }
 

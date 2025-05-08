@@ -61,6 +61,7 @@ class UserParkingSpaceService
             ->join('parking_spaces', 'hourly_pricings.parking_space_id', '=', 'parking_spaces.id')
             ->where('hourly_pricings.status', 'active')
             ->where('parking_spaces.status', 'available')
+            ->whereNotNull('parking_spaces.user_id')
             ->where('parking_spaces.is_verified', true)
             ->whereNull('parking_spaces.deleted_at')
             ->whereRaw("$haversine <= ?", [$latitude, $longitude, $latitude, $radius])
@@ -155,6 +156,7 @@ class UserParkingSpaceService
                 ->whereHas('days', function ($q) {
                     $q->where('status', 'available');
                 })
+                ->wherehas('parkingSpace', fn($q) => $q->whereNotNull('user_id'))
                 ->when($startTime, fn($q) => $q->whereTime('start_time', '<=', $startTime))
                 ->when($endTime, fn($q) => $q->whereTime('end_time', '>=', $endTime))
                 ->findOrFail($id);
