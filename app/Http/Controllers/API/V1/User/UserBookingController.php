@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\UserBookingExtendRequestViewResource;
 use App\Http\Resources\API\V1\UserBookingIndexResource;
 use App\Http\Resources\API\V1\UserDashboardTransactionResource;
 use App\Models\Booking;
@@ -134,7 +135,40 @@ class UserBookingController extends Controller
             return Helper::jsonErrorResponse('Failed to delete booking', 500);
         }
     }
-
+    public function bookingExtendRequestView(Request $request)
+    {
+        $validatedData = $request->validate([
+            'unique_id' => 'required|exists:bookings,unique_id',
+            'extend_time' => 'required|numeric|min:1',
+            'extend_type' => 'required|in:hourly,daily,monthly',
+        ]);
+        try {
+            $booking = $this->userBookingService->bookingExtendRequestView($validatedData);
+            return Helper::jsonResponse(true, 'Booking extended successfully', 200, new UserBookingExtendRequestViewResource($booking));
+        } catch (Exception $e) {
+            Log::error("UserBookingController::bookingExtendRequestView" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to extend booking' . $e->getMessage(), 500);
+        }
+    }
+    public function bookingExtendRequestStore(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'unique_id' => 'required|exists:bookings,unique_id',
+                'extend_time' => 'required|numeric|min:1',
+                'extend_type' => 'required|in:hourly,daily,monthly',
+            ]);
+            $appVersion = 1;
+            if ($appVersion) {
+                return Helper::jsonErrorResponse('Booking Extension not Available', 400);
+            }
+            $booking = $this->userBookingService->bookingExtendRequestStore($validatedData);
+            return Helper::jsonResponse(true, 'Booking extended successfully', 200, $booking);
+        } catch (Exception $e) {
+            Log::error("UserBookingController::bookingExtendRequestStore" . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to extend booking', 500);
+        }
+    }
 
     public function userDashboardData()
     {
