@@ -22,11 +22,15 @@ class CustomNotification extends Model
     protected $casts = [
         'title' => 'string',
         'description' => 'string',
-        'type' => 'string',   
+        'type' => 'string',
         'role' => 'string',
-        'status' => 'string', 
+        'status' => 'string',
     ];
 
+    public function userCustomNotifications()
+    {
+        return $this->hasMany(UserCustomNotification::class);
+    }
 
 }
 
