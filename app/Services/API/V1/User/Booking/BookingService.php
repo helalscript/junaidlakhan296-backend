@@ -54,7 +54,6 @@ class BookingService
         }
     }
 
-
     /**
      * Store a new resource.
      *
@@ -126,7 +125,6 @@ class BookingService
             throw $e;
         }
     }
-
 
     private function checkParkingSlotAvailbelity($validatedData)
     {
@@ -283,8 +281,6 @@ class BookingService
         return $total;
     }
 
-
-
     /**
      * Display a specific resource.
      *
@@ -319,8 +315,6 @@ class BookingService
             throw $e;
         }
     }
-
-
 
     /**
      * Update a specific resource.
@@ -462,4 +456,96 @@ class BookingService
 
         return $booking;
     }
+
+
+    public function bookingExtendRequestView($validatedData)
+    {
+        try {
+            // dd($validatedData);
+            $booking = Booking::where('unique_id', $validatedData['unique_id'])
+                ->where('user_id', $this->user->id)
+                ->with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
+                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at', 'pricing_type', 'per_hour_price')
+                ->whereIn('status', ['active', 'confirmed', 'pending'])
+                ->first();
+
+            if (!$booking) {
+                throw new Exception('Booking not found or not allowed', 404);
+            }
+            //check pricing type
+            if ($booking->pricing_type !== $validatedData['extend_type']) {
+                throw new Exception('Pricing type not matched', 404);
+            }
+            $booking = $this->applyTimeStatus($booking);
+            //calculate price
+            $this->calculateBookingExtendPrice($booking, $validatedData);
+            return $booking;
+        } catch (Exception $e) {
+            Log::error("BookingService::bookingExtendRequest" . $e->getMessage());
+            throw $e;
+        }
+    }
+    public function bookingExtendRequestStore($validatedData)
+    {
+        try {
+            // dd($validatedData);
+            $booking = Booking::where('unique_id', $validatedData['unique_id'])
+                ->where('user_id', $this->user->id)
+                ->with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
+                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->whereIn('status', ['active', 'confirmed', 'pending'])
+                ->first();
+
+            if (!$booking) {
+                throw new Exception('Booking not found or not allowed', 404);
+            }
+            //check pricing type
+            if ($booking->pricing_type !== $validatedData['extend_type']) {
+                throw new Exception('Pricing type not matched', 404);
+            }
+            $booking = $this->applyTimeStatus($booking);
+            //calculate price
+            $price = $this->calculateBookingExtendPrice($booking, $validatedData);
+            dd($booking->toArray());
+            return $booking;
+        } catch (Exception $e) {
+            Log::error("BookingService::bookingExtendRequest" . $e->getMessage());
+            throw $e;
+        }
+    }
+
+
+    private function calculateBookingExtendPrice($booking, $validatedData)
+    {
+        $booking->extension_price = 0;
+        $hoursInDay = 24;
+
+        switch ($validatedData['extend_type']) {
+            case 'hourly':
+                $extendTime = (int) $validatedData['extend_time'];
+                $basePrice = $booking->per_hour_price * $validatedData['extend_time'];
+                $booking->extension_new_end_time = $booking->end_time->copy()->addHours($extendTime)->format('M-d-Y H:i A');
+                break;
+            case 'daily':
+            case 'monthly':
+                $extendTime = (int) $validatedData['extend_time'];
+                $basePrice = ($booking->per_hour_price * $hoursInDay) * $validatedData['extend_time'];
+                $booking->extension_new_end_time = $booking->end_time->copy()->addDays($extendTime)->format('M-d-Y H:i A');
+                break;
+            default:
+                throw new Exception('Invalid extend type', 400);
+        }
+
+        $price = $basePrice * $booking->number_of_slot;
+        $fee = $this->platformFee($price);
+        $total = $price + $fee;
+
+        // Cast to string with 2 decimal places
+        $booking->extension_price = number_format($price, 2, '.', '');
+        $booking->extension_fee = number_format($fee, 2, '.', '');
+        $booking->extension_total_price = number_format($total, 2, '.', '');
+
+        return true;
+    }
+
 }
