@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\UserBookingIndexResource;
 use App\Http\Resources\API\V1\UserDashboardTransactionResource;
 use App\Models\Booking;
 use App\Services\API\V1\User\Booking\BookingService;
@@ -34,7 +35,7 @@ class UserBookingController extends Controller
     {
         try {
             $bookings = $this->userBookingService->index($request);
-            return Helper::jsonResponse(true, 'Bookings fetched successfully', 200, $bookings, true);
+            return Helper::jsonResponse(true, 'Bookings fetched successfully', 200, UserBookingIndexResource::collection($bookings), true);
         } catch (Exception $e) {
             Log::error("UserBookingController::index" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces' . $e->getMessage(), 500);
@@ -51,10 +52,12 @@ class UserBookingController extends Controller
             'vehicle_details_id' => 'required|exists:vehicle_details,id',
             'number_of_slot' => 'required|integer|min:1',
             'pricing_type' => 'required|in:hourly,daily,monthly',
-            'booking_date_start' => 'required|date|after_or_equal:today',
-            'booking_date_end' => 'required|date|after_or_equal:booking_date_start',
-            'booking_time_start' => 'required|date_format:H:i',
-            'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+            // 'booking_date_start' => 'required|date|after_or_equal:today',
+            // 'booking_date_end' => 'required|date|after_or_equal:booking_date_start',
+            // 'booking_time_start' => 'required|date_format:H:i',
+            // 'booking_time_end' => 'required|date_format:H:i|after:booking_time_start',
+            'start_time' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
+            'end_time' => 'required|date_format:Y-m-d\TH:i|after:start_time',
         ], [
             'vehicle_details_id.required' => 'The vehicle details field is required.',
         ]);
