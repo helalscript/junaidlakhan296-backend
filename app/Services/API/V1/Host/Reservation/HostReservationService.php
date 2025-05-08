@@ -104,7 +104,7 @@ class HostReservationService
             }
             $reservation->status = 'confirmed';
             $reservation->save();
-            // dd($reservation->toArray());
+
             $qrData = <<<EOT
                         📌 Booking Confirmation
 
@@ -122,10 +122,10 @@ class HostReservationService
                         EOT;
             // Send notification to user
             $this->notificationOrMailService->sendNotificationAndMail(
-                [$reservation->user],
-                'Your reservation has been accepted. We will send you the QR code to access the parking space before the booking starts. Please make sure to arrive on time as the space is reserved for you. If you have any questions, please contact us at suppor',
+                $reservation->user,
+                'Your booking has been accepted. Please make sure to arrive on time as the space is reserved for you. If you have any questions, please contact us at support',
                 NotificationType::BookingConfirmationNotification,
-                'Reservation Accepted',
+                'Booking Accepted',
                 $qrData
             );
             DB::commit();
@@ -159,7 +159,30 @@ class HostReservationService
 
             // Refund payment if applicable
             $this->stripePaymentService->refundPayment($reservation->payment->payment_intent_id);
+            // Send notification query data
+            $qrData = <<<EOT
+                        📌 Booking Cancellation
 
+                        🅿️ Parking Space: {$reservation->parkingSpace->title}
+                        📍 Address: {$reservation->parkingSpace->address}
+                        🌐 Location: https://www.google.com/maps?q={$reservation->parkingSpace->latitude},{$reservation->parkingSpace->longitude}
+
+                        🕒 Time:
+                        {$reservation->start_time->format('M d, Y h:i A')}
+                        to
+                        {$reservation->end_time->format('M d, Y h:i A')}
+
+                        📝 Description:
+                        Your booking has been cancelled.
+                        EOT;
+            // Send notification to user
+            $this->notificationOrMailService->sendNotificationAndMail(
+                $reservation->user,
+                'Your Booking has been cancelled.If you have any questions, please contact us at support',
+                NotificationType::BookingCancelledNotification,
+                'Booking Cancelled',
+                $qrData
+            );
             DB::commit();
             return $reservation;
         } catch (Exception $e) {
@@ -172,7 +195,6 @@ class HostReservationService
             throw $e;
         }
     }
-
 
     private function applyTimeStatus($booking)
     {
