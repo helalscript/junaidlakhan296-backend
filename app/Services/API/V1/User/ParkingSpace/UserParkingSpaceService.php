@@ -3,6 +3,7 @@
 namespace App\Services\API\V1\User\ParkingSpace;
 
 use App\Models\Booking;
+use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\PlatformSetting;
 use Carbon\Carbon;
@@ -80,11 +81,11 @@ class UserParkingSpaceService
         return $hourlyPricing->paginate($perPage);
     }
 
-    public function transformPricingData($result, $startTime, $endTime, $startDate, $endDate)
+    public function transformPricingData($result, $startTime, $endTime, $startDate, $endDate, $pricingType = 'hourly')
     {
         // dd($startTime. $endTime. $startDate. $endDate);
-        Log::info('hourly pricing', [$startTime, $endTime, $startDate, $endDate]);
-        return $result->getCollection()->map(function ($pricing) use ($startTime, $endTime, $startDate, $endDate) {
+        Log::info($pricingType . 'pricing: ', [$startTime, $endTime, $startDate, $endDate]);
+        return $result->getCollection()->map(function ($pricing) use ($startTime, $endTime, $startDate, $endDate, $pricingType) {
             $bookingsQuery = Booking::where('parking_space_id', $pricing->parking_space_id)
                 ->whereNotIn('status', ['cancelled', 'close', 'completed']);
 
@@ -104,15 +105,36 @@ class UserParkingSpaceService
             $bookingCount = $bookingsQuery->get()->sum(fn($b) => $b->number_of_slot ?? 1);
             $pricing->booking_count = $bookingCount;
             $pricing->available_slots = max(0, $pricing->parkingSpace->total_slots - $bookingCount);
-
+            // estimated hours and price
             if ($startTime && $endTime) {
-                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
-                if ($endDate) {
-                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
-                } else {
-                    $totalHours = $dailyHours;
-                }
 
+                // $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                // if ($endDate) {
+                //     $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                // } else {
+                //     $totalHours = $dailyHours;
+                // }
+
+                // $pricing->estimated_hours = round($totalHours, 2);
+                // $pricing->estimated_price = round($totalHours * $pricing->rate, 2);
+                if ($pricingType == 'hourly') {
+                    $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                    if ($endDate) {
+                        $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                    } else {
+                        $totalHours = $dailyHours;
+                    }
+                } elseif($pricingType == 'daily') {
+                    // for daily pricing
+                    $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                    if ($endDate) {
+                        $totalCount = Carbon::parse("$startDate $startTime")->floatDiffInDays(Carbon::parse("$endDate $endTime"));
+                        $totalHours = ceil($totalCount);
+                        // dd($totalCount);
+                    } else {
+                        $totalHours = $dailyHours;
+                    }
+                }
                 $pricing->estimated_hours = round($totalHours, 2);
                 $pricing->estimated_price = round($totalHours * $pricing->rate, 2);
             }
@@ -210,5 +232,71 @@ class UserParkingSpaceService
     {
         $platformFee = PlatformSetting::where('status', 'active')->select('id', 'key', 'value')->get();
         return $platformFee;
+    }
+
+    public function getDailyPricing($request)
+    {
+        try {
+            // dd($request->all());
+            $perPage = $request->per_page ?? 25;
+            $startTime = $request->start_time ? (new Carbon($request->start_time))->format('H:i') : now()->format('H:i');
+            $startDate = $request->start_time ? (new Carbon($request->start_time))->format('Y-m-d') : now()->format('Y-m-d');
+            // dd($startDate);
+            $isStartTime = $request->start_time ?? null;
+            $isStartDate = $request->start_time ?? null;
+            $endTime = $isStartTime ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
+            $endDate = $request->end_time ? (new Carbon($request->end_time))->format('Y-m-d') : $startDate;
+            $latitude = $request->latitude ?? 12.9716770;
+            $longitude = $request->longitude ?? 77.5946770;
+            $radius = $request->radius ?? 500;
+            // dd($startDate);
+
+            $haversine = "(6371 * acos(cos(radians(?)) 
+                        * cos(radians(parking_spaces.latitude)) 
+                        * cos(radians(parking_spaces.longitude) - radians(?)) 
+                        + sin(radians(?)) 
+                        * sin(radians(parking_spaces.latitude))))";
+
+            $dailyPricings = DailyPricing::with([
+                'parkingSpace.driverInstructions',
+                'parkingSpace.reviews' => function ($query) {
+                    $query->where('status', 'approved');
+                },
+                'parkingSpace.spotDetails'
+            ])
+                ->join('parking_spaces', 'daily_pricings.parking_space_id', '=', 'parking_spaces.id')
+                ->where('daily_pricings.status', 'active')
+                ->where('parking_spaces.status', 'available')
+                ->whereNotNull('parking_spaces.user_id')
+                ->where('parking_spaces.is_verified', true)
+                ->whereNull('parking_spaces.deleted_at')
+                ->whereRaw("$haversine <= ?", [$latitude, $longitude, $latitude, $radius])
+                ->select('daily_pricings.*')
+                ->selectRaw("$haversine AS distance", [$latitude, $longitude, $latitude])
+                ->when(
+                    $startDate && $endDate,
+                    fn($q) =>
+                    $q->whereDate('start_date', '<=', $startDate)
+                        ->whereDate('end_date', '>=', $startDate)
+                        ->whereTime('start_time', '<=', $startTime)
+                        ->whereTime('end_time', '>=', $endTime)
+                )
+                ->orderBy('distance', 'asc');
+
+            return $dailyPricings->paginate($perPage);
+
+        } catch (Exception $e) {
+            Log::error("UserParkingSpaceService::getDailyPricing - " . $e->getMessage());
+            throw $e;
+        }
+    }
+    public function getDailyPricingDetails($id, $request)
+    {
+        try {
+
+        } catch (Exception $e) {
+            Log::error("UserParkingSpaceService::getDailyPricingDetails - " . $e->getMessage());
+            throw $e;
+        }
     }
 }
