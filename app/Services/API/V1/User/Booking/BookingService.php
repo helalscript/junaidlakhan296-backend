@@ -519,6 +519,7 @@ class BookingService
     {
         $booking->extension_price = 0;
         $hoursInDay = 24;
+        $hoursInMonth = 30 * $hoursInDay;
 
         switch ($validatedData['extend_type']) {
             case 'hourly':
@@ -527,9 +528,12 @@ class BookingService
                 $booking->extension_new_end_time = $booking->end_time->copy()->addHours($extendTime)->format('M-d-Y H:i A');
                 break;
             case 'daily':
+                $extendTime = (int) $validatedData['extend_time'];
+                $basePrice = ($booking->per_hour_price / $hoursInDay) * $validatedData['extend_time'];
+                $booking->extension_new_end_time = $booking->end_time->copy()->addDays($extendTime)->format('M-d-Y H:i A');
             case 'monthly':
                 $extendTime = (int) $validatedData['extend_time'];
-                $basePrice = ($booking->per_hour_price * $hoursInDay) * $validatedData['extend_time'];
+                $basePrice = ($booking->per_hour_price / $hoursInMonth) * $validatedData['extend_time'];
                 $booking->extension_new_end_time = $booking->end_time->copy()->addDays($extendTime)->format('M-d-Y H:i A');
                 break;
             default:
