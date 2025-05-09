@@ -79,7 +79,7 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonResponse(true, 'Parking space details fetched successfully', 200, new ShowForUserHourlyResource($pricing));
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::showForUsersHourly - " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to fetch pricing details.' , 500);
+            return Helper::jsonErrorResponse('Failed to fetch pricing details.', 500);
         }
     }
 
@@ -336,5 +336,40 @@ class UserParkingSpaceController extends Controller
     // }
 
 
+    public function indexForUsersDaily(Request $request)
+    {
+        $validatedData = $request->validate([
+            'start_time' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
+            'end_time' => 'nullable|date_format:Y-m-d\TH:i|after:start_time',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:10',
+        ]);
+        // dd($validatedData);
+        try {
+            $isStartTime = $validatedData['start_time'] ?? null;
+            $startTime = $request->start_time ? (new Carbon($request->start_time))->format('H:i') : now()->format('H:i');
+            $startDate = $request->start_time ? (new Carbon($request->start_time))->format('Y-m-d') : now()->format('Y-m-d');
+            $endTime = $request->end_time ? (new Carbon($request->end_time))->format('H:i') : (new Carbon($startTime))->addHour()->format('H:i');
+            // dd($startTime . ' ' . $endTime);
+            $endDate = $request->end_time ? (new Carbon($request->end_time))->format('Y-m-d') : $startDate;
+            $result = $this->userParkingSpaceService->getDailyPricing($request);
+            // dd($result->toArray());
+            // dd($endTime);
+            $transformedData = $this->userParkingSpaceService->transformPricingData(
+                $result,
+                $startTime,
+                $endTime,
+                $startDate,
+                $endDate,
+                'daily'
+            );
+            $result->setCollection($transformedData);
 
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserHourlyResource::collection($result), true);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::indexForUsersDaily - " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
+        }
+    }
 }
