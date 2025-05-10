@@ -12,6 +12,7 @@ use App\Models\ParkingSpace;
 use App\Models\Payment;
 use App\Models\PlatformSetting;
 use App\Services\API\V1\User\NotificationOrMail\NotificationOrMailService;
+use App\Services\API\V1\User\ParkingSpace\UserParkingSpaceService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -23,10 +24,12 @@ class BookingService
 {
     protected $user;
     protected $notificationOrMailService;
-    public function __construct(NotificationOrMailService $notificationOrMailService)
+    protected $userParkingSpaceService;
+    public function __construct(NotificationOrMailService $notificationOrMailService, UserParkingSpaceService $userParkingSpaceService)
     {
         $this->user = Auth::user();
         $this->notificationOrMailService = $notificationOrMailService;
+        $this->userParkingSpaceService = $userParkingSpaceService;
     }
     /**
      * Fetch all resources.
@@ -128,7 +131,6 @@ class BookingService
 
     private function checkParkingSlotAvailbelity($validatedData)
     {
-
         $parkingSpace = ParkingSpace::where('status', 'available')->where('id', $validatedData['parking_space_id'])->first();
         if (!$parkingSpace) {
             throw new Exception('Parking Space not available', 404);
@@ -162,8 +164,6 @@ class BookingService
         if ($available_slots < $validatedData['number_of_slot']) {
             throw new Exception(' Not enough available slots', 400);
         }
-
-        // dd($available_slots);
     }
 
     private function checkPricingType($validatedData)
@@ -175,6 +175,7 @@ class BookingService
 
             $startDate = $validatedData['booking_date_start'];
             $endDate = $validatedData['booking_date_end'];
+            // day names
             if ($startDate && !$endDate) {
                 $dayNames[] = Carbon::parse($startDate)->format('l');
             } elseif ($startDate && $endDate) {
@@ -187,6 +188,7 @@ class BookingService
                 }
             }
             Log::info('Booking day names: ' . json_encode($dayNames));
+            // Check if hourly pricing is available for the selected days
             $hourlyPricing = HourlyPricing::where('id', $validatedData['pricing_id'])
                 ->whereHas('days', function ($q) use ($dayNames) {
                     if (!empty($dayNames)) {
@@ -194,6 +196,7 @@ class BookingService
                     }
                     $q->where('status', 'available'); // Filter days by status
                 })
+                ->wherehas('parkingSpace', fn($q) => $q->whereNotNull('user_id')->where('status', 'available'))
                 ->Where('status', 'active')
                 ->When($validatedData['booking_time_start'], function ($query) use ($validatedData) {
                     $query->whereTime('start_time', '<=', $validatedData['booking_time_start'])
@@ -201,6 +204,7 @@ class BookingService
                 })
                 ->first();
 
+            // not found hourly pricing
             if (!$hourlyPricing) {
                 throw new Exception(' Hourly pricing not found', 404);
             }
@@ -209,35 +213,69 @@ class BookingService
             $startDate = $validatedData['booking_date_start'] ?? now()->format('Y-m-d');
             $endDate = $validatedData['booking_date_end'];
 
+            // Estimate time and price
             if ($startTime && $endTime) {
-                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
-                if ($endDate) {
-                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
-                    Log::info('totalHours' . $totalHours);
-                } else {
-                    $totalHours = $dailyHours;
-                }
-
-                $hourlyPricing->estimated_hours = round($totalHours, 2);
-                $hourlyPricing->estimated_price = round($totalHours * $hourlyPricing->rate, 2);
+                $estimate = $this->userParkingSpaceService->calculateEstimatedPricing($startDate, $startTime, $endDate, $endTime, $hourlyPricing->rate, 'hourly');
+                $hourlyPricing->estimated_hours = $estimate['estimated_hours'];
+                $hourlyPricing->estimated_price = $estimate['estimated_price'];
             }
             Log::info($hourlyPricing);
             return $hourlyPricing;
 
-
-
-
         } elseif ($validatedData['pricing_type'] == 'daily') {
-            $dailyPricing = DailyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
+            // Check if hourly pricing is available for the selected days
+            $dailyPricing = DailyPricing::where('id', $validatedData['pricing_id'])
+                ->wherehas('parkingSpace', fn($q) => $q->whereNotNull('user_id')->where('status', 'available'))
+                ->Where('status', 'active')
+                ->When($validatedData['booking_time_start'], function ($query) use ($validatedData) {
+                    $query->whereTime('start_time', '<=', $validatedData['booking_time_start'])
+                        ->whereTime('end_time', '>=', $validatedData['booking_time_end']);
+                })
+                ->first();
+
+            // not found hourly pricing
             if (!$dailyPricing) {
                 throw new Exception('Daily pricing not found', 404);
+            }
+            $startTime = $validatedData['booking_time_start'] ?? now()->format('H:i');
+            $endTime = $validatedData['booking_time_end'] ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $validatedData['booking_date_start'] ?? now()->format('Y-m-d');
+            $endDate = $validatedData['booking_date_end'];
+
+            // Estimate time and price
+            if ($startTime && $endTime) {
+                $estimate = $this->userParkingSpaceService->calculateEstimatedPricing($startDate, $startTime, $endDate, $endTime, $dailyPricing->rate, 'daily');
+                $dailyPricing->estimated_hours = $estimate['estimated_hours'];
+                $dailyPricing->estimated_price = $estimate['estimated_price'];
             }
             Log::info($dailyPricing);
             return $dailyPricing;
         } elseif ($validatedData['pricing_type'] == 'monthly') {
-            $monthlyPricing = MonthlyPricing::where('id', $validatedData['pricing_id'])->Where('status', 'active')->first();
+
+            // Check if hourly pricing is available for the selected days
+            $monthlyPricing = MonthlyPricing::where('id', $validatedData['pricing_id'])
+                ->wherehas('parkingSpace', fn($q) => $q->whereNotNull('user_id')->where('status', 'available'))
+                ->Where('status', 'active')
+                ->When($validatedData['booking_time_start'], function ($query) use ($validatedData) {
+                    $query->whereTime('start_time', '<=', $validatedData['booking_time_start'])
+                        ->whereTime('end_time', '>=', $validatedData['booking_time_end']);
+                })
+                ->first();
+
+            // not found hourly pricing
             if (!$monthlyPricing) {
                 throw new Exception('Monthly pricing not found', 404);
+            }
+            $startTime = $validatedData['booking_time_start'] ?? now()->format('H:i');
+            $endTime = $validatedData['booking_time_end'] ?? (new Carbon($startTime))->addHour()->format('H:i');
+            $startDate = $validatedData['booking_date_start'] ?? now()->format('Y-m-d');
+            $endDate = $validatedData['booking_date_end'];
+
+            // Estimate time and price
+            if ($startTime && $endTime) {
+                $estimate = $this->userParkingSpaceService->calculateEstimatedPricing($startDate, $startTime, $endDate, $endTime, $monthlyPricing->rate, 'monthly');
+                $monthlyPricing->estimated_hours = $estimate['estimated_hours'];
+                $monthlyPricing->estimated_price = $estimate['estimated_price'];
             }
             Log::info($monthlyPricing);
             return $monthlyPricing;
