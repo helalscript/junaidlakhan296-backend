@@ -63,7 +63,6 @@ class UserBookingController extends Controller
         ], [
             'vehicle_details_id.required' => 'The vehicle details field is required.',
         ]);
-
         // Validate pricing_id based on pricing_type
         if ($request->pricing_type === 'hourly') {
             $pricingData = $request->validate([
@@ -83,8 +82,9 @@ class UserBookingController extends Controller
         $validatedData = array_merge($validatedData, $pricingData);
 
         try {
+
             $booking = $this->userBookingService->store($validatedData);
-            return Helper::jsonResponse(true, 'Booking created successfully', 200, UserBookingShowResource::make($booking));
+            return Helper::jsonResponse(true, 'Booking created successfully', 200, new UserBookingShowResource($booking));
         } catch (Exception $e) {
             Log::error("UserBookingController::store" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to create booking' . $e->getMessage(), 500);
@@ -98,7 +98,7 @@ class UserBookingController extends Controller
     {
         try {
             $booking = $this->userBookingService->show($unique_id);
-            return Helper::jsonResponse(true, 'Booking fetched successfully', 200, $booking);
+            return Helper::jsonResponse(true, 'Booking fetched successfully', 200, new UserBookingShowResource($booking));
         } catch (Exception $e) {
             Log::error("UserBookingController::show" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch booking', 500);

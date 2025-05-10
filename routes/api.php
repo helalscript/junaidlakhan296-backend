@@ -87,7 +87,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
 Route::group(['middleware' => ['auth:api', 'check_is_user']], function ($router) {
     Route::get('/user-dashboard-data', [UserBookingController::class, 'userDashboardData']);
     Route::get('/user-dashboard-transactions', [UserBookingController::class, 'userDashboardTransactions']);
-    Route::apiResource('/my-bookings', UserBookingController::class);
+    Route::apiResource('/my-bookings', UserBookingController::class)->only('index', 'show', 'store');
     Route::post('/my-bookings/extend-request', [UserBookingController::class, 'bookingExtendRequestView']);
     Route::post('/my-bookings/extend-request-create', [UserBookingController::class, 'bookingExtendRequestStore']);
     Route::post('/my-bookings/given-review', [UserReviewController::class, 'store']);
