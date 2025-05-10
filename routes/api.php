@@ -120,4 +120,6 @@ Route::get('/parking-spaces/hourly', [UserParkingSpaceController::class, 'indexF
 Route::get('/parking-spaces/hourly/single/{id}', [UserParkingSpaceController::class, 'showForUsersHourly']);
 Route::get('/parking-spaces/daily', [UserParkingSpaceController::class, 'indexForUsersDaily']);
 Route::get('/parking-spaces/daily/single/{id}', [UserParkingSpaceController::class, 'showForUsersDaily']);
+Route::get('/parking-spaces/monthly', [UserParkingSpaceController::class, 'indexForUsersMonthly']);
+Route::get('/parking-spaces/monthly/single/{id}', [UserParkingSpaceController::class, 'showForUsersMonthly']);
 // Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);
