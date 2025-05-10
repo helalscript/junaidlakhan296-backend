@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API\V1\User;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\IndexForUserDailyResource;
 use App\Http\Resources\API\V1\IndexForUserHourlyResource;
+use App\Http\Resources\API\V1\ShowForUserDailyResource;
 use App\Http\Resources\API\V1\ShowForUserHourlyResource;
 use App\Models\Booking;
 use App\Models\HourlyPricing;
@@ -341,21 +343,20 @@ class UserParkingSpaceController extends Controller
         $validatedData = $request->validate([
             'start_time' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
             'end_time' => 'nullable|date_format:Y-m-d\TH:i|after:start_time',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'radius' => 'nullable|numeric|min:10',
         ]);
-        // dd($validatedData);
+
         try {
-            $isStartTime = $validatedData['start_time'] ?? null;
             $startTime = $request->start_time ? (new Carbon($request->start_time))->format('H:i') : now()->format('H:i');
             $startDate = $request->start_time ? (new Carbon($request->start_time))->format('Y-m-d') : now()->format('Y-m-d');
             $endTime = $request->end_time ? (new Carbon($request->end_time))->format('H:i') : (new Carbon($startTime))->addHour()->format('H:i');
-            // dd($startTime . ' ' . $endTime);
+
             $endDate = $request->end_time ? (new Carbon($request->end_time))->format('Y-m-d') : $startDate;
             $result = $this->userParkingSpaceService->getDailyPricing($request);
-            // dd($result->toArray());
-            // dd($endTime);
+
+            // transform the data
             $transformedData = $this->userParkingSpaceService->transformPricingData(
                 $result,
                 $startTime,
@@ -366,10 +367,30 @@ class UserParkingSpaceController extends Controller
             );
             $result->setCollection($transformedData);
 
-            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserHourlyResource::collection($result), true);
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserDailyResource::collection($result), true);
         } catch (Exception $e) {
             Log::error("ParkingSpaceController::indexForUsersDaily - " . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
         }
     }
+
+    public function showForUsersDaily($id, Request $request)
+    {
+        $validatedData = $request->validate([
+            'start_time' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
+            'end_time' => 'nullable|date_format:Y-m-d\TH:i|after:start_time',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:10',
+        ]);
+// dd($validatedData);
+        try {
+            $pricing = $this->userParkingSpaceService->getDailyPricingDetails($id, $request);
+            return Helper::jsonResponse(true, 'Daily parking space details fetched successfully', 200, new ShowForUserDailyResource($pricing));
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::showForUsersDaily - " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch pricing details.', 500);
+        }
+    }
+
 }
