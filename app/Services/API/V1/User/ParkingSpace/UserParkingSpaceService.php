@@ -431,7 +431,7 @@ class UserParkingSpaceService
      * @param string $pricingType The pricing type, either 'hourly' or 'daily'. Defaults to 'hourly'.
      * @return array An array containing the estimated hours and estimated price.
      */
-    private function calculateEstimatedPricing($startDate, $startTime, $endDate, $endTime, $rate, $pricingType = 'hourly')
+    public function calculateEstimatedPricing($startDate, $startTime, $endDate, $endTime, $rate, $pricingType = 'hourly')
     {
         if (!$startDate || !$startTime || !$endTime || !$rate) {
             return [
