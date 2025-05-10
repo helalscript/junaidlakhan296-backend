@@ -17,6 +17,7 @@ class UserBookingIndexResource extends JsonResource
         return [
             'id' => $this->id,
             'unique_id' => $this->unique_id,
+            'pricing_type' => $this->pricing_type,
             'number_of_slot' => $this->number_of_slot,
             'start_time' => $this->start_time->format('M-d-Y H:i A'),
             'end_time' => $this->end_time->format('M-d-Y H:i A'),

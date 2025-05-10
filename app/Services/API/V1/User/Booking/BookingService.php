@@ -43,7 +43,7 @@ class BookingService
             $status = $request->status;
             $bookings = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
-                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id', 'unique_id', 'parking_space_id','pricing_type', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->when($status, fn($query) => $query->where('status', $status))
                 ->latest()
                 ->paginate($request->per_page ?? 25);
@@ -331,7 +331,7 @@ class BookingService
         try {
             $booking = Booking::with(['parkingSpace:id,slug,title,gallery_images,address,latitude,longitude', 'payment'])
                 ->where('user_id', $this->user->id)
-                ->select('id', 'unique_id', 'parking_space_id', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
+                ->select('id', 'unique_id', 'parking_space_id','pricing_type', 'number_of_slot', 'start_time', 'end_time', 'status', 'created_at')
                 ->where('unique_id', $unique_id)
                 ->firstOrFail();
 
