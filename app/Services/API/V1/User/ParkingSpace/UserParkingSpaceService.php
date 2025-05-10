@@ -124,7 +124,7 @@ class UserParkingSpaceService
                     } else {
                         $totalHours = $dailyHours;
                     }
-                } elseif($pricingType == 'daily') {
+                } elseif ($pricingType == 'daily') {
                     // for daily pricing
                     $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
                     if ($endDate) {
@@ -153,6 +153,8 @@ class UserParkingSpaceService
             $endTime = $request->start_time ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
             $startDate = $request->start_date ?? now()->format('Y-m-d');
             $endDate = $request->end_date;
+            $userLat = $request->latitude;
+            $userLng = $request->longitude;
             // get day names
             $dayNames = [];
             if ($startDate && !$endDate) {
@@ -185,6 +187,7 @@ class UserParkingSpaceService
                 ->when($endTime, fn($q) => $q->whereTime('end_time', '>=', $endTime))
                 ->findOrFail($id);
 
+            // boooking slots check
             $bookingsQuery = Booking::where('parking_space_id', $pricing->parking_space_id)
                 ->whereNotIn('status', ['cancelled', 'close', 'completed']);
 
@@ -200,11 +203,23 @@ class UserParkingSpaceService
             if ($endTime) {
                 $bookingsQuery->whereTime('booking_time_end', '>=', $endTime);
             }
-
+            // booking count
             $bookingCount = $bookingsQuery->get()->sum(fn($b) => $b->number_of_slot ?? 1);
             $pricing->booking_count = $bookingCount;
             $pricing->available_slots = max(0, $pricing->parkingSpace->total_slots - $bookingCount);
 
+            // Calculate distance
+            if ($userLat && $userLng && $pricing->parkingSpace->latitude && $pricing->parkingSpace->longitude) {
+                $distance = $this->calculateDistance(
+                    $userLat,
+                    $userLng,
+                    $pricing->parkingSpace->latitude,
+                    $pricing->parkingSpace->longitude
+                );
+                $pricing->distance = round($distance, 2);
+            }
+
+            // Estimate time and price
             if ($startTime && $endTime) {
                 $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
                 if ($endDate) {
@@ -237,11 +252,11 @@ class UserParkingSpaceService
     public function getDailyPricing($request)
     {
         try {
-            // dd($request->all());
+
             $perPage = $request->per_page ?? 25;
             $startTime = $request->start_time ? (new Carbon($request->start_time))->format('H:i') : now()->format('H:i');
             $startDate = $request->start_time ? (new Carbon($request->start_time))->format('Y-m-d') : now()->format('Y-m-d');
-            // dd($startDate);
+
             $isStartTime = $request->start_time ?? null;
             $isStartDate = $request->start_time ?? null;
             $endTime = $isStartTime ? ($request->end_time ?? (new Carbon($startTime))->addHour()->format('H:i')) : (new Carbon($startTime))->addHour()->format('H:i');
@@ -249,14 +264,14 @@ class UserParkingSpaceService
             $latitude = $request->latitude ?? 12.9716770;
             $longitude = $request->longitude ?? 77.5946770;
             $radius = $request->radius ?? 500;
-            // dd($startDate);
 
+            // haversine formula
             $haversine = "(6371 * acos(cos(radians(?)) 
                         * cos(radians(parking_spaces.latitude)) 
                         * cos(radians(parking_spaces.longitude) - radians(?)) 
                         + sin(radians(?)) 
                         * sin(radians(parking_spaces.latitude))))";
-
+            //daily pricing
             $dailyPricings = DailyPricing::with([
                 'parkingSpace.driverInstructions',
                 'parkingSpace.reviews' => function ($query) {
@@ -282,7 +297,6 @@ class UserParkingSpaceService
                         ->whereTime('end_time', '>=', $endTime)
                 )
                 ->orderBy('distance', 'asc');
-
             return $dailyPricings->paginate($perPage);
 
         } catch (Exception $e) {
@@ -293,10 +307,96 @@ class UserParkingSpaceService
     public function getDailyPricingDetails($id, $request)
     {
         try {
+            $startTime = $request->start_time ? Carbon::parse($request->start_time)->format('H:i') : now()->format('H:i');
+            $startDate = $request->start_time ? Carbon::parse($request->start_time)->format('Y-m-d') : now()->format('Y-m-d');
+            $endTime = $request->end_time ? Carbon::parse($request->end_time)->format('H:i') : Carbon::parse($startTime)->addHour()->format('H:i');
+            $endDate = $request->end_time ? Carbon::parse($request->end_time)->format('Y-m-d') : $startDate;
+            $userLat = $request->latitude;
+            $userLng = $request->longitude;
+            $pricing = DailyPricing::with([
+                'parkingSpace.driverInstructions',
+                'parkingSpace.reviews' => function ($query) {
+                    $query->where('status', 'approved')
+                        ->select('id', 'parking_space_id', 'user_id', 'comment', 'rating', 'created_at')
+                        ->with('user:id,name,avatar');
+                },
+                'parkingSpace.spotDetails',
+            ])
+                ->whereHas('parkingSpace', fn($q) => $q->whereNotNull('user_id')->where('status', 'available')->whereNull('deleted_at')->where('is_verified', true))
+                ->where('status', 'active')
+                ->findOrFail($id);
+
+            // Bookings for the same parking space
+            $bookingCount = Booking::where('parking_space_id', $pricing->parking_space_id)
+                ->whereNotIn('status', ['cancelled', 'close', 'completed'])
+                ->whereDate('start_time', '>=', $startDate)
+                ->whereDate('end_time', '<=', $endDate)
+                ->whereTime('booking_time_start', '<=', $startTime)
+                ->whereTime('booking_time_end', '>=', $endTime)
+                ->get()
+                ->sum(fn($b) => $b->number_of_slot ?? 1);
+
+            $pricing->booking_count = $bookingCount;
+            $pricing->available_slots = max(0, $pricing->parkingSpace->total_slots - $bookingCount);
+
+            // Calculate distance
+            if ($userLat && $userLng && $pricing->parkingSpace->latitude && $pricing->parkingSpace->longitude) {
+                $distance = $this->calculateDistance(
+                    $userLat,
+                    $userLng,
+                    $pricing->parkingSpace->latitude,
+                    $pricing->parkingSpace->longitude
+                );
+                $pricing->distance = round($distance, 2);
+            }
+
+            // Estimate time and price
+            if ($startTime && $endTime) {
+                $dailyHours = Carbon::parse($startTime)->floatDiffInHours(Carbon::parse($endTime));
+                if ($endDate) {
+                    $totalHours = Carbon::parse("$startDate $startTime")->floatDiffInHours(Carbon::parse("$endDate $endTime"));
+                } else {
+                    $totalHours = $dailyHours;
+                }
+
+                $pricing->estimated_hours = round($totalHours, 2);
+                $pricing->estimated_price = round($totalHours * $pricing->rate, 2); // Or use day rate
+            }
+
+            // Reviews
+            $reviews = $pricing->parkingSpace->reviews;
+            $pricing->review_count = $reviews->count();
+            $pricing->average_rating = $reviews->count() > 0 ? round($reviews->avg('rating'), 2) : 0;
+            $pricing->platform_fee = $this->platformFee() ?? [];
+            // return $pricing;
+            return $pricing;
 
         } catch (Exception $e) {
             Log::error("UserParkingSpaceService::getDailyPricingDetails - " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Calculates the distance between two points on the surface of the Earth.
+     * The two points are given by their latitude and longitude coordinates.
+     * The distance is returned in the given unit, which can be either 'K' (kilometers) or 'M' (miles).
+     * @param float $lat1 The latitude of the first point in degrees.
+     * @param float $lon1 The longitude of the first point in degrees.
+     * @param float $lat2 The latitude of the second point in degrees.
+     * @param float $lon2 The longitude of the second point in degrees.
+     * @param string $unit The unit to use for the result, either 'K' (kilometers) or 'M' (miles).
+     * @return float The distance between the two points in the given unit.
+     */
+    protected function calculateDistance($lat1, $lon1, $lat2, $lon2, $unit = 'K')
+    {
+        $theta = $lon1 - $lon2;
+        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+        $dist = acos($dist);
+        $dist = rad2deg($dist);
+        $miles = $dist * 60 * 1.1515;
+
+        return $unit === 'K' ? $miles * 1.609344 : $miles;
     }
 }
