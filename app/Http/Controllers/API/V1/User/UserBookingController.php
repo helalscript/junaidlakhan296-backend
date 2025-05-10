@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\UserBookingExtendRequestViewResource;
 use App\Http\Resources\API\V1\UserBookingIndexResource;
+use App\Http\Resources\API\V1\UserBookingShowResource;
 use App\Http\Resources\API\V1\UserDashboardTransactionResource;
 use App\Models\Booking;
 use App\Services\API\V1\User\Booking\BookingService;
@@ -62,7 +63,7 @@ class UserBookingController extends Controller
         ], [
             'vehicle_details_id.required' => 'The vehicle details field is required.',
         ]);
-        // dd($validatedData);
+
         // Validate pricing_id based on pricing_type
         if ($request->pricing_type === 'hourly') {
             $pricingData = $request->validate([
@@ -83,7 +84,7 @@ class UserBookingController extends Controller
 
         try {
             $booking = $this->userBookingService->store($validatedData);
-            return Helper::jsonResponse(true, 'Booking created successfully', 200, $booking);
+            return Helper::jsonResponse(true, 'Booking created successfully', 200, UserBookingShowResource::make($booking));
         } catch (Exception $e) {
             Log::error("UserBookingController::store" . $e->getMessage());
             return Helper::jsonErrorResponse('Failed to create booking' . $e->getMessage(), 500);
