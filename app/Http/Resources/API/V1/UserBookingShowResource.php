@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Http\Resources\API\V1;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class UserBookingShowResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'unique_id' => $this->unique_id,
+            'parking_space_id' => $this->parking_space_id,
+            'number_of_slot' => $this->number_of_slot,
+            'start_time' => $this->start_time,
+            'end_time' => $this->end_time,
+            'status' => $this->status,
+            'created_at' => $this->created_at,
+            'is_critical' => $this->is_critical,
+            'is_expired' => $this->is_expired,
+            'is_running' => $this->is_running,
+            'parking_status' => $this->parking_status,
+            'parking_space' => $this->parkingSpace,
+            'payment' => $this->payment,
+        ];
+    }
+}
