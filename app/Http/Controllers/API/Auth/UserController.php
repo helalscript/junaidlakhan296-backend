@@ -23,7 +23,13 @@ class UserController extends Controller
      */
     public function me()
     {
-        return Helper::jsonResponse(true, 'User details fetched successfully', 200, auth('api')->user());
+        try {
+            $user = User::where('id', Auth::user()?->id)->select('id', 'name', 'first_name', 'last_name', 'email', 'phone', 'avatar', 'gender', 'role', 'status')->first();
+            return Helper::jsonResponse(true, 'User details fetched successfully', 200, $user);
+        } catch (Exception $e) {
+            Log::error('UserController::me' . $e->getMessage());
+            return Helper::jsonErrorResponse('something went wrong', 403);
+        }
     }
 
     /**
