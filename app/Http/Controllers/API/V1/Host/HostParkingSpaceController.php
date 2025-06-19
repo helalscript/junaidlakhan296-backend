@@ -438,6 +438,7 @@ class HostParkingSpaceController extends Controller
             if (!$parkingSpace) {
                 return Helper::jsonErrorResponse('Parking space not found', 404);
             }
+            
             // check if the parking space is booked actively
             if ($parkingSpace->bookings()->where('status', 'active')->count() > 0) {
                 return Helper::jsonErrorResponse('You cannot delete this parking space because it is currently being used.', 400);
@@ -488,7 +489,7 @@ class HostParkingSpaceController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
             Log::error("ParkingSpaceController::destroy => " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to delete parking space', 403);
+            return Helper::jsonErrorResponse('Failed to delete parking space'. $e->getMessage(), 403);
         }
     }
 
