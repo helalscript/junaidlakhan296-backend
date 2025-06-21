@@ -77,6 +77,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_host']], function ($router)
     Route::post('/my-parking-spaces/update/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'update']);
     Route::get('/my-parking-spaces/single/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'showForHost']);
     Route::delete('/my-parking-spaces/delete/{ParkingSpaceSlug}', [HostParkingSpaceController::class, 'destroy']);
+    Route::post('/my-parking-spaces/update-spot-detail/{spotDetailId}', [HostParkingSpaceController::class, 'updateSpotDetail']);
     Route::apiResource('/my-reservations', HostReservationController::class)->only('index', 'show');
     Route::post('/my-reservations/accept/{ReservationUniqueId}', [HostReservationController::class, 'acceptReservation']);
     Route::post('/my-reservations/cancle/{ReservationUniqueId}', [HostReservationController::class, 'cancelReservation']);

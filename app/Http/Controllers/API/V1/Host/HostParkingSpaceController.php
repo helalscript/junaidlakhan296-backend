@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\SpotDetail;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -332,8 +333,8 @@ class HostParkingSpaceController extends Controller
             'monthly_pricing.*.start_date' => 'required|date',
             'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.*.start_date',
 
-            'spot_details' => 'required|array',
-            'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'spot_details' => 'nullable|array',
+            'spot_details.*.icon' => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'spot_details.*.details' => 'required|string',
         ]);
 
@@ -438,7 +439,7 @@ class HostParkingSpaceController extends Controller
             if (!$parkingSpace) {
                 return Helper::jsonErrorResponse('Parking space not found', 404);
             }
-            
+
             // check if the parking space is booked actively
             if ($parkingSpace->bookings()->where('status', 'active')->count() > 0) {
                 return Helper::jsonErrorResponse('You cannot delete this parking space because it is currently being used.', 400);
@@ -489,8 +490,35 @@ class HostParkingSpaceController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
             Log::error("ParkingSpaceController::destroy => " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to delete parking space'. $e->getMessage(), 403);
+            return Helper::jsonErrorResponse('Failed to delete parking space' . $e->getMessage(), 403);
         }
     }
 
+
+    public function updateSpotDetail(Request $requst, string $spotDetailId, )
+    {
+        $validateData = request()->validate([
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'details' => 'required|string',
+        ]);
+        try {
+            $spotDetail = SpotDetail::find($spotDetailId);
+            if (!$spotDetail) {
+                return Helper::jsonErrorResponse('Spot detail not found', 404);
+            }
+            if ($requst->hasFile('icon')) {
+                $validateData['icon'] = Helper::fileUpload($validateData['icon'], 'spot_details_images', $spotDetailId . '_' . getFileName($validateData['icon']));
+            } else {
+                $validateData['icon'] = $spotDetail->icon;
+            }
+
+            $spotDetail->update($validateData);
+
+            return Helper::jsonResponse(true, 'Spot detail updated successfully', 200);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::updateSpotDetail => " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to update spot detail' . $e->getMessage(), 403);
+        }
+
+    }
 }
