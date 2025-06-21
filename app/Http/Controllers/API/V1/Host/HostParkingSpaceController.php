@@ -393,19 +393,22 @@ class HostParkingSpaceController extends Controller
                 $parkingSpace->monthlyPricing()->create($pricing);
             }
 
-            // Delete and recreate spot details
-            $parkingSpace->spotDetails()->delete();
-            foreach ($validatedData['spot_details'] as $key => $spotDetail) {
-                $imagePath = null;
-                if (isset($spotDetail['icon']) && $spotDetail['icon']) {
-                    $image = $spotDetail['icon'];
-                    unset($spotDetail['icon']);
-                    $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
+            if (array_key_exists('spot_details', $validatedData)) {
+                // Delete and recreate spot details
+                // $parkingSpace->spotDetails()->delete();
+                foreach ($validatedData['spot_details'] as $key => $spotDetail) {
+                    $imagePath = null;
+                    if (isset($spotDetail['icon']) && $spotDetail['icon']) {
+                        $image = $spotDetail['icon'];
+                        unset($spotDetail['icon']);
+                        $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
+                    }
+                    if ($imagePath) {
+                        $spotDetail['icon'] = $imagePath;
+                    }
+                    $parkingSpace->spotDetails()->create($spotDetail);
                 }
-                if ($imagePath) {
-                    $spotDetail['icon'] = $imagePath;
-                }
-                $parkingSpace->spotDetails()->create($spotDetail);
+
             }
 
             DB::commit();
