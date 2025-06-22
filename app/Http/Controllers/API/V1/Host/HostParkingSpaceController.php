@@ -444,7 +444,7 @@ class HostParkingSpaceController extends Controller
             }
 
             // check if the parking space is booked actively
-            if ($parkingSpace->bookings()->where('status', 'active')->count() > 0) {
+            if ($parkingSpace->bookings()->count() > 0) {
                 return Helper::jsonErrorResponse('You cannot delete this parking space because it is currently being used.', 400);
             }
             // Delete associated driver instructions
