@@ -76,7 +76,8 @@ class HostParkingSpaceController extends Controller
                 ->withCount([
                     'reviews as total_reviews' => function ($query) {
                         $query->where('status', 'approved');
-                    }
+                    },
+                    'bookings as total_bookings'
                 ])->paginate($per_page);
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, ParkingSpaceResource::collection($parkingSpaces), true);
         } catch (Exception $e) {
