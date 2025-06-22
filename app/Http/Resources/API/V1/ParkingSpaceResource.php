@@ -29,6 +29,7 @@ class ParkingSpaceResource extends JsonResource
             'address' => $this->address,
             'gallery_images' => $this->gallery_images,
             'total_reviews' => $this->total_reviews??null,
+            'total_bookings' => $this->total_bookings??null,
             'average_rating' => $this->average_rating ? number_format($this->average_rating, 1) : null,
             'status' => $this->status,
             'driver_instructions' => DriverInstructionResource::collection($this->whenLoaded('driverInstructions')),
@@ -37,6 +38,7 @@ class ParkingSpaceResource extends JsonResource
             'monthly_pricing' => MonthlyPricingResource::collection($this->whenLoaded('monthlyPricing')),
             'spot_details' => SpotDetailResource::collection($this->whenLoaded('spotDetails')),
             'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
+            // 'bookings'=>$this->bookings
         ];
     }
 }

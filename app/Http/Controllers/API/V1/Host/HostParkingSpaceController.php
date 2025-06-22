@@ -122,11 +122,13 @@ class HostParkingSpaceController extends Controller
                             }
                         ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
                     },
+                    // 'bookings'
                 ])
                 ->withCount([
                     'reviews as total_reviews' => function ($query) {
                         $query->where('status', 'approved');
-                    }
+                    },
+                    'bookings as total_bookings'
                 ])
                 ->firstOrFail();
             return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, ParkingSpaceResource::make($parkingSpace));
