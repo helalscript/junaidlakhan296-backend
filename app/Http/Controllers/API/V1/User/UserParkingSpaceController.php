@@ -200,6 +200,12 @@ class UserParkingSpaceController extends Controller
 
     public function indexForUsers(Request $request)
     {
+        $validatedData = $request->validate([
+            'per_page' => 'nullable|numeric|min:1',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:10',
+        ]);
         try {
             $result = $this->userParkingSpaceService->indexForUsers($request);
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result, true);
