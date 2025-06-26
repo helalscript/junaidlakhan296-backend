@@ -5,7 +5,7 @@ namespace App\Http\Resources\API\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class showForUserHourlyResource extends JsonResource
+class ShowForUserHourlyResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -38,6 +38,7 @@ class showForUserHourlyResource extends JsonResource
                         'reviews' => ReviewResource::collection($this->parkingSpace->reviews),
                         'review_count' => $this->review_count,
                         'average_rating' => $this->average_rating,
+                        'platform_fee' => $this->platform_fee,
                     ];
                 }
             ),

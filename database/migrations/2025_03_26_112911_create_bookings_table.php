@@ -22,17 +22,16 @@ return new class extends Migration {
             $table->string('per_hour_price')->nullable();
             $table->string('estimated_hours')->nullable();
             $table->decimal('estimated_price', 10, 2)->nullable();
-            $table->decimal('platform_fee', 10, 2)->nullable();
             $table->decimal('total_price', 10, 2)->nullable();
-            $table->date('booking_start_date')->nullable();
-            $table->date('booking_end_date')->nullable();
+            $table->date('booking_date_start')->nullable();
+            $table->date('booking_date_end')->nullable();
             $table->time('booking_time_start')->nullable();
             $table->time('booking_time_end')->nullable();
             $table->timestamp('start_time')->nullable();
             $table->timestamp('end_time')->nullable();
             $table->enum('status', ['pending', 'confirmed', 'active', 'cancelled', 'close', 'completed'])->default('pending');
             $table->timestamps();
-            $table->index(['parking_space_id', 'booking_start_date', 'booking_end_date', 'booking_time_start', 'booking_time_end'], 'booking_availability_index');
+            $table->index(['parking_space_id', 'booking_date_start', 'booking_date_end', 'booking_time_start', 'booking_time_end'], 'booking_availability_index');
 
         });
     }

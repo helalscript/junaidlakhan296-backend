@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
@@ -77,7 +78,6 @@ class User extends Authenticatable implements JWTSubject
         'is_otp_verified',
         'created_at',
         'updated_at',
-        'role',
         'status',
         'remember_token',
     ];
@@ -114,5 +114,30 @@ class User extends Authenticatable implements JWTSubject
         return $value;
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+        // Automatically assign custom notifications when a user is created
+        static::created(function ($user) {
+            $user->assignCustomNotifications();
+        });
+    }
+
+    public function assignCustomNotifications()
+    {
+        $notifications = CustomNotification::where('role', $this->role)
+            ->where('status', 'active')
+            ->get();
+        Log::info('Custom notifications fetched for role' . $this->role . ': ' . json_encode($notifications));
+        Log::info('Custom notifications assigned to user: ' . $this->id);
+        foreach ($notifications as $notification) {
+            $userCustormNotification = UserCustomNotification::create([
+                'user_id' => $this->id,
+                'custom_notification_id' => $notification->id,
+                'status' => 'active',
+            ]);
+            Log::info('Custom notification assigned to user: ' . $this->id . ' Notification ID: ' . $notification->id);
+        }
+    }
 
 }

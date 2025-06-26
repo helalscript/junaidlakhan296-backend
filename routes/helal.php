@@ -9,10 +9,13 @@
  */
 
 
+use App\Http\Controllers\Web\Backend\CMS\FaqController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageHowItWorkContainerController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageSocialLinkContainerController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageWhyChooseUsContainerController;
+use App\Http\Controllers\Web\Backend\ContactMessageController;
+use App\Http\Controllers\Web\Backend\NotificationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\ProfileController;
 use App\Http\Controllers\Web\Backend\DynamicPageController;
@@ -57,6 +60,10 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   Route::resource('/dynamic-page', DynamicPageController::class)->names('dynamic_page');
   Route::post('/dynamic-page/status/{id}', [DynamicPageController::class, 'status'])->name('dynamic_page.status');
 
+  // Routes for FaqController
+  Route::resource('/faqs', FaqController::class)->names('faqs');
+  Route::post('/faqs/status/{id}', [FaqController::class, 'status'])->name('faqs.status');
+
 
   // Route Home Page CMS
   Route::get('/home-page/banner/index', [HomePageController::class, 'index'])->name('cms.home_page.banner.index');
@@ -76,7 +83,17 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   Route::resource('/home-page/why-choose-us/index', HomePageWhyChooseUsContainerController::class)->names('cms.home_page.why_choose_us')->except('show');
   Route::post('/home-page/why-choose-us/status/{id}', [HomePageWhyChooseUsContainerController::class, 'status'])->name('cms.home_page.why_choose_us.status');
   Route::Post('/cms/home-page/why-choose-us-update', [HomePageWhyChooseUsContainerController::class, 'WhyChooseUsContainerUpdate'])->name('cms.home_page.why_choose_us.why_choose_us_update');
-  
+
+
+  // Routes for NotificationController
+  Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notification.read');
+  Route::post('/notifications/mark-as-read/single/{id}', [NotificationController::class, 'markAsSingleRead'])->name('notification.read_single');
+  Route::delete('/notifications/{id}', [NotificationController::class, 'delete'])->name('notification.delete');
+  Route::delete('/notifications', [NotificationController::class, 'deleteAll'])->name('notification.deleteall');
+
+  Route::get('/contact-us-message', [ContactMessageController::class, 'index'])->name('admin_contact_us.index');
+  Route::get('/contact-us-message/{id}', [ContactMessageController::class, 'show'])->name('admin_contact_us.show');
+  Route::delete('/contact-us-message/{id}', [ContactMessageController::class, 'destroy'])->name('admin_contact_us.destroy');
 });
 
 

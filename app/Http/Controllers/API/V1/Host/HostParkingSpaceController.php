@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ParkingSpaceResource;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
+use App\Models\SpotDetail;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -75,7 +76,8 @@ class HostParkingSpaceController extends Controller
                 ->withCount([
                     'reviews as total_reviews' => function ($query) {
                         $query->where('status', 'approved');
-                    }
+                    },
+                    'bookings as total_bookings'
                 ])->paginate($per_page);
             return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, ParkingSpaceResource::collection($parkingSpaces), true);
         } catch (Exception $e) {
@@ -121,11 +123,13 @@ class HostParkingSpaceController extends Controller
                             }
                         ])->where('status', 'approved')->select('id', 'user_id', 'parking_space_id', 'rating', 'comment');
                     },
+                    // 'bookings'
                 ])
                 ->withCount([
                     'reviews as total_reviews' => function ($query) {
                         $query->where('status', 'approved');
-                    }
+                    },
+                    'bookings as total_bookings'
                 ])
                 ->firstOrFail();
             return Helper::jsonResponse(true, 'Parking space fetched successfully', 200, ParkingSpaceResource::make($parkingSpace));
@@ -135,7 +139,7 @@ class HostParkingSpaceController extends Controller
         }
     }
 
-    
+
     /**
      * Store a newly created parking space in the database.
      *
@@ -176,7 +180,7 @@ class HostParkingSpaceController extends Controller
             'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.*.start_time',
             'hourly_pricing.*.days' => 'required|array|min:1',
             'hourly_pricing.*.days.*.day' => 'required|string',
-            'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
+            // 'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
 
             // Daily Pricing
             'daily_pricing' => 'required|array',
@@ -332,8 +336,8 @@ class HostParkingSpaceController extends Controller
             'monthly_pricing.*.start_date' => 'required|date',
             'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.*.start_date',
 
-            'spot_details' => 'required|array',
-            'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'spot_details' => 'nullable|array',
+            'spot_details.*.icon' => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'spot_details.*.details' => 'required|string',
         ]);
 
@@ -392,19 +396,22 @@ class HostParkingSpaceController extends Controller
                 $parkingSpace->monthlyPricing()->create($pricing);
             }
 
-            // Delete and recreate spot details
-            $parkingSpace->spotDetails()->delete();
-            foreach ($validatedData['spot_details'] as $key => $spotDetail) {
-                $imagePath = null;
-                if (isset($spotDetail['icon']) && $spotDetail['icon']) {
-                    $image = $spotDetail['icon'];
-                    unset($spotDetail['icon']);
-                    $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
+            if (array_key_exists('spot_details', $validatedData)) {
+                // Delete and recreate spot details
+                // $parkingSpace->spotDetails()->delete();
+                foreach ($validatedData['spot_details'] as $key => $spotDetail) {
+                    $imagePath = null;
+                    if (isset($spotDetail['icon']) && $spotDetail['icon']) {
+                        $image = $spotDetail['icon'];
+                        unset($spotDetail['icon']);
+                        $imagePath = Helper::fileUpload($image, 'spot_details_images', $key . '_' . getFileName($image));
+                    }
+                    if ($imagePath) {
+                        $spotDetail['icon'] = $imagePath;
+                    }
+                    $parkingSpace->spotDetails()->create($spotDetail);
                 }
-                if ($imagePath) {
-                    $spotDetail['icon'] = $imagePath;
-                }
-                $parkingSpace->spotDetails()->create($spotDetail);
+
             }
 
             DB::commit();
@@ -433,9 +440,16 @@ class HostParkingSpaceController extends Controller
     public function destroy(string $ParkingSpaceSlug): JsonResponse
     {
         try {
-            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->firstOrFail();
             DB::beginTransaction();
+            $parkingSpace = ParkingSpace::where('slug', $ParkingSpaceSlug)->where('user_id', $this->user->id)->first();
+            if (!$parkingSpace) {
+                return Helper::jsonErrorResponse('Parking space not found', 404);
+            }
 
+            // check if the parking space is booked actively
+            if ($parkingSpace->bookings()->count() > 0) {
+                return Helper::jsonErrorResponse('You cannot delete this parking space because it is currently being used.', 400);
+            }
             // Delete associated driver instructions
             $parkingSpace->driverInstructions()->delete();
             // Delete associated hourly pricing
@@ -482,8 +496,35 @@ class HostParkingSpaceController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
             Log::error("ParkingSpaceController::destroy => " . $e->getMessage());
-            return Helper::jsonErrorResponse('Failed to delete parking space', 403);
+            return Helper::jsonErrorResponse('Failed to delete parking space' . $e->getMessage(), 403);
         }
     }
 
+
+    public function updateSpotDetail(Request $requst, string $spotDetailId, )
+    {
+        $validateData = request()->validate([
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'details' => 'required|string',
+        ]);
+        try {
+            $spotDetail = SpotDetail::find($spotDetailId);
+            if (!$spotDetail) {
+                return Helper::jsonErrorResponse('Spot detail not found', 404);
+            }
+            if ($requst->hasFile('icon')) {
+                $validateData['icon'] = Helper::fileUpload($validateData['icon'], 'spot_details_images', $spotDetailId . '_' . getFileName($validateData['icon']));
+            } else {
+                $validateData['icon'] = $spotDetail->icon;
+            }
+
+            $spotDetail->update($validateData);
+
+            return Helper::jsonResponse(true, 'Spot detail updated successfully', 200);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::updateSpotDetail => " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to update spot detail' . $e->getMessage(), 403);
+        }
+
+    }
 }

@@ -106,8 +106,13 @@ class ParkingSpace extends Model
     }
 
     public function averageRating()
-{
-    return $this->reviews()->where('status', 'approved')->avg('rating') ?? 0;
-}
+    {
+        return $this->reviews()->where('status', 'approved')->avg('rating') ?? 0;
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
 }
 

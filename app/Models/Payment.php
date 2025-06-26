@@ -14,9 +14,12 @@ class Payment extends Model
         'booking_id',
         'user_id',
         'transaction_id',
+        'promo_code_id',
+        'promo_code',
         'transaction_number',
         'payment_method',
-        'payment_id',
+        'payment_intent_id',
+        'client_secret',
         'amount',
         'status'
     ];
@@ -26,9 +29,12 @@ class Payment extends Model
         'booking_id' => 'integer',
         'user_id' => 'integer',
         'transaction_id' => 'integer',
+        'promo_code_id' => 'integer',
+        'promo_code' => 'string',
         'transaction_number' => 'string',
         'payment_method' => 'string',
-        'payment_id' => 'string',
+        'payment_intent_id' => 'string',
+        'client_secret' => 'string',
         'amount' => 'decimal:2',
         'status' => 'string',
     ];
@@ -51,5 +57,10 @@ class Payment extends Model
     public function transaction()
     {
         return $this->belongsTo(Transaction::class); // Foreign key 'transaction_id'
+    }
+
+    public function isPaid()
+    {
+        return $this->status === 'success';
     }
 }

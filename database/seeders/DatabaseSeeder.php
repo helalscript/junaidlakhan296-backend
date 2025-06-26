@@ -15,10 +15,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(CustomNotificationSeeder::class);
         User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
             'password' => Hash::make('12345678'),
+            'role' => 'admin',
+        ]);
+        User::factory()->create([
+            'name' => 'Developer',
+            'email' => 'developer@developer.com',
+            'password' => Hash::make('devhelal'),
             'role' => 'admin',
         ]);
 
@@ -35,7 +42,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'host',
         ]);
 
-        //category sub_category seeder call
         $this->call(SystemSettingSeeder::class);
+        $this->call(FaqSeeder::class);
     }
 }

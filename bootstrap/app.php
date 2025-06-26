@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'check_anonymous_user' => \App\Http\Middleware\checkAnonymousUser::class,
             'check_is_host' => \App\Http\Middleware\CheckIsHost::class,
             'check_is_user' => \App\Http\Middleware\CheckIsUser::class,
+            'check_is_user_or_host' => \App\Http\Middleware\CheckIsUserOrHost::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

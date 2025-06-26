@@ -5,7 +5,7 @@ namespace App\Http\Resources\API\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class indexForUserHourlyResource extends JsonResource
+class IndexForUserHourlyResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

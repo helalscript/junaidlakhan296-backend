@@ -8,6 +8,7 @@ class Review extends Model
 {
     protected $fillable = [
         'user_id',
+        'booking_id',
         'parking_space_id',
         'comment',
         'rating',
@@ -16,6 +17,7 @@ class Review extends Model
 
     protected $casts = [
         'user_id' => 'integer',
+        'booking_id' => 'integer',
         'parking_space_id' => 'integer',
         'comment' => 'string',
         'rating' => 'integer',
@@ -32,6 +34,6 @@ class Review extends Model
         return $this->belongsTo(ParkingSpace::class);
     }
 
-    
+
 }
 
