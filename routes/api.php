@@ -116,7 +116,7 @@ Route::group(['middleware' => ['auth:api', 'check_is_user_or_host']], function (
 
 
 // public api
-// Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
+Route::get('/parking-spaces', [UserParkingSpaceController::class, 'indexForUsers']);
 Route::get('/parking-spaces/hourly', [UserParkingSpaceController::class, 'indexForUsersHourly']);
 Route::get('/parking-spaces/hourly/single/{id}', [UserParkingSpaceController::class, 'showForUsersHourly']);
 Route::get('/parking-spaces/daily', [UserParkingSpaceController::class, 'indexForUsersDaily']);

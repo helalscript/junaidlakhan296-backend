@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\DailyPricing;
 use App\Models\HourlyPricing;
 use App\Models\MonthlyPricing;
+use App\Models\ParkingSpace;
 use App\Models\PlatformSetting;
 use Carbon\Carbon;
 use Exception;
@@ -506,5 +507,24 @@ class UserParkingSpaceService
     {
         $platformFee = PlatformSetting::where('status', 'active')->select('id', 'key', 'value')->get();
         return $platformFee;
+    }
+
+
+
+    public function indexForUsers($request)
+    {
+        try {
+            $per_page = $request->per_page ?? 10;
+            $parkingSpaces = ParkingSpace::whereIn('status', ['available', 'unavailable', 'sold-out', 'close'])
+                ->where('is_verified', true)
+                ->select('id', 'slug', 'unique_id', 'user_id', 'title', 'description', 'address', 'latitude', 'longitude', 'gallery_images', 'status')
+                ->with('hourlyPricing:id,parking_space_id,rate', 'dailyPricing:id,parking_space_id,rate', 'monthlyPricing:id,parking_space_id,rate')
+                ->withCount(['bookings as total_bookings', 'reviews as total_reviews'])
+                ->orderBy('total_reviews', 'desc')
+                ->paginate($per_page);
+            return $parkingSpaces;
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
     }
 }
