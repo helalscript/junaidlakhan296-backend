@@ -515,12 +515,17 @@ class UserParkingSpaceService
     {
         try {
             $per_page = $request->per_page ?? 10;
+            $radius = $request->radius ?? 500;
+
             $parkingSpaces = ParkingSpace::whereIn('status', ['available', 'unavailable', 'sold-out', 'close'])
                 ->where('is_verified', true)
                 ->select('id', 'slug', 'unique_id', 'user_id', 'title', 'description', 'address', 'latitude', 'longitude', 'gallery_images', 'status')
                 ->with('hourlyPricing:id,parking_space_id,rate', 'dailyPricing:id,parking_space_id,rate', 'monthlyPricing:id,parking_space_id,rate')
                 ->withCount(['bookings as total_bookings', 'reviews as total_reviews'])
                 ->orderBy('total_reviews', 'desc')
+                ->when($request->has('latitude') && $request->has('longitude'), function ($query) use ($request, $radius) {
+                    $query->havingRaw("ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) < ?", [$request->longitude, $request->latitude, $radius]);
+                })
                 ->paginate($per_page);
             return $parkingSpaces;
         } catch (Exception $e) {
