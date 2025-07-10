@@ -21,11 +21,11 @@ class CancelPendingPayments extends Command
         Stripe::setApiKey(config('services.stripe.key'));
 
         // Find bookings that are unpaid and created more than 10 minutes ago
-        $pendingBookings = Booking::whereDoesntHave('payment', function ($query) {
-            $query->where('status', 'paid');
+        $pendingBookings = Booking::whereHas('payment', function ($query) {
+            $query->where('status', 'pending');
         })
         ->where('created_at', '<=', Carbon::now()->subMinutes(10))
-        ->whereNotIn('status', ['cancelled', 'completed', 'close'])
+        ->whereNotIn('status', ['cancelled','active', 'completed', 'close'])
         ->get();
 
         foreach ($pendingBookings as $booking) {
