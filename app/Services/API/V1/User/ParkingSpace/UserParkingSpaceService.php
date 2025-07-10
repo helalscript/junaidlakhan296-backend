@@ -382,7 +382,7 @@ class UserParkingSpaceService
     public function transformPricingData($result, $startTime, $endTime, $startDate, $endDate, $pricingType = 'hourly')
     {
         // dd($startTime. $endTime. $startDate. $endDate);
-        Log::info($pricingType . 'pricing: ', [$startTime, $endTime, $startDate, $endDate]);
+        // Log::info($pricingType . 'pricing: ', [$startTime, $endTime, $startDate, $endDate]);
         return $result->getCollection()->map(function ($pricing) use ($startTime, $endTime, $startDate, $endDate, $pricingType) {
             // Bookings for the same parking space
             $bookingCount = $this->getBookingCount($pricing, $startDate, $endDate, $startTime, $endTime);

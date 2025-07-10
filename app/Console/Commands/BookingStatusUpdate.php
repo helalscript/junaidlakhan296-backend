@@ -39,9 +39,9 @@ class BookingStatusUpdate extends Command
 
         // check confirmed booking
         if ($confirmBookings->count() > 0) {
-            Log::info('confirmed booking status: ' . $confirmBookings->count());
+            // Log::info('confirmed booking status: ' . $confirmBookings->count());
         } else {
-            Log::info('confirmed booking status: 0');
+            // Log::info('confirmed booking status: 0');
         }
         // changes booking status confirmed to active
         foreach ($confirmBookings as $booking) {
@@ -50,7 +50,7 @@ class BookingStatusUpdate extends Command
                 $booking->update(['status' => 'active']);
 
                 // $this->info('active booking status: ' . $booking->id);
-                Log::info('active booking status: ' . $booking->id);
+                // Log::info('active booking status: ' . $booking->id);
             } catch (Exception $e) {
                 Log::error('Failed to update booking status for booking ' . $booking->id . ': ' . $e->getMessage());
             }
@@ -63,9 +63,9 @@ class BookingStatusUpdate extends Command
 
         //check active booking
         if ($activeBookings->count() > 0) {
-            Log::info('active booking status: ' . $activeBookings->count());
+            // Log::info('active booking status: ' . $activeBookings->count());
         } else {
-            Log::info('active booking status: 0');
+            // Log::info('active booking status: 0');
         }
 
         // changes booking status active to completed
@@ -74,7 +74,7 @@ class BookingStatusUpdate extends Command
                 // Optionally update booking/payment status
                 $booking->update(['status' => 'completed']);
                 // $this->info('completed booking status: ' . $booking->id);
-                Log::info('completed booking status: ' . $booking->id);
+                // Log::info('completed booking status: ' . $booking->id);
             } catch (Exception $e) {
                 Log::error('Failed to update booking status for booking' . $booking->id . ': ' . $e->getMessage());
             }
