@@ -29,10 +29,10 @@ class BookingStatusUpdate extends Command
      */
     public function handle()
     {
-        // part:1 Find bookings that are paid and confirmed
+        // part:1 Find bookings that are success and confirmed
         $confirmBookings = Booking::where('status', 'confirmed')
             ->whereHas('payment', function ($query) {
-                $query->where('status', 'paid');
+                $query->where('status', 'success');
             })
             ->where('start_time', '<=', Carbon::now())
             ->get();
