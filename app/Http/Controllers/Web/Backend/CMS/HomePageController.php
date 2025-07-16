@@ -185,7 +185,7 @@ class HomePageController extends Controller
             [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|max:255',
-                'background_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             ],
 
         );
