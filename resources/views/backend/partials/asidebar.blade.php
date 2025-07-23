@@ -32,6 +32,30 @@ $systemSetting = App\Models\SystemSetting::first();
             <li class="menu-title small text-uppercase">
                 <span class="menu-title-text">APPS</span>
             </li>
+            <!-- Parking Spaces Message Menu Item -->
+            <li class="menu-item {{ request()->routeIs('parking_spaces.*') ? 'open' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle active">
+                    <span class="material-symbols-outlined menu-icon">help</span>
+                    <span class="title">Parking Spaces</span>
+                </a>
+                <ul class="menu-sub">
+                    <!-- Submenu -->
+                    <li class="menu-item ">
+                        <a href="{{ route('parking_spaces.index', ['isVerified' => '1']) }}"
+                            class="menu-link {{ request()->routeIs('parking_spaces.index') && request('isVerified') == '1' ? 'active' : '' }} ">
+                            List
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    <li class="menu-item">
+                        <a href="{{ route('parking_spaces.index', ['isVerified' => '0']) }}"
+                            class="menu-link {{ request()->routeIs('parking_spaces.index') && request('isVerified') == '0' ? 'active' : '' }}">
+                            Request List
+                        </a>
+                    </li>
+
+                </ul>
+            </li>
             <!-- Contact Support Message Menu Item -->
             <li class="menu-item open">
                 <a href="{{ route('admin_contact_us.index') }}"

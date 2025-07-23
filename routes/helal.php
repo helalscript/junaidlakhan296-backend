@@ -16,6 +16,7 @@ use App\Http\Controllers\Web\Backend\CMS\HomePageSocialLinkContainerController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageWhyChooseUsContainerController;
 use App\Http\Controllers\Web\Backend\ContactMessageController;
 use App\Http\Controllers\Web\Backend\NotificationController;
+use App\Http\Controllers\Web\Backend\ParkingSpaceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\ProfileController;
 use App\Http\Controllers\Web\Backend\DynamicPageController;
@@ -63,6 +64,11 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   // Routes for FaqController
   Route::resource('/faqs', FaqController::class)->names('faqs');
   Route::post('/faqs/status/{id}', [FaqController::class, 'status'])->name('faqs.status');
+
+  //Route for Parking Space
+  Route::resource('/parking-spaces', ParkingSpaceController::class)->names('parking_spaces');
+  Route::post('/parking-spaces/status/{id}', [ParkingSpaceController::class, 'status'])->name('parking_spaces.status');
+  Route::get('/parking-spaces/verified/{id}', [ParkingSpaceController::class, 'verified'])->name('parking_spaces.verified');
 
 
   // Route Home Page CMS
