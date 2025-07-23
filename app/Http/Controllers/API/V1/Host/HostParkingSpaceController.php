@@ -174,39 +174,42 @@ class HostParkingSpaceController extends Controller
             'instructions.*' => 'required|string',
 
             // Hourly Pricing
-            'hourly_pricing' => 'required|array',
-            'hourly_pricing.*.rate' => 'required|numeric|min:0',
-            'hourly_pricing.*.start_time' => 'required|date_format:H:i',
-            'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.*.start_time',
-            'hourly_pricing.*.days' => 'required|array|min:1',
-            'hourly_pricing.*.days.*.day' => 'required|string',
+            'hourly_pricing' => 'nullable|array',
+            'hourly_pricing.*.rate' => 'nullable|numeric|min:0',
+            'hourly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'hourly_pricing.*.end_time' => 'nullable|date_format:H:i|after:hourly_pricing.*.start_time',
+            'hourly_pricing.*.days' => 'nullable|array|min:1',
+            'hourly_pricing.*.days.*.day' => 'nullable|string',
             // 'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
 
             // Daily Pricing
-            'daily_pricing' => 'required|array',
-            'daily_pricing.*.rate' => 'required|numeric|min:0',
-            'daily_pricing.*.start_time' => 'required|date_format:H:i',
-            'daily_pricing.*.end_time' => 'required|date_format:H:i|after:daily_pricing.*.start_time',
-            'daily_pricing.*.start_date' => 'required|date',
-            'daily_pricing.*.end_date' => 'required|date|after_or_equal:daily_pricing.*.start_date',
+            'daily_pricing' => 'nullable|array',
+            'daily_pricing.*.rate' => 'nullable|numeric|min:0',
+            'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
+            'daily_pricing.*.start_date' => 'nullable|date',
+            'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
 
             // Monthly Pricing
-            'monthly_pricing' => 'required|array',
-            'monthly_pricing.*.rate' => 'required|numeric|min:0',
-            'monthly_pricing.*.start_time' => 'required|date_format:H:i',
-            'monthly_pricing.*.end_time' => 'required|date_format:H:i|after:monthly_pricing.*.start_time',
-            'monthly_pricing.*.start_date' => 'required|date',
-            'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.*.start_date',
+            'monthly_pricing' => 'nullable|array',
+            'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
+            'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
+            'monthly_pricing.*.start_date' => 'nullable|date',
+            'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
 
             // Spot Details
-            'spot_details' => 'required|array',
-            'spot_details.*.icon' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'spot_details.*.details' => 'required|string',
+            'spot_details' => 'nullable|array',
+            'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'spot_details.*.details' => 'nullable|string',
         ]);
 
         try {
             DB::beginTransaction();
 
+            if (!isset($validatedData['hourly_pricing']) && !isset($validatedData['daily_pricing']) && !isset($validatedData['monthly_pricing'])) {
+                return Helper::jsonErrorResponse('Please select at least one pricing option', 400);
+            }
             // Handle Gallery Images
             $galleryImages = [];
             if ($request->hasFile('gallery_images')) {
@@ -226,45 +229,56 @@ class HostParkingSpaceController extends Controller
             $parkingSpaceData['is_verified'] = true;
             $parkingSpaceData['status'] = 'available';
 
+
             $parkingSpace = ParkingSpace::create($parkingSpaceData);
 
-            // Save Instructions
-            foreach ($validatedData['instructions'] as $instruction) {
-                $parkingSpace->driverInstructions()->create([
-                    'instructions' => $instruction,
-                    'status' => 'active',
-                ]);
-            }
-
-            // Save Hourly Pricing with Days
-            foreach ($validatedData['hourly_pricing'] as $hourly) {
-                $days = $hourly['days'];
-                unset($hourly['days']);
-
-                $hourlyModel = $parkingSpace->hourlyPricing()->create($hourly);
-                foreach ($days as $day) {
-                    $hourlyModel->days()->create($day);
+            if (isset($validatedData['instructions'])) {
+                // Save Instructions
+                foreach ($validatedData['instructions'] as $instruction) {
+                    $parkingSpace->driverInstructions()->create([
+                        'instructions' => $instruction,
+                        'status' => 'active',
+                    ]);
                 }
             }
 
-            // Save Daily Pricing
-            foreach ($validatedData['daily_pricing'] as $daily) {
-                $parkingSpace->dailyPricing()->create($daily);
+            if (isset($validatedData['hourly_pricing'])) {
+                // Save Hourly Pricing with Days
+                foreach ($validatedData['hourly_pricing'] as $hourly) {
+                    $days = $hourly['days'];
+                    unset($hourly['days']);
+
+                    $hourlyModel = $parkingSpace->hourlyPricing()->create($hourly);
+                    foreach ($days as $day) {
+                        $hourlyModel->days()->create($day);
+                    }
+                }
             }
 
-            // Save Monthly Pricing
-            foreach ($validatedData['monthly_pricing'] as $monthly) {
-                $parkingSpace->monthlyPricing()->create($monthly);
+            if (isset($validatedData['daily_pricing'])) {
+                // Save Daily Pricing
+                foreach ($validatedData['daily_pricing'] as $daily) {
+                    $parkingSpace->dailyPricing()->create($daily);
+                }
             }
 
-            // Save Spot Details with icon image upload
-            foreach ($validatedData['spot_details'] as $key => $detail) {
-                $imagePath = Helper::fileUpload($request->file("spot_details.$key.icon"), 'spot_details_images', $key . '_' . getFileName($request->file("spot_details.$key.icon")));
-                $parkingSpace->spotDetails()->create([
-                    'icon' => $imagePath,
-                    'details' => $detail['details'],
-                    'status' => 'active',
-                ]);
+            if (isset($validatedData['monthly_pricing'])) {
+                // Save Monthly Pricing
+                foreach ($validatedData['monthly_pricing'] as $monthly) {
+                    $parkingSpace->monthlyPricing()->create($monthly);
+                }
+            }
+
+            if (isset($validatedData['spot_details'])) {
+                // Save Spot Details with icon image upload
+                foreach ($validatedData['spot_details'] as $key => $detail) {
+                    $imagePath = Helper::fileUpload($request->file("spot_details.$key.icon"), 'spot_details_images', $key . '_' . getFileName($request->file("spot_details.$key.icon")));
+                    $parkingSpace->spotDetails()->create([
+                        'icon' => $imagePath,
+                        'details' => $detail['details'],
+                        'status' => 'active',
+                    ]);
+                }
             }
 
             DB::commit();
@@ -314,31 +328,31 @@ class HostParkingSpaceController extends Controller
             'instructions' => 'required|array|min:1',
             'instructions.*' => 'required|string',
 
-            'hourly_pricing' => 'required|array',
-            'hourly_pricing.*.rate' => 'required|numeric|min:0',
-            'hourly_pricing.*.start_time' => 'required|date_format:H:i',
-            'hourly_pricing.*.end_time' => 'required|date_format:H:i|after:hourly_pricing.*.start_time',
-            'hourly_pricing.*.days' => 'required|array|min:1',
-            'hourly_pricing.*.days.*.day' => 'required|string',
-            'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
+            'hourly_pricing' => 'nullable|array',
+            'hourly_pricing.*.rate' => 'nullable|numeric|min:0',
+            'hourly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'hourly_pricing.*.end_time' => 'nullable|date_format:H:i|after:hourly_pricing.*.start_time',
+            'hourly_pricing.*.days' => 'nullable|array|min:1',
+            'hourly_pricing.*.days.*.day' => 'nullable|string',
+            'hourly_pricing.*.days.*.status' => 'nullable|in:available,unavailable,sold-out,close',
 
-            'daily_pricing' => 'required|array',
-            'daily_pricing.*.rate' => 'required|numeric|min:0',
-            'daily_pricing.*.start_time' => 'required|date_format:H:i',
-            'daily_pricing.*.end_time' => 'required|date_format:H:i|after:daily_pricing.*.start_time',
-            'daily_pricing.*.start_date' => 'required|date',
-            'daily_pricing.*.end_date' => 'required|date|after_or_equal:daily_pricing.*.start_date',
+            'daily_pricing' => 'nullable|array',
+            'daily_pricing.*.rate' => 'nullable|numeric|min:0',
+            'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
+            'daily_pricing.*.start_date' => 'nullable|date',
+            'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
 
-            'monthly_pricing' => 'required|array',
-            'monthly_pricing.*.rate' => 'required|numeric|min:0',
-            'monthly_pricing.*.start_time' => 'required|date_format:H:i',
-            'monthly_pricing.*.end_time' => 'required|date_format:H:i|after:monthly_pricing.*.start_time',
-            'monthly_pricing.*.start_date' => 'required|date',
-            'monthly_pricing.*.end_date' => 'required|date|after_or_equal:monthly_pricing.*.start_date',
+            'monthly_pricing' => 'nullable|array',
+            'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
+            'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
+            'monthly_pricing.*.start_date' => 'nullable|date',
+            'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
 
             'spot_details' => 'nullable|array',
-            'spot_details.*.icon' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'spot_details.*.details' => 'required|string',
+            'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'spot_details.*.details' => 'nullable|string',
         ]);
 
         try {
@@ -361,39 +375,45 @@ class HostParkingSpaceController extends Controller
             // Update basic fields
             $parkingSpace->update($validatedData);
 
-            // Delete and recreate instructions
-            $parkingSpace->driverInstructions()->delete();
-            foreach ($validatedData['instructions'] as $instruction) {
-                $parkingSpace->driverInstructions()->create([
-                    'instructions' => $instruction,
-                    'status' => 'active',
-                ]);
-            }
-
-            // Delete and recreate hourly pricing and days
-            $parkingSpace->hourlyPricing()->each(function ($hourly) {
-                $hourly->days()->delete();
-                $hourly->delete();
-            });
-            foreach ($validatedData['hourly_pricing'] as $hourly) {
-                $days = $hourly['days'];
-                unset($hourly['days']);
-                $newHourly = $parkingSpace->hourlyPricing()->create($hourly);
-                foreach ($days as $day) {
-                    $newHourly->days()->create($day);
+            if (isset($validatedData['instructions'])) {
+                // Delete and recreate instructions
+                $parkingSpace->driverInstructions()->delete();
+                foreach ($validatedData['instructions'] as $instruction) {
+                    $parkingSpace->driverInstructions()->create([
+                        'instructions' => $instruction,
+                        'status' => 'active',
+                    ]);
                 }
             }
 
-            // Delete and recreate daily pricing
-            $parkingSpace->dailyPricing()->delete();
-            foreach ($validatedData['daily_pricing'] as $pricing) {
-                $parkingSpace->dailyPricing()->create($pricing);
+            if (isset($validatedData['hourly_pricing'])) {
+                // Delete and recreate hourly pricing and days
+                $parkingSpace->hourlyPricing()->each(function ($hourly) {
+                    $hourly->days()->delete();
+                    $hourly->delete();
+                });
+                foreach ($validatedData['hourly_pricing'] as $hourly) {
+                    $days = $hourly['days'];
+                    unset($hourly['days']);
+                    $newHourly = $parkingSpace->hourlyPricing()->create($hourly);
+                    foreach ($days as $day) {
+                        $newHourly->days()->create($day);
+                    }
+                }
             }
 
-            // Delete and recreate monthly pricing
-            $parkingSpace->monthlyPricing()->delete();
-            foreach ($validatedData['monthly_pricing'] as $pricing) {
-                $parkingSpace->monthlyPricing()->create($pricing);
+            if (isset($validatedData['daily_pricing'])) {
+                // Delete and recreate daily pricing
+                $parkingSpace->dailyPricing()->delete();
+                foreach ($validatedData['daily_pricing'] as $pricing) {
+                    $parkingSpace->dailyPricing()->create($pricing);
+                }
+
+                // Delete and recreate monthly pricing
+                $parkingSpace->monthlyPricing()->delete();
+                foreach ($validatedData['monthly_pricing'] as $pricing) {
+                    $parkingSpace->monthlyPricing()->create($pricing);
+                }
             }
 
             if (array_key_exists('spot_details', $validatedData)) {
