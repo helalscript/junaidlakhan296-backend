@@ -26,7 +26,7 @@
             <div class="card shadow-sm border-0 rounded-4 bg-white">
                 <div class="card-header d-flex justify-content-between align-items-center bg-white">
                     <h4 class="mb-0">Spot: {{ $data->title ?? 'N/A' }}</h4>
-                    <a href="{{ route('parking_spaces.index') }}" class="btn btn-dark btn-sm">Back</a>
+                    <a href="{{ url()->previous() }}" class="btn btn-dark btn-sm">Back</a>
                 </div>
 
                 <div class="card-body">
@@ -69,9 +69,6 @@
                         <strong >Address:</strong>
                         <div>{{ $data->address }}</div>
                     </div>
-
-
-
                     {{-- Description --}}
                     <div class="mb-3">
                         <strong>Description:</strong>

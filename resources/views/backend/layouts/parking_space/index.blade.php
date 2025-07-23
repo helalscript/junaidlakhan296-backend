@@ -207,8 +207,8 @@
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
-                            if (data.length > 1000) {
-                                return data.substring(0, 1000) + '...';
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
                             } else {
                                 return data;
                             }
