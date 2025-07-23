@@ -35,7 +35,7 @@ $systemSetting = App\Models\SystemSetting::first();
             <!-- Parking Spaces Message Menu Item -->
             <li class="menu-item {{ request()->routeIs('parking_spaces.*') ? 'open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle active">
-                    <span class="material-symbols-outlined menu-icon">help</span>
+                    <span class="material-symbols-outlined menu-icon">location_on</span>
                     <span class="title">Parking Spaces</span>
                 </a>
                 <ul class="menu-sub">
