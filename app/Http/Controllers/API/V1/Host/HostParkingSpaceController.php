@@ -226,7 +226,7 @@ class HostParkingSpaceController extends Controller
             $parkingSpaceData['user_id'] = auth()->id();
             $parkingSpaceData['slug'] = Helper::makeSlug($validatedData['title'], 'parking_spaces');
             // here option for future use verify
-            $parkingSpaceData['is_verified'] = true;
+            $parkingSpaceData['is_verified'] = false;
             $parkingSpaceData['status'] = 'available';
 
 
