@@ -32,6 +32,7 @@ class ParkingSpaceResource extends JsonResource
             'total_bookings' => $this->total_bookings??null,
             'average_rating' => $this->average_rating ? number_format($this->average_rating, 1) : null,
             'status' => $this->status,
+            'is_verified' => $this->is_verified,
             'driver_instructions' => DriverInstructionResource::collection($this->whenLoaded('driverInstructions')),
             'hourly_pricing' => HourlyPricingResource::collection($this->whenLoaded('hourlyPricing')),
             'daily_pricing' => DailyPricingResource::collection($this->whenLoaded('dailyPricing')),
