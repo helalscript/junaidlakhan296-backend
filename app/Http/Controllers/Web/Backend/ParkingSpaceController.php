@@ -4,13 +4,22 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\ParkingSpace;
+use App\Services\API\V1\User\NotificationOrMail\NotificationOrMailService;
+use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Notification;
 use Yajra\DataTables\DataTables;
 use App\Helpers\Helper;
 
 class ParkingSpaceController extends Controller
 {
+    protected $notificationOrMailService;
+    public function __construct(NotificationOrMailService $notificationOrMailService)
+    {
+        $this->notificationOrMailService = $notificationOrMailService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -42,22 +51,6 @@ class ParkingSpaceController extends Controller
     //                             </button>
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(string $id)
@@ -67,29 +60,7 @@ class ParkingSpaceController extends Controller
         return view("backend.layouts.parking_space.show", compact('data'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 
 
     /**
@@ -125,7 +96,8 @@ class ParkingSpaceController extends Controller
     public function verified($id)
     {
         try {
-            $data = ParkingSpace::find($id);
+            DB::beginTransaction();
+            $data = ParkingSpace::with(['user'])->find($id);
             // check if the category exists
             if (empty($data)) {
                 return back()->with('error', 'Item not found.');
@@ -140,6 +112,10 @@ class ParkingSpaceController extends Controller
 
             // save the changes
             $data->save();
+
+            //send notification to host
+            $this->notificationOrMailService->sendNotification(false, $data->user, 'Your parking space has been verified', 'others_notification');
+            DB::commit();
             return back()->with('success', 'Item status changed successfully.');
         } catch (Exception $e) {
             Log::error('ParkingSpaceController::verified- ' . $e->getMessage());
