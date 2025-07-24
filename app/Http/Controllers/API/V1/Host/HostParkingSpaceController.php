@@ -8,6 +8,8 @@ use App\Http\Resources\API\V1\ParkingSpaceResource;
 use App\Models\HourlyPricing;
 use App\Models\ParkingSpace;
 use App\Models\SpotDetail;
+use App\Models\User;
+use App\Services\API\V1\User\NotificationOrMail\NotificationOrMailService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +21,7 @@ use Illuminate\Support\Str;
 class HostParkingSpaceController extends Controller
 {
     protected $user;
+    protected $notificationOrMailService;
 
     /**
      * Set the authenticated user.
@@ -26,9 +29,10 @@ class HostParkingSpaceController extends Controller
      * This constructor method is called after all other service providers have
      * been registered, so we can rely on the Auth facade being available.
      */
-    public function __construct()
+    public function __construct(NotificationOrMailService $notificationOrMailService)
     {
         $this->user = auth()->user();
+        $this->notificationOrMailService = $notificationOrMailService;
     }
 
     /**
@@ -280,7 +284,8 @@ class HostParkingSpaceController extends Controller
                     ]);
                 }
             }
-
+            //send notification to admin
+            $this->notificationOrMailService->sendNotification(true, User::where('role', 'admin')->first(), 'New Parking Space Created please check request', 'new_parking_space');
             DB::commit();
 
             return Helper::jsonResponse(true, 'Parking space created successfully', 200, ParkingSpaceResource::make($parkingSpace->load([

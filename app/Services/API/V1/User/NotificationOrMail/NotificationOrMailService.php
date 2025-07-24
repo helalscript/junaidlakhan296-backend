@@ -7,6 +7,7 @@ use App\Models\CustomNotification;
 use App\Models\User;
 use App\Models\UserCustomNotification;
 use App\Notifications\InfoNotification;
+use App\Notifications\SendNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -93,6 +94,33 @@ class NotificationOrMailService
             return true;
         }
         return false;
+    }
+
+    public function sendNotification($isAdmin, $user = null, $messages = null, $type = null, $subject = null, $data = null)
+    {
+        if ($user && $type) {
+            if (!$isAdmin) {
+                // check user notification settings on
+                $checkNotificationSetting = $this->userNotificationSetting($user, $type);
+                // check user notification settings on
+                if (!$checkNotificationSetting) {
+                    Log::info('User notification setting is off for user: ' . $user->name);
+                    return;
+                }
+            }
+            $notificationData = [
+                'title' => $subject,
+                'message' => $messages,
+                'url' => '',
+                'type' => $type,
+                'thumbnail' => asset('backend/admin/assets/images/messages_user.png' ?? ''),
+                'user' => $this->user,
+                'subject' => $subject,
+            ];
+            $user->notify(new SendNotification($notificationData));
+            Log::info('Notification sent to user: ' . $user->name);
+        }
+
     }
 
 }

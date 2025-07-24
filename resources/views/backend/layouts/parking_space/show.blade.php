@@ -3,6 +3,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 @endpush
 
 @section('content')
@@ -25,9 +26,10 @@
         @if ($data)
             <div class="card shadow-sm border-0 rounded-4 bg-white">
                 <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                    <h4 class="mb-0">Spot: {{ $data->title ?? 'N/A' }}</h4>
+                    <h4 class="mb-0">Parking Name: {{ $data->title ?? 'N/A' }}</h4>
                     <a href="{{ url()->previous() }}" class="btn btn-dark btn-sm">Back</a>
                 </div>
+
 
                 <div class="card-body">
                     {{-- Basic Info --}}
@@ -56,17 +58,16 @@
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Latitude:</strong> {{ $data->latitude }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Longitude:</strong> {{ $data->longitude }}
-                        </div>
+                    <div class="mb-3">
+                        <strong>Location:</strong>
+                        <div id="map" style="height: 300px;"></div>
+
+                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
                     </div>
                     {{-- Address & Location --}}
                     <div class="mb-3">
-                        <strong >Address:</strong>
+                        <strong>Address:</strong>
                         <div>{{ $data->address }}</div>
                     </div>
                     {{-- Description --}}
@@ -145,6 +146,10 @@
                     <div class="text-muted text-end">
                         Created: {{ \Carbon\Carbon::parse($data->created_at)->format('d M, Y h:i A') }}
                     </div>
+                    {{-- Created By --}}
+                    <div class="text-muted text-end">
+                        Created By: {{ $data->user->name }} ({{ $data->user->email }})
+                    </div>
                 </div>
             </div>
         @else
@@ -156,4 +161,16 @@
 @endsection
 
 @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var location = [{{ $data->latitude }}, {{ $data->longitude }}];
+            var map = L.map('map').setView(location, 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 50,
+            }).addTo(map);
+
+            L.marker(location).addTo(map);
+        });
+    </script>
 @endpush
