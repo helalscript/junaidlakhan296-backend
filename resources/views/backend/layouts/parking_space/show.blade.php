@@ -164,10 +164,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var location = [{{ $data->latitude }}, {{ $data->longitude }}];
-            var map = L.map('map').setView(location, 15);
+            var map = L.map('map').setView(location, 08);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 50,
+                maxZoom: 100,
             }).addTo(map);
 
             L.marker(location).addTo(map);
