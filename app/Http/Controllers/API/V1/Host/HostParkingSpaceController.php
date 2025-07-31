@@ -207,7 +207,8 @@ class HostParkingSpaceController extends Controller
             'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'spot_details.*.details' => 'nullable|string',
         ]);
-
+        // Log::info($validatedData);
+        // dd($validatedData);
         try {
             DB::beginTransaction();
 
@@ -287,14 +288,15 @@ class HostParkingSpaceController extends Controller
             //send notification to admin
             $this->notificationOrMailService->sendNotification(true, User::where('role', 'admin')->first(), 'New Parking Space Created please check request', 'new_parking_space');
             DB::commit();
-
-            return Helper::jsonResponse(true, 'Parking space created successfully', 200, ParkingSpaceResource::make($parkingSpace->load([
+            $data=$parkingSpace->load([
                 'driverInstructions',
                 'hourlyPricing.days',
                 'dailyPricing',
                 'monthlyPricing',
                 'spotDetails',
-            ])));
+            ]);
+            // Log::info("ParkingSpaceController::store => " . json_encode($data));
+            return Helper::jsonResponse(true, 'Parking space created successfully', 200, ParkingSpaceResource::make($data));
 
         } catch (Exception $e) {
             DB::rollBack();

@@ -3,9 +3,9 @@ $systemSetting = App\Models\SystemSetting::first();
 @endphp --}}
 <!-- Start Sidebar Area -->
 <div class="sidebar-area" id="sidebar-area">
-    <div class="logo position-relative">
+    <div class="logo position-relative" >
         <a href="{{ route('admin.dashboard') }}" class="d-block text-decoration-none position-relative">
-            <img src="{{ asset($systemSetting->logo ?? 'backend/admin/assets/logo.png') }}" alt="logo-icon" style="height: 120px">
+            <img src="{{ asset($systemSetting->logo ?? 'backend/admin/assets/logo.png') }}" alt="logo-icon" style="height: 100px">
         </a>
         <button
             class="sidebar-burger-menu bg-transparent p-0 border-0 opacity-0 z-n1 position-absolute top-50 end-0 translate-middle-y"
@@ -14,7 +14,7 @@ $systemSetting = App\Models\SystemSetting::first();
         </button>
     </div>
 
-    <aside id="layout-menu" class="layout-menu menu-vertical menu active" data-simplebar>
+    <aside id="layout-menu" class="layout-menu menu-vertical menu active" data-simplebar style="height: calc(100vh - 100px)">
         <ul class="menu-inner">
             <li class="menu-title small text-uppercase">
                 <span class="menu-title-text">MAIN</span>
