@@ -20,6 +20,7 @@ class HourlyPricingResource extends JsonResource
             'rate' => $this->rate,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
+            'is_free_pricing' => $this->is_free_pricing,
             'days' => HourlyPricingDayResource::collection($this->whenLoaded('days')),
         ];
     }

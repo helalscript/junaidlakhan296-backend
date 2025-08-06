@@ -19,6 +19,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->date('start_date'); // Start and end date for monthly pricing
             $table->date('end_date');
+             $table->boolean('is_free_pricing')->default(false); 
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
 
