@@ -35,6 +35,7 @@ class UserParkingSpaceController extends Controller
         $this->user = auth()->user();
         $this->userParkingSpaceService = $userParkingSpaceService;
     }
+    
     public function indexForUsersHourly(Request $request)
     {
         $validatedData = $request->validate([
@@ -215,4 +216,6 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
         }
     }
+
+    
 }
