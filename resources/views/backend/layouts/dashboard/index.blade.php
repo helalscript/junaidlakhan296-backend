@@ -12,10 +12,9 @@
         <div class="row">
             <div class="col-md-7">
                 <div class="mb-4">
-                    <h3 class="fs-20 fw-semibold mb-1">Welcome Back, <span class="text-primary">{{ Auth::user()->name ?? 'Mr. John Doe' }}!</span>
+                    <h3 class="fs-20 fw-semibold mb-1">Welcome Back, <span class="text-primary">{{ Auth::user()->name ?? 'Junaid Lakhani' }}!</span>
                     </h3>
-                    <p style="line-height: 1.4;">Monitor and manage employee performance, attendance and more
-                        in one place.</p>
+                    <p style="line-height: 1.4;">Monitor and manage performance, parking space and more in one place.</p>
                 </div>
             </div>
             {{-- <div class="col-md-5">
@@ -33,7 +32,7 @@
                 </div>
             </div> --}}
         </div>
-        {{-- <div class="row">
+        <div class="row">
             <div class="col-lg-4 col-md-6">
                 <div class="card border-0 rounded-3 bg-white mb-4">
                     <div class="custom-padding-30 position-relative">
@@ -41,23 +40,23 @@
                             <div class="flex-shrink-0">
                                 <div class="text-center rounded-2 bg-primary-50"
                                     style="width: 44px; height: 44px; line-height: 44px;">
-                                    <img src="{{ asset('backend/admin/assets') }}/images/icon-employees.svg"
+                                    <img src="{{ asset('backend/admin/assets/images/icon-employees.svg') }}"
                                         alt="icon-employees">
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <span class="d-block mb-1">Total Employees</span>
-                                <h3 class="fw-medium fs-20 mb-0">15,720</h3>
+                                <span class="d-block mb-1">Total Host</span>
+                                <h3 class="fw-medium fs-20 mb-0">{{$totalHost}}</h3>
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center">
+                        {{-- <div class="d-flex align-items-center">
                             <i class="ri-arrow-right-up-line d-inline-block text-center rounded-1 fs-18 text-success-50"
                                 style="width: 26px; height: 26px; line-height: 26px; background-color: #D8FFC8;"></i>
                             <p class="ms-2"><span class="text-secondary fw-medium">+12%</span> last year</p>
-                        </div>
+                        </div> --}}
 
-                        <div id="total_employees" class="chart-position top-50 translate-middle-y"></div>
+                        {{-- <div id="total_employees" class="chart-position top-50 translate-middle-y"></div> --}}
                     </div>
                 </div>
             </div>
@@ -68,39 +67,39 @@
                             <div class="flex-shrink-0">
                                 <div class="text-center rounded-2 bg-danger-50"
                                     style="width: 44px; height: 44px; line-height: 44px;">
-                                    <img src="{{ asset('backend/admin/assets') }}/images/icon-resigned.svg"
+                                    <img src="{{ asset('backend/admin/assets/images/seller-10.png') }}"
                                         alt="icon-resigned">
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <span class="d-block mb-1">Resigned Employees</span>
-                                <h3 class="fw-medium fs-20 mb-0">3,18</h3>
+                                <span class="d-block mb-1">Total Parking Space</span>
+                                <h3 class="fw-medium fs-20 mb-0">{{$totalParkingSpace}}</h3>
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center">
+                        {{-- <div class="d-flex align-items-center">
                             <i class="ri-arrow-right-down-line d-inline-block text-center rounded-1 fs-18 text-danger-50"
                                 style="width: 26px; height: 26px; line-height: 26px; background-color: #FFE8D4;"></i>
                             <p class="ms-2"><span class="text-secondary fw-medium">-5%</span> last year</p>
                         </div>
 
-                        <div id="resigned_employees" class="chart-position top-50 translate-middle-y"></div>
+                        <div id="resigned_employees" class="chart-position top-50 translate-middle-y"></div> --}}
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-12">
+            {{-- <div class="col-lg-4 col-md-12">
                 <div class="card border-0 rounded-3 bg-white mb-4">
                     <div class="custom-padding-30 position-relative">
                         <div class="d-flex align-items-center mb-4 pb-2">
                             <div class="flex-shrink-0">
                                 <div class="text-center rounded-2 bg-primary-div-50"
                                     style="width: 44px; height: 44px; line-height: 44px;">
-                                    <img src="{{ asset('backend/admin/assets') }}/images/icon-employees.svg"
+                                    <img src="{{ asset('backend/admin/assets/images/christmas.png') }}"
                                         alt="icon-employees">
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <span class="d-block mb-1">New Employees</span>
+                                <span class="d-block mb-1">New Parking Space</span>
                                 <h3 class="fw-medium fs-20 mb-0">8,24</h3>
                             </div>
                         </div>
@@ -115,10 +114,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
-        <div class="card bg-white border-0 rounded-3 mb-4">
+        {{-- <div class="card bg-white border-0 rounded-3 mb-4">
             <div class="card-body p-0">
                 <div
                     class="d-flex justify-content-between align-items-center flex-wrap gap-3 custom-padding-30 border-bottom pb-4">

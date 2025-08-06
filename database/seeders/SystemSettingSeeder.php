@@ -14,16 +14,16 @@ class SystemSettingSeeder extends Seeder
     public function run(): void
     {
         SystemSetting::create([
-            'title' => 'Junaid Lakhan',
-            'system_name' => 'Junaid Lakhan',
-            'email' => 'example@email.com',
-            'contact_number' => '+88084936789',
-            'company_open_hour' => '24 HOUR',
-            'copyright_text' => '© Copyright 2023, All right reserved',
+            'title' => 'Rakkin – Parking Directory and Booking Solution',
+            'system_name' => 'Rakkin – Parking Directory and Booking Solution',
+            'email' => 'info@rakkin.com',
+            'contact_number' => Null,
+            'company_open_hour' => Null,
+            'copyright_text' => '© Copyright 2025, All right reserved',
             'logo' => 'uploads/logos/logo.png',
             'favicon' => 'uploads/favicons/favicon.png',
-            'address' => 'TEST',
-            'description' => 'TEST',
+            'address' => 'Suite No. 5, 2nd floor, Al Surooh Business Center  Hail Street, Jeddah 21313, Saudi Arabia',
+            'description' => 'https://g.co/kgs/D18pJZE',
         ]);
     }
 }

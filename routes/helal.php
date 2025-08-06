@@ -9,6 +9,7 @@
  */
 
 
+use App\Http\Controllers\Web\Backend\CMS\DashboardController;
 use App\Http\Controllers\Web\Backend\CMS\FaqController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\HomePageHowItWorkContainerController;
@@ -25,14 +26,8 @@ use App\Http\Controllers\Web\Backend\SystemSettingController;
 
 Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function () {
   // Route for the admin dashboard
-  // Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+  Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-
-  // Routes for managing guests
-  Route::get('/', function () {
-    return view('backend.layouts.dashboard.index');
-    // return view('backend.layouts.dashboard.index');
-  })->name('admin.dashboard');
 
   Route::get('settings-profile', [ProfileController::class, 'index'])->name('profile_settings.index');
   Route::post('settings-profile', [ProfileController::class, 'update'])->name('profile_settings.update');

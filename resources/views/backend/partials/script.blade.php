@@ -28,7 +28,7 @@
         integrity="sha256-BpyIV7Y3e2pnqy8TQGXxsmOiQ4jXNDTOTBGL2TEJeDY=" crossorigin="anonymous"></script>
 
         {{-- new add --}}
-        <script src="{{ asset('frontend/assets/js/plugins/jquery-3.7.1.min.js') }}"></script>
+        
         <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
         <!--buttons dataTables-->
         <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>
