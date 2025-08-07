@@ -54,6 +54,7 @@
                                         <th scope="col">Is_verified</th>
                                         <th scope="col">Address</th>
                                         <th scope="col">Description</th>
+                                        <th scope="col">Is Feature</th>
                                         <th scope="col">Action</th>
                                     </tr>
                                 </thead>
@@ -215,6 +216,12 @@
                         }
                     },
                     {
+                        data: 'is_feature',
+                        name: 'is_feature',
+                        orderable: false,
+                        searchable: false,
+                    },
+                    {
                         data: 'action',
                         name: 'action',
                         orderable: false,
@@ -321,6 +328,12 @@
     </script>
     <script src="{{ asset('backend/admin/assets/custom-actions.js') }}"></script>
     <script>
+         // Use the status change alert
+        function changeStatus(event, id) {
+            event.preventDefault();
+            let statusUrl = '{{ route('parking_spaces.is_feature', ':id') }}';
+            showStatusChangeAlert(id, statusUrl);
+        }
         // Use the delete confirm alert
         function deleteRecord(event, id) {
             event.preventDefault();
@@ -328,4 +341,5 @@
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
+    
 @endpush

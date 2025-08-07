@@ -63,6 +63,7 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   //Route for Parking Space
   Route::resource('/parking-spaces', ParkingSpaceController::class)->names('parking_spaces');
   Route::post('/parking-spaces/status/{id}', [ParkingSpaceController::class, 'status'])->name('parking_spaces.status');
+  Route::post('/parking-spaces/is-feature/{id}', [ParkingSpaceController::class, 'isFeature'])->name('parking_spaces.is_feature');
   Route::get('/parking-spaces/verified/{id}', [ParkingSpaceController::class, 'verified'])->name('parking_spaces.verified');
 
 
