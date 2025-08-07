@@ -557,7 +557,7 @@ class UserParkingSpaceService
                             ->with('user:id,name,avatar');
                     },
                     'spotDetails'=> function ($query) {
-                        $query->select('id', 'parking_space_id', 'icon')->where('status', 'active');
+                        $query->select('id', 'parking_space_id', 'icon','details')->where('status', 'active');
                     }
                 ])
                 ->withCount(['bookings as total_bookings', 'reviews as total_reviews'])
