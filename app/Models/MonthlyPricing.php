@@ -18,6 +18,7 @@ class MonthlyPricing extends Model
         'end_time',
         'start_date',
         'end_date',
+        'is_free_pricing',
         'status',
     ];
 
@@ -29,6 +30,7 @@ class MonthlyPricing extends Model
         'end_time' => 'datetime:H:i',
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_free_pricing' => 'boolean',
         'status' => 'string',
     ];
 

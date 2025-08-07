@@ -35,6 +35,7 @@ class UserParkingSpaceController extends Controller
         $this->user = auth()->user();
         $this->userParkingSpaceService = $userParkingSpaceService;
     }
+    
     public function indexForUsersHourly(Request $request)
     {
         $validatedData = $request->validate([
@@ -215,4 +216,17 @@ class UserParkingSpaceController extends Controller
             return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
         }
     }
+    public function showForUsers(string $ParkingSpaceSlug)
+    {
+        try {
+            $result = $this->userParkingSpaceService->showForUsers($ParkingSpaceSlug);
+            return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, $result);
+            // return Helper::jsonResponse(true, 'Parking spaces fetched successfully', 200, IndexForUserResource::collection($result), true);
+        } catch (Exception $e) {
+            Log::error("ParkingSpaceController::indexForUsers - " . $e->getMessage());
+            return Helper::jsonErrorResponse('Failed to fetch parking spaces. ' . $e->getMessage(), 500);
+        }
+    }
+
+    
 }

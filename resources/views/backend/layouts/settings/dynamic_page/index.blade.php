@@ -92,7 +92,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('frontend/assets/js/plugins/jquery-3.7.1.min.js') }}"></script>
+    
     <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
     <!--buttons dataTables-->
     <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>

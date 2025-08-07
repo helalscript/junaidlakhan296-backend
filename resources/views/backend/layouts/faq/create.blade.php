@@ -1,15 +1,7 @@
 @extends('backend.app')
 @section('title', 'Dynamic page')
 
-@push('styles')
-    {{-- CKEditor CDN --}}
-    <script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
-    <style>
-        .ck-editor__editable_inline {
-            min-height: 300px;
-        }
-    </style>
-@endpush
+
 @section('content')
 
     <div class="main-content-container overflow-hidden">
@@ -67,7 +59,7 @@
                             <div class="form-group mb-4">
                                 <label class="label text-secondary">Faq Answer</label>
                                 <div class="form-group position-relative">
-                                    <textarea name="answer" class="form-control @error('answer') is-invalid @enderror" id="answer"
+                                    <textarea name="answer" class="form-control ps-5 h-55 @error('answer') is-invalid @enderror" id="answer"
                                         placeholder="Faq Answer here">{{ old('answer') }}</textarea>
                                 </div>
                                 @error('answer')
@@ -107,15 +99,3 @@
     </div>
 @endsection
 
-@push('scripts')
-    <script>
-        ClassicEditor
-            .create(document.querySelector('#page_content'), {
-                removePlugins: ['CKFinderUploadAdapter', 'CKFinder', 'EasyImage', 'ImageUpload', 'MediaEmbed'],
-                toolbar: ['bold', 'italic', 'heading', '|', 'undo', 'redo']
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    </script>
-@endpush

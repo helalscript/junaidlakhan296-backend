@@ -20,6 +20,7 @@ use App\Http\Controllers\API\V1\User\UserNotificationSettingController;
 use App\Http\Controllers\API\V1\User\UserParkingSpaceController;
 use App\Http\Controllers\API\V1\User\UserReviewController;
 use App\Http\Controllers\API\V1\User\UserVehicleController;
+use App\Http\Controllers\API\V2\User\ParkingSpaceController as UserParkingSpaceControllerV2;
 use Illuminate\Support\Facades\Route;
 
 
@@ -123,4 +124,7 @@ Route::get('/parking-spaces/daily', [UserParkingSpaceController::class, 'indexFo
 Route::get('/parking-spaces/daily/single/{id}', [UserParkingSpaceController::class, 'showForUsersDaily']);
 Route::get('/parking-spaces/monthly', [UserParkingSpaceController::class, 'indexForUsersMonthly']);
 Route::get('/parking-spaces/monthly/single/{id}', [UserParkingSpaceController::class, 'showForUsersMonthly']);
-// Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);
+Route::get('/parking-spaces/single/{ParkingSpaceSlug}', [UserParkingSpaceController::class, 'showForUsers']);
+
+// Route::get('v2/parking-spaces/hourly', [UserParkingSpaceControllerV2::class, 'indexForUsersHourly']);
+// Route::get('v2/parking-spaces/hourly/single/{id}', [UserParkingSpaceControllerV2::class, 'showForUsersHourly']);

@@ -32,7 +32,19 @@ class ParkingSpaceController extends Controller
             $data = ParkingSpace::where('is_verified', $isVerified)->latest()->get();
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('is_feature', function ($data) {
+                    $is_feature = '<div class="form-check form-switch">';
+                    $is_feature .= '<input onclick="changeStatus(event,' . $data->id . ')" type="checkbox" class="form-check-input" style="border-radius: 25rem;width:40px"' . $data->id . '" name="is_feature"';
 
+                    if ($data->is_feature == "active") {
+                        $is_feature .= ' checked';
+                    }
+
+                    $is_feature .= '>';
+                    $is_feature .= '</div>';
+
+                    return $is_feature;
+                })
                 ->addColumn('action', function ($data) {
                     return '<div class="action-wrapper">
                      <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="View" onclick="window.location.href=\'' . route('parking_spaces.show', $data->id) . '\'">
@@ -41,7 +53,7 @@ class ParkingSpaceController extends Controller
                                
                             </div>';
                 })
-                ->rawColumns(['action', 'status'])
+                ->rawColumns(['action', 'is_feature'])
                 ->make(true);
         }
         return view("backend.layouts.parking_space.index", compact('isVerified'));
@@ -121,5 +133,27 @@ class ParkingSpaceController extends Controller
             Log::error('ParkingSpaceController::verified- ' . $e->getMessage());
             return back()->with('error', 'Something went wrong.');
         }
+    }
+
+    public function isFeature(Request $request, $id)
+    {
+        $data = ParkingSpace::find($id);
+        if (empty($data)) {
+            return response()->json([
+                "success" => false,
+                "message" => "Item not found."
+            ], 404);
+        }
+        if ($data->is_feature == 'active') {
+            $data->is_feature = 'inactive';
+        } else {
+            $data->is_feature = 'active';
+        }
+
+        $data->save();
+        return response()->json([
+            'success' => true,
+            'message' => 'Item status changed successfully.'
+        ]);
     }
 }

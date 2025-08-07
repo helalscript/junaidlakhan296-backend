@@ -186,21 +186,21 @@ class HostParkingSpaceController extends Controller
             'hourly_pricing.*.days.*.day' => 'nullable|string',
             // 'hourly_pricing.*.days.*.status' => 'required|in:available,unavailable,sold-out,close',
 
-            // Daily Pricing
-            'daily_pricing' => 'nullable|array',
-            'daily_pricing.*.rate' => 'nullable|numeric|min:0',
-            'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
-            'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
-            'daily_pricing.*.start_date' => 'nullable|date',
-            'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
+            // // Daily Pricing
+            // 'daily_pricing' => 'nullable|array',
+            // 'daily_pricing.*.rate' => 'nullable|numeric|min:0',
+            // 'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
+            // 'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
+            // 'daily_pricing.*.start_date' => 'nullable|date',
+            // 'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
 
-            // Monthly Pricing
-            'monthly_pricing' => 'nullable|array',
-            'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
-            'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
-            'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
-            'monthly_pricing.*.start_date' => 'nullable|date',
-            'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
+            // // Monthly Pricing
+            // 'monthly_pricing' => 'nullable|array',
+            // 'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
+            // 'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            // 'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
+            // 'monthly_pricing.*.start_date' => 'nullable|date',
+            // 'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
 
             // Spot Details
             'spot_details' => 'nullable|array',
@@ -252,6 +252,7 @@ class HostParkingSpaceController extends Controller
                 foreach ($validatedData['hourly_pricing'] as $hourly) {
                     $days = $hourly['days'];
                     unset($hourly['days']);
+                    $hourly['is_free_pricing'] = $hourly['rate'] == 0 ? true : false; // Check if the rate is 0 to set free pricing
 
                     $hourlyModel = $parkingSpace->hourlyPricing()->create($hourly);
                     foreach ($days as $day) {
@@ -260,19 +261,19 @@ class HostParkingSpaceController extends Controller
                 }
             }
 
-            if (isset($validatedData['daily_pricing'])) {
-                // Save Daily Pricing
-                foreach ($validatedData['daily_pricing'] as $daily) {
-                    $parkingSpace->dailyPricing()->create($daily);
-                }
-            }
+            // if (isset($validatedData['daily_pricing'])) {
+            //     // Save Daily Pricing
+            //     foreach ($validatedData['daily_pricing'] as $daily) {
+            //         $parkingSpace->dailyPricing()->create($daily);
+            //     }
+            // }
 
-            if (isset($validatedData['monthly_pricing'])) {
-                // Save Monthly Pricing
-                foreach ($validatedData['monthly_pricing'] as $monthly) {
-                    $parkingSpace->monthlyPricing()->create($monthly);
-                }
-            }
+            // if (isset($validatedData['monthly_pricing'])) {
+            //     // Save Monthly Pricing
+            //     foreach ($validatedData['monthly_pricing'] as $monthly) {
+            //         $parkingSpace->monthlyPricing()->create($monthly);
+            //     }
+            // }
 
             if (isset($validatedData['spot_details'])) {
                 // Save Spot Details with icon image upload
@@ -288,11 +289,11 @@ class HostParkingSpaceController extends Controller
             //send notification to admin
             $this->notificationOrMailService->sendNotification(true, User::where('role', 'admin')->first(), 'New Parking Space Created please check request', 'new_parking_space');
             DB::commit();
-            $data=$parkingSpace->load([
+            $data = $parkingSpace->load([
                 'driverInstructions',
                 'hourlyPricing.days',
-                'dailyPricing',
-                'monthlyPricing',
+                // 'dailyPricing',
+                // 'monthlyPricing',
                 'spotDetails',
             ]);
             // Log::info("ParkingSpaceController::store => " . json_encode($data));
@@ -343,19 +344,19 @@ class HostParkingSpaceController extends Controller
             'hourly_pricing.*.days.*.day' => 'nullable|string',
             'hourly_pricing.*.days.*.status' => 'nullable|in:available,unavailable,sold-out,close',
 
-            'daily_pricing' => 'nullable|array',
-            'daily_pricing.*.rate' => 'nullable|numeric|min:0',
-            'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
-            'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
-            'daily_pricing.*.start_date' => 'nullable|date',
-            'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
+            // 'daily_pricing' => 'nullable|array',
+            // 'daily_pricing.*.rate' => 'nullable|numeric|min:0',
+            // 'daily_pricing.*.start_time' => 'nullable|date_format:H:i',
+            // 'daily_pricing.*.end_time' => 'nullable|date_format:H:i|after:daily_pricing.*.start_time',
+            // 'daily_pricing.*.start_date' => 'nullable|date',
+            // 'daily_pricing.*.end_date' => 'nullable|date|after_or_equal:daily_pricing.*.start_date',
 
-            'monthly_pricing' => 'nullable|array',
-            'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
-            'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
-            'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
-            'monthly_pricing.*.start_date' => 'nullable|date',
-            'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
+            // 'monthly_pricing' => 'nullable|array',
+            // 'monthly_pricing.*.rate' => 'nullable|numeric|min:0',
+            // 'monthly_pricing.*.start_time' => 'nullable|date_format:H:i',
+            // 'monthly_pricing.*.end_time' => 'nullable|date_format:H:i|after:monthly_pricing.*.start_time',
+            // 'monthly_pricing.*.start_date' => 'nullable|date',
+            // 'monthly_pricing.*.end_date' => 'nullable|date|after_or_equal:monthly_pricing.*.start_date',
 
             'spot_details' => 'nullable|array',
             'spot_details.*.icon' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
@@ -402,6 +403,7 @@ class HostParkingSpaceController extends Controller
                 foreach ($validatedData['hourly_pricing'] as $hourly) {
                     $days = $hourly['days'];
                     unset($hourly['days']);
+                    $hourly['is_free_pricing'] = $hourly['rate'] == 0 ? true : false; // Check if the rate is 0 to set free pricing
                     $newHourly = $parkingSpace->hourlyPricing()->create($hourly);
                     foreach ($days as $day) {
                         $newHourly->days()->create($day);
@@ -409,19 +411,21 @@ class HostParkingSpaceController extends Controller
                 }
             }
 
-            if (isset($validatedData['daily_pricing'])) {
-                // Delete and recreate daily pricing
-                $parkingSpace->dailyPricing()->delete();
-                foreach ($validatedData['daily_pricing'] as $pricing) {
-                    $parkingSpace->dailyPricing()->create($pricing);
-                }
+            // if (isset($validatedData['daily_pricing'])) {
+            //     // Delete and recreate daily pricing
+            //     $parkingSpace->dailyPricing()->delete();
+            //     foreach ($validatedData['daily_pricing'] as $pricing) {
+            //         $pricing['is_free_pricing'] = $pricing['rate'] == 0 ? true : false; // Check if the rate is 0 to set free pricing
+            //         $parkingSpace->dailyPricing()->create($pricing);
+            //     }
 
-                // Delete and recreate monthly pricing
-                $parkingSpace->monthlyPricing()->delete();
-                foreach ($validatedData['monthly_pricing'] as $pricing) {
-                    $parkingSpace->monthlyPricing()->create($pricing);
-                }
-            }
+            //     // Delete and recreate monthly pricing
+            //     $parkingSpace->monthlyPricing()->delete();
+            //     foreach ($validatedData['monthly_pricing'] as $pricing) {
+            //         $pricing['is_free_pricing'] = $pricing['rate'] == 0 ? true : false; // Check if the rate is 0 to set free pricing
+            //         $parkingSpace->monthlyPricing()->create($pricing);
+            //     }
+            // }
 
             if (array_key_exists('spot_details', $validatedData)) {
                 // Delete and recreate spot details
@@ -446,8 +450,8 @@ class HostParkingSpaceController extends Controller
             return Helper::jsonResponse(true, 'Parking space updated successfully', 200, ParkingSpaceResource::make($parkingSpace->load([
                 'driverInstructions',
                 'hourlyPricing.days',
-                'dailyPricing',
-                'monthlyPricing',
+                // 'dailyPricing',
+                // 'monthlyPricing',
                 'spotDetails'
             ])));
         } catch (Exception $e) {

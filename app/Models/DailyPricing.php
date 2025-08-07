@@ -18,6 +18,7 @@ class DailyPricing extends Model
         'end_time',
         'start_date',
         'end_date',
+        'is_free_pricing',
         'status',
     ];
 
@@ -29,6 +30,7 @@ class DailyPricing extends Model
         'end_time' => 'datetime:H:i',
         'start_date' => 'date', // Cast to date
         'end_date' => 'date', // Cast to date
+        'is_free_pricing' => 'boolean', // Cast to boolean
         'status' => 'string',
     ];
 
