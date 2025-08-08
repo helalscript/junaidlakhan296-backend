@@ -4,32 +4,41 @@
 @push('styles')
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
     <style>
-    .text-center {
-        text-align: end;
-    }
+        .text-center {
+            text-align: end;
+        }
 
-    .table-topbar {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 40px;
-    }
+        .table-topbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
 
-    .dataTables_info {
-        margin-top: 20px;
-    }
-    .form-input {
-        border: 2px solid #f0f3f7;
-        border-radius: 6px;
-    }
-    .dropify-wrapper {
-        height: 200px;
-    }
-    .dropify-wrapper .dropify-preview .dropify-render img {
-        display: block;
-    margin-left: auto;
-    margin-right: auto;
-    }
-</style>
+        .dataTables_info {
+            margin-top: 20px;
+        }
+
+        .form-input {
+            border: 2px solid #f0f3f7;
+            border-radius: 6px;
+        }
+
+        .dropify-wrapper {
+            height: 200px;
+        }
+
+        .dropify-wrapper .dropify-preview .dropify-render img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+    <style>
+        [type=checkbox]:checked,
+        [type=radio]:checked {
+            background-size: 40% !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -65,20 +74,19 @@
                             <p class="fs-15">Update Home Page How It Work Container and site details here.</p>
                         </div>
 
-                        <form action="{{ route('cms.home_page.how_it_work.how_it_work_update') }}"
-                            method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('cms.home_page.how_it_work.how_it_work_update') }}" method="POST"
+                            enctype="multipart/form-data">
                             @csrf
                             <div class="row">
                                 <!-- Title Field -->
                                 <div class="col-lg-12">
                                     <div class="form-group mb-4">
-                                        <label class="label text-secondary">Title<span
-                                                class="text-danger">*</span></label>
+                                        <label class="label text-secondary">Title<span class="text-danger">*</span></label>
                                         <div class="form-group position-relative">
                                             <input type="text"
                                                 class="form-control text-dark ps-5 h-55 @error('title') is-invalid @enderror"
-                                                name="title" value="{{ old('title', $HowItWork->title ?? '') }}"
-                                                required placeholder="Enter Title here">
+                                                name="title" value="{{ old('title', $HowItWork->title ?? '') }}" required
+                                                placeholder="Enter Title here">
                                         </div>
                                         @error('title')
                                             <div id="title-error" class="text-danger">{{ $message }}</div>
@@ -94,8 +102,7 @@
                                         <div class="form-group position-relative">
                                             <input type="text"
                                                 class="form-control text-dark ps-5 h-55 @error('sub_title') is-invalid @enderror"
-                                                name="sub_title"
-                                                value="{{ old('sub_title', $HowItWork->sub_title ?? '') }}"
+                                                name="sub_title" value="{{ old('sub_title', $HowItWork->sub_title ?? '') }}"
                                                 placeholder="Enter Sub Title here">
                                         </div>
                                         @error('sub_title')
@@ -164,8 +171,7 @@
                                 <nav aria-label="Page navigation example">
                                     <ul class="pagination mb-0 justify-content-center">
                                         <li class="page-item">
-                                            <a class="page-link icon" aria-label="Previous" href="#"
-                                                id="prevPage">
+                                            <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
                                                 <i class="material-symbols-outlined">keyboard_arrow_left</i>
                                             </a>
                                         </li>
@@ -204,7 +210,6 @@
 @endsection
 
 @push('scripts')
-    
     <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
     <!--buttons dataTables-->
     <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>

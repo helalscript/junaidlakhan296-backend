@@ -4,7 +4,7 @@
         <div class="col-lg-4 col-sm-6">
             <div class="left-header-content">
                 <ul
-                    class="d-flex align-items-center ps-0 mb-0 list-unstyled justify-content-center justify-content-sm-start">
+                    class="d-flex align-items-center ps-0 mb-0 list-unstyled justify-content-left justify-content-sm-start">
                     <li>
                         <button class="header-burger-menu bg-transparent p-0 border-0"
                             id="header-burger-menu">
