@@ -14,5 +14,5 @@ use Illuminate\Support\Facades\Artisan;
 //     logger()->info('test it');
 // })->everySecond();
 // Schedule::command(UpdateContactorStatistics::class)->cron('0 0 */3 * *');
-Schedule::command(BookingStatusUpdate::class)->everyMinute();
-Schedule::command(CancelPendingPayments::class)->everyFourHours();
+// Schedule::command(BookingStatusUpdate::class)->everyMinute();
+// Schedule::command(CancelPendingPayments::class)->everyFourHours();
