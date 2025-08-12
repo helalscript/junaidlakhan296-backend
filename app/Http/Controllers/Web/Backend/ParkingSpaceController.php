@@ -50,7 +50,9 @@ class ParkingSpaceController extends Controller
                      <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="View" onclick="window.location.href=\'' . route('parking_spaces.show', $data->id) . '\'">
                         <i class="material-symbols-outlined fs-16 text-primary">visibility</i>
                         </button>
-                               
+                    <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Delete" onclick="deleteRecord(event,' . $data->id . ')">
+                               <i class="material-symbols-outlined fs-16 text-danger">delete</i>
+                    </button>
                             </div>';
                 })
                 ->rawColumns(['action', 'is_feature'])
@@ -58,9 +60,7 @@ class ParkingSpaceController extends Controller
         }
         return view("backend.layouts.parking_space.index", compact('isVerified'));
     }
-    //  <button class="ps-0 border-0 bg-transparent lh-1 position-relative top-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Delete" onclick="deleteRecord(event,' . $data->id . ')">
-    //                             <i class="material-symbols-outlined fs-16 text-danger">delete</i>
-    //                             </button>
+ 
 
     /**
      * Display the specified resource.
@@ -72,7 +72,29 @@ class ParkingSpaceController extends Controller
         return view("backend.layouts.parking_space.show", compact('data'));
     }
 
+    public function destroy(string $id)
+    {
+        $data = ParkingSpace::find($id);
+        if (empty($data)) {
+            return response()->json([
+                "success" => false,
+                "message" => "Item not found."
+            ], 404);
+        }
+        if ($data->gallery_images) {
+            // Delete gallery images from storage
+            foreach ($data->gallery_images as $image) {
+                Helper::fileDelete($image);
+            }
+        }
+        // Delete the parking space record
+        $data->delete();
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Item deleted successfully.'
+        ]);
+    }
 
 
     /**
