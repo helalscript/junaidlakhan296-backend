@@ -4,32 +4,41 @@
 @push('styles')
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
     <style>
-    .text-center {
-        text-align: end;
-    }
+        .text-center {
+            text-align: end;
+        }
 
-    .table-topbar {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 40px;
-    }
+        .table-topbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
 
-    .dataTables_info {
-        margin-top: 20px;
-    }
-    .form-input {
-        border: 2px solid #f0f3f7;
-        border-radius: 6px;
-    }
-    .dropify-wrapper {
-        height: 200px;
-    }
-    .dropify-wrapper .dropify-preview .dropify-render img {
-        display: block;
-    margin-left: auto;
-    margin-right: auto;
-    }
-</style>
+        .dataTables_info {
+            margin-top: 20px;
+        }
+
+        .form-input {
+            border: 2px solid #f0f3f7;
+            border-radius: 6px;
+        }
+
+        .dropify-wrapper {
+            height: 200px;
+        }
+
+        .dropify-wrapper .dropify-preview .dropify-render img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+    <style>
+        [type=checkbox]:checked,
+        [type=radio]:checked {
+            background-size: 40% !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -65,15 +74,14 @@
                             <p class="fs-15">Update Home Page Why Choose Us Container and site details here.</p>
                         </div>
 
-                        <form action="{{ route('cms.home_page.why_choose_us.why_choose_us_update') }}"
-                            method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('cms.home_page.why_choose_us.why_choose_us_update') }}" method="POST"
+                            enctype="multipart/form-data">
                             @csrf
                             <div class="row">
                                 <!-- Title Field -->
                                 <div class="col-lg-12">
                                     <div class="form-group mb-4">
-                                        <label class="label text-secondary">Title<span
-                                                class="text-danger">*</span></label>
+                                        <label class="label text-secondary">Title<span class="text-danger">*</span></label>
                                         <div class="form-group position-relative">
                                             <input type="text"
                                                 class="form-control text-dark ps-5 h-55 @error('title') is-invalid @enderror"
@@ -216,7 +224,6 @@
 @endsection
 
 @push('scripts')
-    
     <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
     <!--buttons dataTables-->
     <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>

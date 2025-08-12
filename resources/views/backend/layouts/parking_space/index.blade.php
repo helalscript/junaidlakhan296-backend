@@ -3,6 +3,12 @@
 
 @push('styles')
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
+    <style>
+        [type=checkbox]:checked,
+        [type=radio]:checked {
+            background-size: 40% !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -328,7 +334,7 @@
     </script>
     <script src="{{ asset('backend/admin/assets/custom-actions.js') }}"></script>
     <script>
-         // Use the status change alert
+        // Use the status change alert
         function changeStatus(event, id) {
             event.preventDefault();
             let statusUrl = '{{ route('parking_spaces.is_feature', ':id') }}';
@@ -341,5 +347,4 @@
             showDeleteConfirm(id, deleteUrl);
         }
     </script>
-    
 @endpush
