@@ -287,7 +287,7 @@ class HostParkingSpaceController extends Controller
                 }
             }
             //send notification to admin
-            $this->notificationOrMailService->sendNotification(true, User::where('role', 'admin')->first(), 'New Parking Space Created please check request', 'new_parking_space');
+            // $this->notificationOrMailService->sendNotification(true, User::where('role', 'admin')->first(), 'New Parking Space Created please check request', 'new_parking_space');
             DB::commit();
             $data = $parkingSpace->load([
                 'driverInstructions',
