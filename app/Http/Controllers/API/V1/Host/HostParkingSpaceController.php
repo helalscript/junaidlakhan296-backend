@@ -173,9 +173,9 @@ class HostParkingSpaceController extends Controller
             'gallery_images' => 'required|array',
             'gallery_images.*' => 'required|image|mimes:jpeg,png,jpg|max:5120',
 
-            // Instructions
-            'instructions' => 'required|array|min:1',
-            'instructions.*' => 'required|string',
+            // // Instructions
+            // 'instructions' => 'required|array|min:1',
+            // 'instructions.*' => 'required|string',
 
             // Hourly Pricing
             'hourly_pricing' => 'nullable|array',
@@ -237,15 +237,15 @@ class HostParkingSpaceController extends Controller
 
             $parkingSpace = ParkingSpace::create($parkingSpaceData);
 
-            if (isset($validatedData['instructions'])) {
-                // Save Instructions
-                foreach ($validatedData['instructions'] as $instruction) {
-                    $parkingSpace->driverInstructions()->create([
-                        'instructions' => $instruction,
-                        'status' => 'active',
-                    ]);
-                }
-            }
+            // if (isset($validatedData['instructions'])) {
+            //     // Save Instructions
+            //     foreach ($validatedData['instructions'] as $instruction) {
+            //         $parkingSpace->driverInstructions()->create([
+            //             'instructions' => $instruction,
+            //             'status' => 'active',
+            //         ]);
+            //     }
+            // }
 
             if (isset($validatedData['hourly_pricing'])) {
                 // Save Hourly Pricing with Days
@@ -333,8 +333,8 @@ class HostParkingSpaceController extends Controller
             'gallery_images' => 'nullable|array',
             'gallery_images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
 
-            'instructions' => 'required|array|min:1',
-            'instructions.*' => 'required|string',
+            // 'instructions' => 'required|array|min:1',
+            // 'instructions.*' => 'required|string',
 
             'hourly_pricing' => 'nullable|array',
             'hourly_pricing.*.rate' => 'nullable|numeric|min:0',
@@ -383,16 +383,16 @@ class HostParkingSpaceController extends Controller
             // Update basic fields
             $parkingSpace->update($validatedData);
 
-            if (isset($validatedData['instructions'])) {
-                // Delete and recreate instructions
-                $parkingSpace->driverInstructions()->delete();
-                foreach ($validatedData['instructions'] as $instruction) {
-                    $parkingSpace->driverInstructions()->create([
-                        'instructions' => $instruction,
-                        'status' => 'active',
-                    ]);
-                }
-            }
+            // if (isset($validatedData['instructions'])) {
+            //     // Delete and recreate instructions
+            //     $parkingSpace->driverInstructions()->delete();
+            //     foreach ($validatedData['instructions'] as $instruction) {
+            //         $parkingSpace->driverInstructions()->create([
+            //             'instructions' => $instruction,
+            //             'status' => 'active',
+            //         ]);
+            //     }
+            // }
 
             if (isset($validatedData['hourly_pricing'])) {
                 // Delete and recreate hourly pricing and days
