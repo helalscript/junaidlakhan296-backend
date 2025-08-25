@@ -65,6 +65,7 @@ Route::middleware(['auth:web', 'role_check'])->prefix('admin')->group(function (
   Route::post('/parking-spaces/status/{id}', [ParkingSpaceController::class, 'status'])->name('parking_spaces.status');
   Route::post('/parking-spaces/is-feature/{id}', [ParkingSpaceController::class, 'isFeature'])->name('parking_spaces.is_feature');
   Route::get('/parking-spaces/verified/{id}', [ParkingSpaceController::class, 'verified'])->name('parking_spaces.verified');
+  Route::post('/parking-spaces/delete-image/{id}', [ParkingSpaceController::class, 'deleteImage'])->name('parking_spaces.delete_image');
 
 
   // Route Home Page CMS
