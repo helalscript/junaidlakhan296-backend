@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->boolean('is_verified')->default(false);
             $table->enum('status', ['available', 'unavailable', 'sold-out', 'close'])->default('available');
+            $table->enum('is_feature', ['active', 'inactive'])->default('inactive');
             $table->timestamps();
             $table->softDeletes();
 

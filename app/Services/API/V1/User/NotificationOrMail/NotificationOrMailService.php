@@ -7,6 +7,7 @@ use App\Models\CustomNotification;
 use App\Models\User;
 use App\Models\UserCustomNotification;
 use App\Notifications\InfoNotification;
+use App\Notifications\SendNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +37,7 @@ class NotificationOrMailService
             if ($data) {
                 $qrCodeImage = $this->qrCodeGenerator($data);
             }
-            Log::info('QR Code generated: ' . $qrCodeImage);
+            // Log::info('QR Code generated: ' . $qrCodeImage);
             // dd($qrCodeImage);
             $notificationData = [
                 'title' => $subject,
@@ -48,8 +49,14 @@ class NotificationOrMailService
                 'user' => $this->user,
                 'subject' => $subject,
             ];
-            $user->notify(new InfoNotification($notificationData));
-            Log::info('Notification sent to user: ' . $user->name);
+            // try {
+            //     // This is queued, but try/catch protects Booking creation
+            //     $user->notify(new InfoNotification($notificationData));
+            //     Log::info("Notification dispatched successfully for user: " . $user->name);
+            // } catch (Exception $e) {
+            //     // Only log mail errors, do not interrupt the booking
+            //     Log::error("❌ Failed to send notification email to {$user->email}: " . $e->getMessage());
+            // }
         }
 
     }
@@ -93,6 +100,33 @@ class NotificationOrMailService
             return true;
         }
         return false;
+    }
+
+    public function sendNotification($isAdmin, $user = null, $messages = null, $type = null, $subject = null, $data = null)
+    {
+        if ($user && $type) {
+            if (!$isAdmin) {
+                // check user notification settings on
+                $checkNotificationSetting = $this->userNotificationSetting($user, $type);
+                // check user notification settings on
+                if (!$checkNotificationSetting) {
+                    Log::info('User notification setting is off for user: ' . $user->name);
+                    return;
+                }
+            }
+            $notificationData = [
+                'title' => $subject,
+                'message' => $messages,
+                'url' => '',
+                'type' => $type,
+                'thumbnail' => asset('backend/admin/assets/images/messages_user.png' ?? ''),
+                'user' => $this->user,
+                'subject' => $subject,
+            ];
+            $user->notify(new SendNotification($notificationData));
+            Log::info('Notification sent to user: ' . $user->name);
+        }
+
     }
 
 }

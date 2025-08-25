@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->decimal('rate', 8, 2); // Assuming rate is a decimal
             $table->time('start_time'); // For time-based pricing
             $table->time('end_time');
+            $table->boolean('is_free_pricing')->default(false); // Indicates if the pricing is free
             $table->enum('status', ['active', 'inactive'])->default('active'); // Status for pricing
             $table->timestamps();
 

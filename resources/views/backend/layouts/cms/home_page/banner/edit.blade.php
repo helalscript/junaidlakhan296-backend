@@ -3,6 +3,33 @@
 
 @push('styles')
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
+    <style>
+    .text-center {
+        text-align: end;
+    }
+
+    .table-topbar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+    }
+
+    .dataTables_info {
+        margin-top: 20px;
+    }
+    .form-input {
+        border: 2px solid #f0f3f7;
+        border-radius: 6px;
+    }
+    .dropify-wrapper {
+        height: 200px;
+    }
+    .dropify-wrapper .dropify-preview .dropify-render img {
+        display: block;
+    margin-left: auto;
+    margin-right: auto;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -122,7 +149,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('frontend/assets/js/plugins/jquery-3.7.1.min.js') }}"></script>
+    
     <script type="text/javascript" src="https://jeremyfagis.github.io/dropify/dist/js/dropify.min.js"></script>
     <script>
         $(document).ready(function() {

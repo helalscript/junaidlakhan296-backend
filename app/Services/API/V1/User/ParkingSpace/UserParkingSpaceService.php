@@ -515,18 +515,59 @@ class UserParkingSpaceService
     {
         try {
             $per_page = $request->per_page ?? 10;
-            $radius = $request->radius ?? 500;
+            $radius = $request->radius ?? 10000000000;
 
             $parkingSpaces = ParkingSpace::whereIn('status', ['available', 'unavailable', 'sold-out', 'close'])
                 ->where('is_verified', true)
-                ->select('id', 'slug', 'unique_id', 'user_id', 'title', 'description', 'address', 'latitude', 'longitude', 'gallery_images', 'status')
-                ->with('hourlyPricing:id,parking_space_id,rate', 'dailyPricing:id,parking_space_id,rate', 'monthlyPricing:id,parking_space_id,rate')
+                ->select('id', 'slug', 'unique_id', 'user_id', 'title', 'description', 'address', 'latitude', 'longitude', 'gallery_images', 'status', 'is_feature')
+                ->with('hourlyPricing:id,parking_space_id,rate,is_free_pricing', 'dailyPricing:id,parking_space_id,rate', 'monthlyPricing:id,parking_space_id,rate')
                 ->withCount(['bookings as total_bookings', 'reviews as total_reviews'])
                 ->orderBy('total_reviews', 'desc')
                 ->when($request->has('latitude') && $request->has('longitude'), function ($query) use ($request, $radius) {
                     $query->havingRaw("ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) < ?", [$request->longitude, $request->latitude, $radius]);
                 })
                 ->paginate($per_page);
+            return $parkingSpaces;
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+    }
+    public function showForUsers($ParkingSpaceSlug)
+    {
+        try {
+            $parkingSpaces = ParkingSpace::whereIn('status', ['available', 'unavailable', 'sold-out', 'close'])
+                ->where('is_verified', true)
+                ->select('id', 'slug', 'unique_id', 'user_id', 'title', 'description', 'address', 'latitude', 'longitude', 'gallery_images', 'status', 'is_feature', 'total_slots')
+                ->with([
+                    'hourlyPricing' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'rate', 'is_free_pricing', 'start_time', 'end_time')
+                            ->with(['days:id,hourly_pricing_id,status,day'])
+                            ->whereHas('days', function ($q) {
+                                $q->where('status', 'available');
+                            });
+                    },
+                    'dailyPricing:id,parking_space_id,rate',
+                    'monthlyPricing:id,parking_space_id,rate',
+                    'driverInstructions' => function ($query) {
+                        $query->select('id', 'parking_space_id', 'instructions')->where('status', 'active');
+                    },
+                    'reviews' => function ($query) {
+                        $query->where('status', 'approved')
+                            ->select('id', 'parking_space_id', 'user_id', 'comment', 'rating', 'created_at')
+                            ->with('user:id,name,avatar');
+                    },
+                    'spotDetails'=> function ($query) {
+                        $query->select('id', 'parking_space_id', 'icon','details')->where('status', 'active');
+                    }
+                ])
+                ->withCount(['bookings as total_bookings', 'reviews as total_reviews'])
+                ->orderBy('total_reviews', 'desc')
+
+                ->whereNotNull('user_id')
+                ->where('slug', $ParkingSpaceSlug)->first();
+            if (!$parkingSpaces) {
+                throw new Exception('Parking space not found');
+            }
             return $parkingSpaces;
         } catch (Exception $e) {
             throw new Exception($e->getMessage());

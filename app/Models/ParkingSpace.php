@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ParkingSpace extends Model
+class  ParkingSpace extends Model
 {
     use SoftDeletes;
 
@@ -28,6 +28,7 @@ class ParkingSpace extends Model
         'slug',
         'is_verified',
         'status',
+        'is_feature',
     ];
 
     // The attributes that should be cast to native types
@@ -47,6 +48,7 @@ class ParkingSpace extends Model
         'is_verified' => 'boolean',
         'status' => 'string',
         'deleted_at' => 'datetime',
+        'is_feature' => 'string',
     ];
 
 

@@ -16,6 +16,7 @@ class HourlyPricing extends Model
         'rate',
         'start_time',
         'end_time',
+        'is_free_pricing',
         'status',
     ];
 
@@ -25,6 +26,7 @@ class HourlyPricing extends Model
         'rate' => 'decimal:2', // Cast to decimal with 2 decimal places
         'start_time' => 'datetime:H:i', // Cast to time
         'end_time' => 'datetime:H:i', // Cast to time
+        'is_free_pricing' => 'boolean', // Cast to boolean
         'status' => 'string', // Cast to string (enum)
     ];
 

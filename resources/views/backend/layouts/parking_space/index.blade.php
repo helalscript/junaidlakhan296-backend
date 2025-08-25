@@ -1,8 +1,9 @@
 @extends('backend.app')
-@section('title', 'Dynamic Page')
+@section('title', 'Contact Us')
 
 @push('styles')
-<style>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.css">
+    <style>
         [type=checkbox]:checked,
         [type=radio]:checked {
             background-size: 40% !important;
@@ -13,7 +14,8 @@
 @section('content')
     <div class="main-content-container overflow-hidden">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-            <h3 class="mb-0">Pages List</h3>
+            <h3 class="mb-0">Contact Us List</h3>
+
 
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                 <ol class="breadcrumb align-items-center mb-0 lh-1">
@@ -24,97 +26,104 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Pages</span>
+                        <span class="fw-medium">Contact Us</span>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span class="fw-medium">Pages List</span>
+                        <span class="fw-medium">Contact Us List</span>
                     </li>
                 </ol>
             </nav>
         </div>
+        {{-- ---------------------- --}}
+        <div class="row justify-content-center">
 
-        <div class="card bg-white border-0 rounded-3 mb-4">
-            <div class="card-body p-0">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
-                    <span class="position-relative table-src-form me-0">
-                        <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
-                        <i class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
-                    </span>
-                    <a href="{{ route('dynamic_page.create') }}"
-                        class="btn btn-outline-primary py-1 px-2 px-sm-4 fs-14 fw-medium rounded-3 hover-bg">
-                        <span class="py-sm-1 d-block">
-                            <i class="ri-add-line d-none d-sm-inline-block"></i>
-                            <span>Add New Page</span>
+
+            <div class="card bg-white border-0 rounded-3 ">
+                <div class="card-body p-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
+                        <span class="position-relative table-src-form me-0">
+                            <input type="text" class="form-control" placeholder="Search here" id="customSearchBox">
+                            <i
+                                class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">search</i>
                         </span>
-                    </a>
-                </div>
 
-                <div class="default-table-area style-two all-products">
-                    <div class="table-responsive">
-                        <table class="table align-middle" id="basic_tables">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Page Title</th>
-                                    <th scope="col">Page Content</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Custom Pagination -->
-                    <div
-                        class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
-                        <span class="fs-12 fw-medium"></span>
-
-                        <nav aria-label="Page navigation example">
-                            <ul class="pagination mb-0 justify-content-center">
-                                <li class="page-item">
-                                    <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
-                                        <i class="material-symbols-outlined">keyboard_arrow_left</i>
-                                    </a>
-                                </li>
-                                <!-- Pagination Container !-->
-                                <li class="row " id="customPagination">
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
-                                        <i class="material-symbols-outlined">keyboard_arrow_right</i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
                     </div>
 
+                    <div class="default-table-area style-two all-products">
+                        <div class="table-responsive">
+                            <table class="table align-middle" id="basic_tables">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Title</th>
+                                        <th scope="col">Total_slots</th>
+                                        <th scope="col">Is_verified</th>
+                                        <th scope="col">Address</th>
+                                        <th scope="col">Description</th>
+                                        <th scope="col">Is Feature</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div
+                            class="d-flex justify-content-center justify-content-sm-between align-items-center text-center flex-wrap gap-2 showing-wrap">
+                            <span class="fs-12 fw-medium"></span>
+
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination mb-0 justify-content-center">
+                                    <li class="page-item">
+                                        <a class="page-link icon" aria-label="Previous" href="#" id="prevPage">
+                                            <i class="material-symbols-outlined">keyboard_arrow_left</i>
+                                        </a>
+                                    </li>
+                                    <!-- Pagination Container !-->
+                                    <li class="row " id="customPagination">
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link icon" aria-label="Next" href="#" id="nextPage">
+                                            <i class="material-symbols-outlined">keyboard_arrow_right</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+
+
+                    </div>
                 </div>
             </div>
+
         </div>
+
+
     </div>
 
 @endsection
 
 @push('scripts')
-    
-    <script src="{{ asset('backend') }}/admin/assets/datatables/data-tables.min.js"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/data-tables.min.js') }}"></script>
     <!--buttons dataTables-->
-    <script src="{{ asset('backend') }}/admin/assets/datatables/datatables.buttons.min.js"></script>
-    <script src="{{ asset('backend') }}/admin/assets/datatables/jszip.min.js"></script>
-    <script src="{{ asset('backend') }}/admin/assets/datatables/pdfmake.min.js"></script>
-    <script src="{{ asset('backend') }}/admin/assets/datatables/buttons.html5.min.js"></script>
-    <script src="{{ asset('backend') }}/admin/assets/datatables/buttons.print.min.js"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/datatables.buttons.min.js') }}"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/jszip.min.js') }}"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('backend/admin/assets/datatables/buttons.print.min.js') }}"></script>
 
     <script>
         $(document).ready(function() {
+            let isVerified = '{{ $isVerified }}';
+            isVerified = isVerified ? isVerified : 'false'
+            let url = "{{ route('parking_spaces.index') }}";
             let dTable = $('#basic_tables').DataTable({
                 order: [],
                 destroy: true,
                 lengthMenu: [
-                    [25, 50, 100, 200, 500, -1],
-                    [25, 50, 100, 200, 500, "All"]
+                    [10, 25, 50, 100, 200, 500, -1],
+                    [10, 25, 50, 100, 200, 500, "All"]
                 ],
                 processing: true,
                 responsive: true,
@@ -132,11 +141,14 @@
                     loadingIndicator: false
                 },
                 // Remove the default search box
-                dom: "<'row justify-content-between table-topbar'<'col-md-2 col-sm-4 px-0'l>>tir",
+                dom: "<'row justify-content-between table-topbar'<'col-md-6 col-sm-4 px-0'l>>tir",
 
                 ajax: {
-                    url: "{{ route('dynamic_page.index') }}",
-                    type: "get"
+                    url: url + '?isVerified=' + isVerified,
+                    type: "get",
+                    // success: function(res) {
+                    //     console.log(res)
+                    // }
                 },
                 columns: [{
                         data: 'DT_RowIndex',
@@ -145,8 +157,8 @@
                         searchable: false
                     },
                     {
-                        data: 'page_title',
-                        name: 'page_title',
+                        data: 'title',
+                        name: 'title',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -158,8 +170,8 @@
                         }
                     },
                     {
-                        data: 'page_content',
-                        name: 'page_content',
+                        data: 'total_slots',
+                        name: 'total_slots',
                         orderable: true,
                         searchable: true,
                         render: function(data, type, row) {
@@ -171,10 +183,49 @@
                         }
                     },
                     {
-                        data: 'status',
-                        name: 'status',
+                        data: 'is_verified',
+                        name: 'is_verified',
                         orderable: true,
-                        searchable: false
+                        searchable: true,
+                        render: function(data, type, row) {
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        data: 'address',
+                        name: 'address',
+                        orderable: true,
+                        searchable: true,
+                        render: function(data, type, row) {
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        data: 'description',
+                        name: 'description',
+                        orderable: true,
+                        searchable: true,
+                        render: function(data, type, row) {
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        data: 'is_feature',
+                        name: 'is_feature',
+                        orderable: false,
+                        searchable: false,
                     },
                     {
                         data: 'action',
@@ -228,7 +279,7 @@
                 if (startPage > 1) {
                     paginationContainer.append(
                         ` <li class="page-item col-1"><a class="page-link active" href="#" data-page="1">1</a></li>`
-                        );
+                    );
                     if (startPage > 2) {
                         paginationContainer.append(`<span class="ellipsis">...</span>`);
                     }
@@ -248,12 +299,13 @@
                     }
                     paginationContainer.append(
                         `<li class="page-item col-1"><a class="pagination-item page-link "  data-page="${totalPages}">${totalPages}</a></li>`
-                        );
+                    );
                 }
 
                 // Click event for pagination items
                 $('.pagination-item').on('click', function(e) {
                     e.preventDefault();
+                    console.log('pagination-item')
                     const page = $(this).data('page');
                     if (!$(this).hasClass('disabled')) {
                         dTable.page(page - 1).draw('page'); // DataTables is 0-based index, so subtract 1
@@ -271,6 +323,7 @@
                 // Click event for 'Next' button
                 $('#nextPage').off().on('click', function(e) {
                     e.preventDefault();
+                    // console.log('nextPage')
                     if (currentPage < totalPages) {
                         dTable.page(currentPage).draw('page');
                     }
@@ -284,14 +337,13 @@
         // Use the status change alert
         function changeStatus(event, id) {
             event.preventDefault();
-            let statusUrl = '{{ route('dynamic_page.status', ':id') }}';
+            let statusUrl = '{{ route('parking_spaces.is_feature', ':id') }}';
             showStatusChangeAlert(id, statusUrl);
         }
-
         // Use the delete confirm alert
         function deleteRecord(event, id) {
             event.preventDefault();
-            let deleteUrl = '{{ route('dynamic_page.destroy', ':id') }}';
+            let deleteUrl = '{{ route('parking_spaces.destroy', ':id') }}';
             showDeleteConfirm(id, deleteUrl);
         }
     </script>

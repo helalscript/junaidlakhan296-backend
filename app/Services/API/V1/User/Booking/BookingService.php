@@ -88,8 +88,8 @@ class BookingService
             $checkPricingType = $this->checkPricingType($validatedData);
             $validatedData['estimated_hours'] = $checkPricingType->estimated_hours;
             $validatedData['estimated_price'] = $checkPricingType->estimated_price;
-            $validatedData['platform_fee'] = $this->platformFee($validatedData['estimated_price']);
-            $validatedData['total_price'] = ($checkPricingType->estimated_price + $validatedData['platform_fee']) * $validatedData['number_of_slot'];
+            // $validatedData['platform_fee'] = $this->platformFee($validatedData['estimated_price']);
+            $validatedData['total_price'] = ($checkPricingType->estimated_price + $this->platformFee($validatedData['estimated_price'])) * $validatedData['number_of_slot'];
             $singlePrice = $checkPricingType->rate;
             $validatedData['per_hour_price'] = $singlePrice;
             $this->checkParkingSlotAvailbelity($validatedData);

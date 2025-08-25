@@ -3,7 +3,35 @@
 @section('form_title', 'System')
 @section('form_description', 'System')
 @section('form_content')
+@push('styles')
+     <style>
+    .text-center {
+        text-align: end;
+    }
 
+    .table-topbar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+    }
+
+    .dataTables_info {
+        margin-top: 20px;
+    }
+    .form-input {
+        border: 2px solid #f0f3f7;
+        border-radius: 6px;
+    }
+    .dropify-wrapper {
+        height: 200px;
+    }
+    .dropify-wrapper .dropify-preview .dropify-render img {
+        display: block;
+    margin-left: auto;
+    margin-right: auto;
+    }
+</style>
+@endpush
 <form action="{{ route('system_settings.update') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div class="row">
@@ -42,7 +70,7 @@
                 <div class="form-group position-relative">
                     <input type="text"
                         class="form-control text-dark ps-5 h-55 @error('contact_number') is-invalid @enderror"
-                        name="contact_number" value="{{ old('contact_number', $settings->contact_number ?? '') }}" required
+                        name="contact_number" value="{{ old('contact_number', $settings->contact_number ?? '') }}"
                         placeholder="Enter contact number here">
                 </div>
                 @error('contact_number')
@@ -87,7 +115,7 @@
                 <div class="form-group position-relative">
                     <input type="text"
                         class="form-control text-dark ps-5 h-55 @error('company_open_hour') is-invalid @enderror"
-                        name="company_open_hour" value="{{ old('company_open_hour', $settings->company_open_hour ?? '10:00 - 18:00') }}" required
+                        name="company_open_hour" value="{{ old('company_open_hour', $settings->company_open_hour ?? '') }}"
                         placeholder="Enter company open hours here">
                 </div>
                 @error('company_open_hour')
@@ -115,7 +143,7 @@
                 <label class="label text-secondary">Description</label>
                 <div class="form-group position-relative">
                     <textarea class="form-control text-dark ps-5 h-55 @error('description') is-invalid @enderror"
-                        name="description" required
+                        name="description" 
                         placeholder="Enter description here">{{ old('description', $settings->description ?? '') }}</textarea>
                 </div>
                 @error('description')

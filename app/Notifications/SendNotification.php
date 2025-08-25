@@ -2,19 +2,16 @@
 
 namespace App\Notifications;
 
-use App\Mail\InfoMailWithQrCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class InfoNotification extends Notification implements ShouldQueue
+class SendNotification extends Notification
 {
     use Queueable;
-
     private $requestData;
-
     /**
      * Create a new notification instance.
      */
@@ -30,21 +27,7 @@ class InfoNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        // return ['mail'];
-        return ['database', 'broadcast', 'mail'];
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable)
-    {
-        return (new InfoMailWithQrCode(
-            $this->requestData['user'],
-            $this->requestData['title'],
-            $this->requestData['message'],
-            $this->requestData['qrCodeImage'],
-        ))->to($notifiable->email);
+        return ['database', 'broadcast'];
     }
 
     /**

@@ -51,7 +51,49 @@ class HomePageController extends Controller
     public function getSystemInfo(Request $request): JsonResponse
     {
         try {
+            $prime_location = [
+                [
+                    "title" => "Makkah",
+                    "address" => "Makkah, Saudi Arabia",
+                    "latitude" => 21.4225,
+                    "longitude" => 39.8262
+                ],
+                [
+                    "title" => "Madinah",
+                    "address" => "Madinah, Saudi Arabia",
+                    "latitude" => 24.4709,
+                    "longitude" => 39.6122
+                ],
+                [
+                    "title" => "Riyadh",
+                    "address" => "Riyadh, Saudi Arabia",
+                    "latitude" => 24.7743,
+                    "longitude" => 46.7386
+                ],
+                [
+                    "title" => "Jeddah",
+                    "address" => "Jeddah, Saudi Arabia",
+                    "latitude" => 21.4925,
+                    "longitude" => 39.1776
+                ],
+                [
+                    "title" => "Dammam",
+                    "address" => "Dammam, Saudi Arabia",
+                    "latitude" => 26.4257,
+                    "longitude" => 50.0552
+                ],
+                [
+                    "title" => "Taif",
+                    "address" => "Taif, Saudi Arabia",
+                    "latitude" => 21.2703,
+                    "longitude" => 40.4158
+                ]
+            ];
             $data = SystemSetting::select('id', 'system_name', 'logo', 'favicon', 'copyright_text', 'address', 'company_open_hour', 'description', 'contact_number', 'address', 'email')->first();
+            if (!$data) {
+                return Helper::jsonResponse(true, 'No data found', 200, []);
+            }
+            $data->prime_location = $prime_location;
             return Helper::jsonResponse(true, 'System data fetched successfully', 200, $data);
         } catch (Exception $e) {
             Log::error("HomePageController::getSystemInfo" . $e->getMessage());
